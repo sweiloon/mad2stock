@@ -306,6 +306,45 @@ npx ts-node scripts/migrate-data.ts
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENAI_API_KEY`
+- `CRON_SECRET` - Secret for cron job authentication
+
+---
+
+## Stock Price Cron Job
+
+### Current Configuration (Vercel Hobby - Free)
+- **Schedule**: Once daily at 5:30pm Malaysia Time (MYT)
+- **Cron Expression**: `30 9 * * 1-5` (9:30 UTC = 5:30pm MYT)
+- **Days**: Monday to Friday only (market days)
+- **Endpoint**: `/api/cron/update-prices`
+
+### How It Works
+1. Scrapes 80 companies from KLSE Screener (primary) with Yahoo Finance fallback
+2. Processes in batches of 5 with 500ms delay
+3. Stores prices in `stock_prices` Supabase table
+4. Logs results to `price_update_logs` table
+5. Frontend reads cached prices with live fallback when cache unavailable
+
+### Future Upgrade (Vercel Pro - $20/mo)
+When upgraded to Vercel Pro, change cron schedule to every 30 minutes during market hours:
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/update-prices",
+      "schedule": "*/30 1-9 * * 1-5"
+    }
+  ]
+}
+```
+This runs every 30 minutes from 9am-5pm MYT (1am-9am UTC), Monday-Friday.
+
+### Database Tables
+- **stock_prices**: Cached price data (price, change, volume, etc.)
+- **price_update_logs**: Audit trail for cron job runs
+
+### Migration Required
+Run `/supabase/migrations/002_stock_prices.sql` in Supabase SQL Editor to create tables.
 
 ---
 
