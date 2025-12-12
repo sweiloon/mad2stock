@@ -1,0 +1,573 @@
+/**
+ * Stock API Service for KLSE (Bursa Malaysia)
+ *
+ * Data Provider Priority:
+ * 1. KLSE Screener (primary) - Web scraping for accurate Malaysian data
+ * 2. Yahoo Finance (fallback) - May be rate limited
+ *
+ * Malaysian stocks use format:
+ * - KLSE Screener: numeric code (e.g., 5398 for GAMUDA)
+ * - Yahoo Finance: {code}.KL (e.g., 5398.KL for GAMUDA)
+ */
+
+import { getStockCode, getCompanyName } from './stock-codes'
+
+export interface StockQuote {
+  symbol: string
+  name: string
+  price: number
+  change: number
+  changePercent: number
+  previousClose: number
+  open: number
+  dayHigh: number
+  dayLow: number
+  volume: number
+  avgVolume: number
+  marketCap: number
+  pe: number | null
+  eps: number | null
+  week52High: number
+  week52Low: number
+  dividendYield: number | null
+  currency: string
+  exchange: string
+  lastUpdated: string
+  dataSource?: 'klsescreener' | 'yahoo' | 'mock'
+}
+
+export interface StockHistoricalData {
+  date: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
+export interface StockNews {
+  title: string
+  link: string
+  publisher: string
+  publishedAt: string
+  summary?: string
+  thumbnail?: string
+}
+
+export interface MarketIndex {
+  symbol: string
+  name: string
+  value: number
+  change: number
+  changePercent: number
+}
+
+/**
+ * Convert stock code/name to Yahoo Finance format
+ */
+export function toYahooSymbol(codeOrName: string): string {
+  const numericCode = getStockCode(codeOrName)
+  const cleanCode = numericCode.replace(/\.(KL|KLS|KLSE)$/i, '').toUpperCase()
+  return `${cleanCode}.KL`
+}
+
+/**
+ * Get numeric stock code for KLSE Screener
+ */
+export function toKLSECode(codeOrName: string): string {
+  const numericCode = getStockCode(codeOrName)
+  return numericCode.replace(/\.(KL|KLS|KLSE)$/i, '').toUpperCase()
+}
+
+// Retry configuration
+const MAX_RETRIES = 2
+const RETRY_DELAY = 1000
+
+async function fetchWithRetry(url: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<Response> {
+  try {
+    const response = await fetch(url, options)
+    if (!response.ok && retries > 0 && response.status !== 401 && response.status !== 403) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
+      return fetchWithRetry(url, options, retries - 1)
+    }
+    return response
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
+      return fetchWithRetry(url, options, retries - 1)
+    }
+    throw error
+  }
+}
+
+// ============================================================================
+// KLSE SCREENER API (Primary - Most reliable for Malaysian stocks)
+// ============================================================================
+
+interface KLSEScreenerQuote {
+  price: number
+  change: number
+  changePercent: number
+  volume: number
+  open: number
+  high: number
+  low: number
+  previousClose: number
+  name: string
+  code: string
+  pe?: number
+  eps?: number
+  marketCap?: number
+  week52High?: number
+  week52Low?: number
+  dividendYield?: number
+}
+
+/**
+ * Parse price data from KLSE Screener HTML
+ * HTML Structure:
+ * <span id="price" data-value="4.850">4.850</span>
+ * <span id="priceDiff">-0.040 (-0.8%)</span>
+ * <td class="number" id="priceHigh">4.950</td>
+ * <td class="number" id="priceLow">4.830</td>
+ * <td class="number text_volume" id="volume">35,137,500</td>
+ */
+async function fetchKLSEScreenerQuote(codeOrName: string): Promise<StockQuote | null> {
+  try {
+    const stockCode = toKLSECode(codeOrName)
+    const companyName = getCompanyName(stockCode) || codeOrName.toUpperCase()
+
+    const url = `https://www.klsescreener.com/v2/stocks/view/${stockCode}`
+
+    console.log(`[Stock API] Fetching from KLSE Screener: ${stockCode}`)
+
+    const response = await fetchWithRetry(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+      next: { revalidate: 60 },
+    })
+
+    if (!response.ok) {
+      console.error(`[Stock API] KLSE Screener error: ${response.status}`)
+      return null
+    }
+
+    const html = await response.text()
+
+    // Parse price from <span id="price" data-value="X.XXX">
+    const priceMatch = html.match(/<span\s+id="price"\s+data-value="([\d.]+)"[^>]*>([\d.]+)<\/span>/i) ||
+                       html.match(/id="price"[^>]*data-value="([\d.]+)"/i) ||
+                       html.match(/data-value="([\d.]+)"[^>]*id="price"/i)
+
+    // Parse change from <span id="priceDiff">-0.040 (-0.8%)</span>
+    const priceDiffMatch = html.match(/<span\s+id="priceDiff"[^>]*>([+-]?[\d.]+)\s*\(([+-]?[\d.]+)%\)<\/span>/i) ||
+                           html.match(/id="priceDiff"[^>]*>([+-]?[\d.]+)\s*\(([+-]?[\d.]+)%\)/i)
+
+    // Parse high price from <td class="number" id="priceHigh">
+    const priceHighMatch = html.match(/<td[^>]*id="priceHigh"[^>]*>([\d.]+)<\/td>/i) ||
+                           html.match(/id="priceHigh"[^>]*>([\d.]+)/i)
+
+    // Parse low price from <td class="number" id="priceLow">
+    const priceLowMatch = html.match(/<td[^>]*id="priceLow"[^>]*>([\d.]+)<\/td>/i) ||
+                          html.match(/id="priceLow"[^>]*>([\d.]+)/i)
+
+    // Parse volume from <td class="number text_volume" id="volume">
+    const volumeMatch = html.match(/<td[^>]*id="volume"[^>]*>([\d,]+)<\/td>/i) ||
+                        html.match(/id="volume"[^>]*>([\d,]+)/i)
+
+    if (!priceMatch) {
+      console.warn(`[Stock API] Could not parse KLSE Screener price for ${stockCode}`)
+      return null
+    }
+
+    const price = parseFloat(priceMatch[1]) || 0
+    const change = priceDiffMatch ? parseFloat(priceDiffMatch[1]) : 0
+    const changePercent = priceDiffMatch ? parseFloat(priceDiffMatch[2]) : 0
+    const dayHigh = priceHighMatch ? parseFloat(priceHighMatch[1]) : price
+    const dayLow = priceLowMatch ? parseFloat(priceLowMatch[1]) : price
+    const volume = volumeMatch ? parseInt(volumeMatch[1].replace(/,/g, '')) : 0
+
+    console.log(`[Stock API] KLSE Screener parsed: price=${price}, change=${change}, changePercent=${changePercent}%, volume=${volume}`)
+
+    return {
+      symbol: stockCode,
+      name: companyName,
+      price,
+      change,
+      changePercent,
+      previousClose: price - change,
+      open: price,
+      dayHigh,
+      dayLow,
+      volume,
+      avgVolume: 0,
+      marketCap: 0,
+      pe: null,
+      eps: null,
+      week52High: dayHigh,
+      week52Low: dayLow,
+      dividendYield: null,
+      currency: 'MYR',
+      exchange: 'KLSE',
+      lastUpdated: new Date().toISOString(),
+      dataSource: 'klsescreener',
+    }
+  } catch (error) {
+    console.error(`[Stock API] KLSE Screener error for ${codeOrName}:`, error)
+    return null
+  }
+}
+
+// ============================================================================
+// YAHOO FINANCE API (Fallback)
+// ============================================================================
+
+interface YahooChartResult {
+  timestamp?: number[]
+  indicators?: {
+    quote?: Array<{
+      open?: number[]
+      high?: number[]
+      low?: number[]
+      close?: number[]
+      volume?: number[]
+    }>
+  }
+  meta?: {
+    regularMarketPrice?: number
+    previousClose?: number
+    symbol?: string
+    shortName?: string
+  }
+}
+
+/**
+ * Fetch quote from Yahoo Finance v8 chart endpoint
+ */
+async function fetchYahooChartQuote(codeOrName: string): Promise<StockQuote | null> {
+  try {
+    const symbol = toYahooSymbol(codeOrName)
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`
+
+    console.log(`[Stock API] Fetching from Yahoo Chart: ${symbol}`)
+
+    const response = await fetchWithRetry(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Origin': 'https://finance.yahoo.com',
+        'Referer': 'https://finance.yahoo.com/',
+      },
+      next: { revalidate: 60 },
+    })
+
+    if (!response.ok) {
+      console.error(`[Stock API] Yahoo Chart error: ${response.status}`)
+      return null
+    }
+
+    const data = await response.json()
+
+    if (data?.chart?.error) {
+      console.error(`[Stock API] Yahoo Chart error:`, data.chart.error)
+      return null
+    }
+
+    const result: YahooChartResult = data?.chart?.result?.[0]
+    if (!result?.meta) {
+      return null
+    }
+
+    const { meta, timestamp, indicators } = result
+    const quotes = indicators?.quote?.[0]
+
+    const latestIdx = timestamp && timestamp.length > 0 ? timestamp.length - 1 : 0
+    const currentPrice = meta.regularMarketPrice || quotes?.close?.[latestIdx] || 0
+    const previousClose = meta.previousClose || (latestIdx > 0 ? quotes?.close?.[latestIdx - 1] : currentPrice) || currentPrice
+
+    const recentHighs = quotes?.high?.filter(Boolean) || []
+    const recentLows = quotes?.low?.filter(Boolean) || []
+
+    return {
+      symbol: meta.symbol || symbol,
+      name: meta.shortName || codeOrName.toUpperCase(),
+      price: currentPrice,
+      change: currentPrice - previousClose,
+      changePercent: previousClose > 0 ? ((currentPrice - previousClose) / previousClose) * 100 : 0,
+      previousClose,
+      open: quotes?.open?.[latestIdx] || currentPrice,
+      dayHigh: recentHighs.length > 0 ? Math.max(...recentHighs.slice(-1)) : currentPrice,
+      dayLow: recentLows.length > 0 ? Math.min(...recentLows.slice(-1)) : currentPrice,
+      volume: quotes?.volume?.[latestIdx] || 0,
+      avgVolume: quotes?.volume ? quotes.volume.reduce((a, b) => a + (b || 0), 0) / quotes.volume.length : 0,
+      marketCap: 0,
+      pe: null,
+      eps: null,
+      week52High: recentHighs.length > 0 ? Math.max(...recentHighs) : currentPrice,
+      week52Low: recentLows.length > 0 ? Math.min(...recentLows) : currentPrice,
+      dividendYield: null,
+      currency: 'MYR',
+      exchange: 'KLS',
+      lastUpdated: new Date().toISOString(),
+      dataSource: 'yahoo',
+    }
+  } catch (error) {
+    console.error(`[Stock API] Yahoo error:`, error)
+    return null
+  }
+}
+
+/**
+ * Fetch historical data from Yahoo Finance
+ */
+async function fetchYahooHistory(
+  codeOrName: string,
+  period: string = '1mo',
+  interval: string = '1d'
+): Promise<StockHistoricalData[]> {
+  try {
+    const symbol = toYahooSymbol(codeOrName)
+
+    let adjustedInterval = interval
+    if (period === '1d') adjustedInterval = '5m'
+    else if (period === '5d') adjustedInterval = '15m'
+
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${adjustedInterval}`
+
+    console.log(`[Stock API] Fetching Yahoo history: ${symbol}, period: ${period}`)
+
+    const response = await fetchWithRetry(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Origin': 'https://finance.yahoo.com',
+        'Referer': 'https://finance.yahoo.com/',
+      },
+      next: { revalidate: 300 },
+    })
+
+    if (!response.ok) return []
+
+    const data = await response.json()
+    if (data?.chart?.error) return []
+
+    const result: YahooChartResult = data?.chart?.result?.[0]
+    if (!result?.timestamp || !result?.indicators?.quote?.[0]) return []
+
+    const { timestamp } = result
+    const quote = result.indicators.quote[0]
+
+    const history: StockHistoricalData[] = []
+    for (let i = 0; i < timestamp.length; i++) {
+      if (quote.close?.[i] != null) {
+        history.push({
+          date: new Date(timestamp[i] * 1000).toISOString(),
+          open: quote.open?.[i] || 0,
+          high: quote.high?.[i] || 0,
+          low: quote.low?.[i] || 0,
+          close: quote.close[i],
+          volume: quote.volume?.[i] || 0,
+        })
+      }
+    }
+
+    console.log(`[Stock API] Yahoo: Retrieved ${history.length} data points`)
+    return history
+  } catch (error) {
+    console.error(`[Stock API] Yahoo history error:`, error)
+    return []
+  }
+}
+
+// ============================================================================
+// PUBLIC API FUNCTIONS
+// ============================================================================
+
+/**
+ * Fetch real-time quote for a stock
+ * Tries KLSE Screener first (most reliable for Malaysian stocks), falls back to Yahoo Finance
+ */
+export async function fetchStockQuote(codeOrName: string): Promise<StockQuote | null> {
+  console.log(`[Stock API] Fetching quote for: ${codeOrName}`)
+
+  // Try KLSE Screener first (most reliable for Malaysian stocks)
+  const klseQuote = await fetchKLSEScreenerQuote(codeOrName)
+  if (klseQuote) {
+    console.log(`[Stock API] ✓ KLSE Screener: ${codeOrName} = RM${klseQuote.price}`)
+    return klseQuote
+  }
+
+  // Fallback to Yahoo Finance
+  const yahooQuote = await fetchYahooChartQuote(codeOrName)
+  if (yahooQuote) {
+    console.log(`[Stock API] ✓ Yahoo Finance: ${codeOrName} = RM${yahooQuote.price}`)
+    return yahooQuote
+  }
+
+  console.warn(`[Stock API] ✗ All sources failed for ${codeOrName}`)
+  return null
+}
+
+/**
+ * Fetch multiple stock quotes
+ */
+export async function fetchMultipleQuotes(codesOrNames: string[]): Promise<Map<string, StockQuote>> {
+  const results = new Map<string, StockQuote>()
+
+  // Fetch in parallel with concurrency limit
+  const batchSize = 5
+  for (let i = 0; i < codesOrNames.length; i += batchSize) {
+    const batch = codesOrNames.slice(i, i + batchSize)
+    const promises = batch.map(async (code) => {
+      const quote = await fetchStockQuote(code)
+      if (quote) {
+        results.set(code.toUpperCase(), quote)
+      }
+    })
+    await Promise.all(promises)
+
+    // Small delay between batches to avoid overwhelming the server
+    if (i + batchSize < codesOrNames.length) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  }
+
+  return results
+}
+
+/**
+ * Fetch historical data for charts
+ * Uses Yahoo Finance for historical data (KLSE Screener doesn't provide historical API)
+ */
+export async function fetchHistoricalData(
+  codeOrName: string,
+  period: '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '5y' = '1mo',
+  interval: '1m' | '5m' | '15m' | '1h' | '1d' | '1wk' | '1mo' = '1d'
+): Promise<StockHistoricalData[]> {
+  console.log(`[Stock API] Fetching history for: ${codeOrName}, period: ${period}`)
+
+  // Use Yahoo Finance for historical data
+  return await fetchYahooHistory(codeOrName, period, interval)
+}
+
+/**
+ * Fetch KLCI index data
+ */
+export async function fetchKLCIIndex(): Promise<MarketIndex | null> {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/^KLSE?interval=1d&range=5d`
+
+    const response = await fetchWithRetry(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Origin': 'https://finance.yahoo.com',
+        'Referer': 'https://finance.yahoo.com/',
+      },
+      next: { revalidate: 60 },
+    })
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    const result: YahooChartResult = data?.chart?.result?.[0]
+    if (!result?.meta) return null
+
+    const { meta, indicators } = result
+    const quotes = indicators?.quote?.[0]
+    const latestIdx = quotes?.close ? quotes.close.length - 1 : 0
+
+    const currentValue = meta.regularMarketPrice || quotes?.close?.[latestIdx] || 0
+    const previousClose = meta.previousClose || (latestIdx > 0 ? quotes?.close?.[latestIdx - 1] : currentValue) || currentValue
+
+    return {
+      symbol: '^KLSE',
+      name: 'FTSE Bursa Malaysia KLCI',
+      value: currentValue,
+      change: currentValue - previousClose,
+      changePercent: previousClose > 0 ? ((currentValue - previousClose) / previousClose) * 100 : 0,
+    }
+  } catch (error) {
+    console.error('[Stock API] KLCI error:', error)
+    return null
+  }
+}
+
+/**
+ * Fetch news for a stock
+ */
+export async function fetchStockNews(codeOrName: string, limit: number = 10): Promise<StockNews[]> {
+  try {
+    const symbol = toYahooSymbol(codeOrName)
+    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${symbol}&newsCount=${limit}`
+
+    const response = await fetchWithRetry(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+      },
+      next: { revalidate: 300 },
+    })
+
+    if (!response.ok) return []
+
+    const data = await response.json()
+    const news = data?.news || []
+
+    return news.map((item: {
+      title?: string
+      link?: string
+      publisher?: string
+      providerPublishTime?: number
+      thumbnail?: { resolutions?: Array<{ url?: string }> }
+    }) => ({
+      title: item.title || '',
+      link: item.link || '',
+      publisher: item.publisher || '',
+      publishedAt: item.providerPublishTime
+        ? new Date(item.providerPublishTime * 1000).toISOString()
+        : new Date().toISOString(),
+      summary: '',
+      thumbnail: item.thumbnail?.resolutions?.[0]?.url,
+    }))
+  } catch (error) {
+    console.error(`[Stock API] News error:`, error)
+    return []
+  }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+export function formatPrice(price: number): string {
+  return `RM ${price.toFixed(price < 1 ? 3 : 2)}`
+}
+
+export function formatChange(change: number, changePercent: number): {
+  text: string
+  isPositive: boolean
+} {
+  const sign = change >= 0 ? '+' : ''
+  return {
+    text: `${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)`,
+    isPositive: change >= 0,
+  }
+}
+
+export function formatVolume(volume: number): string {
+  if (volume >= 1_000_000_000) return `${(volume / 1_000_000_000).toFixed(2)}B`
+  if (volume >= 1_000_000) return `${(volume / 1_000_000).toFixed(2)}M`
+  if (volume >= 1_000) return `${(volume / 1_000).toFixed(2)}K`
+  return volume.toString()
+}
+
+export function formatMarketCap(marketCap: number): string {
+  if (marketCap >= 1_000_000_000) return `RM ${(marketCap / 1_000_000_000).toFixed(2)}B`
+  if (marketCap >= 1_000_000) return `RM ${(marketCap / 1_000_000).toFixed(2)}M`
+  return `RM ${marketCap.toLocaleString()}`
+}
