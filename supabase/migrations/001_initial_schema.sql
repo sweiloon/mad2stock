@@ -1,4 +1,4 @@
--- KLSE Data Analysis Platform - Initial Database Schema
+-- Mad2Stock - Initial Database Schema
 -- Run this in Supabase SQL Editor
 
 -- Enable UUID extension

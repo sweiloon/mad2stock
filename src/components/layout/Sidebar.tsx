@@ -40,8 +40,8 @@ export function Sidebar() {
             </div>
           </div>
           <div className="flex flex-col">
-            <span className="text-base font-bold text-sidebar-foreground tracking-tight">KLSE Analytics</span>
-            <span className="text-xs text-muted-foreground">Professional Trading</span>
+            <span className="text-base font-bold text-sidebar-foreground tracking-tight">Mad2Stock</span>
+            <span className="text-xs text-muted-foreground">KLSE Analysis Platform</span>
           </div>
         </Link>
       </div>

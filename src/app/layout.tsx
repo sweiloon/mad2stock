@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KLSE Data Analysis Platform",
+  title: "Mad2Stock - Malaysian Stock Analysis",
   description: "Enterprise-grade Malaysian stock market analysis platform",
 };
 

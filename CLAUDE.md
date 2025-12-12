@@ -1,4 +1,4 @@
-# KLSE Data Analysis Platform
+# Mad2Stock
 
 Enterprise-grade data analysis platform for Malaysian KLSE stock market analysis.
 
