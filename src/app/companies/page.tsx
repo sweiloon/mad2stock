@@ -34,22 +34,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-// Mock company data
-const mockCompanies = [
-  { code: "AEONCR", name: "AEON Credit Service", sector: "Finance", yoyCategory: 1, qoqCategory: 1, revenueYoY: 14.1, profitYoY: 1.4, revenueQoQ: 5.2, profitQoQ: 8.3, marketCap: 3200 },
-  { code: "BNASTRA", name: "Bina Nusantara", sector: "Education", yoyCategory: 1, qoqCategory: 2, revenueYoY: 71.9, profitYoY: 24.0, revenueQoQ: -3.5, profitQoQ: 12.1, marketCap: 890 },
-  { code: "UWC", name: "UWC Berhad", sector: "Manufacturing", yoyCategory: 1, qoqCategory: 1, revenueYoY: 43.0, profitYoY: 685.7, revenueQoQ: 28.5, profitQoQ: 112.4, marketCap: 1250 },
-  { code: "UMCCA", name: "UMCCA Berhad", sector: "Plantation", yoyCategory: 1, qoqCategory: 3, revenueYoY: 16.9, profitYoY: 184.2, revenueQoQ: 8.2, profitQoQ: -15.3, marketCap: 450 },
-  { code: "HIGHTEC", name: "Hightec Global", sector: "Technology", yoyCategory: 1, qoqCategory: 1, revenueYoY: 44.2, profitYoY: 180.6, revenueQoQ: 22.1, profitQoQ: 45.8, marketCap: 180 },
-  { code: "ECOWLD", name: "Eco World Development", sector: "Property", yoyCategory: 1, qoqCategory: 1, revenueYoY: 17.6, profitYoY: 51.9, revenueQoQ: 52.4, profitQoQ: 235.2, marketCap: 2800 },
-  { code: "CRESNDO", name: "Crescendo Corporation", sector: "Property", yoyCategory: 1, qoqCategory: 1, revenueYoY: 19.3, profitYoY: 129.6, revenueQoQ: 19.3, profitQoQ: 129.6, marketCap: 320 },
-  { code: "MYNEWS", name: "Mynews Holdings", sector: "Retail", yoyCategory: 1, qoqCategory: 4, revenueYoY: 11.3, profitYoY: 146.2, revenueQoQ: -5.8, profitQoQ: -22.4, marketCap: 210 },
-  { code: "ASTRO", name: "Astro Malaysia", sector: "Media", yoyCategory: 5, qoqCategory: 5, revenueYoY: -13.0, profitYoY: 0, revenueQoQ: -7.4, profitQoQ: 0, marketCap: 679 },
-  { code: "GAMUDA", name: "Gamuda Berhad", sector: "Construction", yoyCategory: 1, qoqCategory: 2, revenueYoY: 25.4, profitYoY: 18.9, revenueQoQ: -8.2, profitQoQ: 5.6, marketCap: 18500 },
-  { code: "KOSSAN", name: "Kossan Rubber", sector: "Healthcare", yoyCategory: 4, qoqCategory: 4, revenueYoY: -15.2, profitYoY: -42.3, revenueQoQ: -8.5, profitQoQ: -18.7, marketCap: 4200 },
-  { code: "SCIENTX", name: "Scientex Berhad", sector: "Industrial", yoyCategory: 3, qoqCategory: 1, revenueYoY: 8.5, profitYoY: -12.4, revenueQoQ: 12.3, profitQoQ: 22.1, marketCap: 5600 },
-]
+import { COMPANY_DATA, getAllSectors } from "@/lib/company-data"
 
 const CATEGORIES = {
   1: { label: "Revenue UP, Profit UP", color: "bg-green-100 text-green-700" },
@@ -72,11 +57,11 @@ export default function CompaniesPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
 
   const sectors = useMemo(() => {
-    return [...new Set(mockCompanies.map(c => c.sector))].sort()
+    return getAllSectors()
   }, [])
 
   const filteredCompanies = useMemo(() => {
-    return mockCompanies
+    return COMPANY_DATA
       .filter(company => {
         const matchesSearch = company.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
           company.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -96,9 +81,9 @@ export default function CompaniesPage() {
             aVal = analysisType === "yoy" ? a.profitYoY : a.profitQoQ
             bVal = analysisType === "yoy" ? b.profitYoY : b.profitQoQ
             break
-          case "marketCap":
-            aVal = a.marketCap
-            bVal = b.marketCap
+          case "latestRevenue":
+            aVal = a.latestRevenue
+            bVal = b.latestRevenue
             break
           default:
             aVal = a.code
@@ -228,115 +213,121 @@ export default function CompaniesPage() {
 
         {/* Table View */}
         {viewMode === "table" && (
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => handleSort("code")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Code <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Sector</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted text-right"
-                    onClick={() => handleSort("revenue")}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      Revenue <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted text-right"
-                    onClick={() => handleSort("profit")}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      Profit <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted text-right"
-                    onClick={() => handleSort("marketCap")}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      Market Cap <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCompanies.map((company) => {
-                  const category = analysisType === "yoy" ? company.yoyCategory : company.qoqCategory
-                  const catInfo = CATEGORIES[category as keyof typeof CATEGORIES]
-                  return (
-                    <TableRow key={company.code}>
-                      <TableCell>
-                        <Link
-                          href={`/companies/${company.code}`}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          {company.code}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{company.name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{company.sector}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={catInfo.color}>
-                          Cat {category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {renderChange(analysisType === "yoy" ? company.revenueYoY : company.revenueQoQ)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {renderChange(analysisType === "yoy" ? company.profitYoY : company.profitQoQ)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        RM{(company.marketCap / 1000).toFixed(1)}B
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+          <Card className="overflow-hidden">
+            <div className="max-h-[600px] overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-card z-10">
+                  <TableRow>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[100px]"
+                      onClick={() => handleSort("code")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Code <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
+                    <TableHead className="min-w-[180px]">Name</TableHead>
+                    <TableHead className="w-[120px]">Sector</TableHead>
+                    <TableHead className="w-[100px]">Category</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[120px]"
+                      onClick={() => handleSort("revenue")}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Revenue % <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[120px]"
+                      onClick={() => handleSort("profit")}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Profit % <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[140px]"
+                      onClick={() => handleSort("latestRevenue")}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Revenue (RM M) <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCompanies.map((company) => {
+                    const category = analysisType === "yoy" ? company.yoyCategory : company.qoqCategory
+                    const catInfo = CATEGORIES[category as keyof typeof CATEGORIES]
+                    return (
+                      <TableRow key={company.code}>
+                        <TableCell>
+                          <Link
+                            href={`/companies/${company.code}`}
+                            className="font-medium text-primary hover:underline"
+                          >
+                            {company.code}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="truncate max-w-[180px]">{company.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{company.sector}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={catInfo.color}>
+                            Cat {category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end">
+                            {renderChange(analysisType === "yoy" ? company.revenueYoY : company.revenueQoQ)}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end">
+                            {renderChange(analysisType === "yoy" ? company.profitYoY : company.profitQoQ)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {company.latestRevenue.toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
         )}
 
         {/* Cards View */}
         {viewMode === "cards" && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-h-[700px] overflow-auto">
             {filteredCompanies.map((company) => {
               const category = analysisType === "yoy" ? company.yoyCategory : company.qoqCategory
               const catInfo = CATEGORIES[category as keyof typeof CATEGORIES]
               return (
                 <Link key={company.code} href={`/companies/${company.code}`}>
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{company.code}</CardTitle>
                         <Badge className={catInfo.color}>Cat {category}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{company.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">{company.name}</p>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Revenue</span>
+                        <span className="text-muted-foreground">Revenue %</span>
                         {renderChange(analysisType === "yoy" ? company.revenueYoY : company.revenueQoQ)}
                       </div>
                       <div className="flex items-center justify-between text-sm mt-1">
-                        <span className="text-muted-foreground">Profit</span>
+                        <span className="text-muted-foreground">Profit %</span>
                         {renderChange(analysisType === "yoy" ? company.profitYoY : company.profitQoQ)}
                       </div>
                       <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t">
                         <Badge variant="outline">{company.sector}</Badge>
-                        <span className="font-medium">RM{(company.marketCap / 1000).toFixed(1)}B</span>
+                        <span className="font-medium tabular-nums">RM {company.latestRevenue.toLocaleString()}M</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -348,63 +339,65 @@ export default function CompaniesPage() {
 
         {/* Excel View */}
         {viewMode === "excel" && (
-          <Card className="overflow-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="border px-3 py-2 text-left font-medium">Code</th>
-                  <th className="border px-3 py-2 text-left font-medium">Name</th>
-                  <th className="border px-3 py-2 text-left font-medium">Sector</th>
-                  <th className="border px-3 py-2 text-center font-medium">YoY Cat</th>
-                  <th className="border px-3 py-2 text-center font-medium">QoQ Cat</th>
-                  <th className="border px-3 py-2 text-right font-medium">Rev YoY%</th>
-                  <th className="border px-3 py-2 text-right font-medium">Profit YoY%</th>
-                  <th className="border px-3 py-2 text-right font-medium">Rev QoQ%</th>
-                  <th className="border px-3 py-2 text-right font-medium">Profit QoQ%</th>
-                  <th className="border px-3 py-2 text-right font-medium">MCap (RM M)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCompanies.map((company, idx) => (
-                  <tr key={company.code} className={idx % 2 === 0 ? "bg-background" : "bg-muted/30"}>
-                    <td className="border px-3 py-2 font-medium">
-                      <Link href={`/companies/${company.code}`} className="text-primary hover:underline">
-                        {company.code}
-                      </Link>
-                    </td>
-                    <td className="border px-3 py-2">{company.name}</td>
-                    <td className="border px-3 py-2">{company.sector}</td>
-                    <td className="border px-3 py-2 text-center">{company.yoyCategory}</td>
-                    <td className="border px-3 py-2 text-center">{company.qoqCategory}</td>
-                    <td className={cn(
-                      "border px-3 py-2 text-right",
-                      company.revenueYoY >= 0 ? "text-green-600" : "text-red-600"
-                    )}>
-                      {company.revenueYoY.toFixed(1)}
-                    </td>
-                    <td className={cn(
-                      "border px-3 py-2 text-right",
-                      company.profitYoY >= 0 ? "text-green-600" : "text-red-600"
-                    )}>
-                      {company.profitYoY.toFixed(1)}
-                    </td>
-                    <td className={cn(
-                      "border px-3 py-2 text-right",
-                      company.revenueQoQ >= 0 ? "text-green-600" : "text-red-600"
-                    )}>
-                      {company.revenueQoQ.toFixed(1)}
-                    </td>
-                    <td className={cn(
-                      "border px-3 py-2 text-right",
-                      company.profitQoQ >= 0 ? "text-green-600" : "text-red-600"
-                    )}>
-                      {company.profitQoQ.toFixed(1)}
-                    </td>
-                    <td className="border px-3 py-2 text-right">{company.marketCap.toLocaleString()}</td>
+          <Card className="overflow-hidden">
+            <div className="max-h-[600px] overflow-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead className="sticky top-0 bg-card z-10">
+                  <tr className="bg-muted">
+                    <th className="border px-3 py-2 text-left font-medium">Code</th>
+                    <th className="border px-3 py-2 text-left font-medium">Name</th>
+                    <th className="border px-3 py-2 text-left font-medium">Sector</th>
+                    <th className="border px-3 py-2 text-center font-medium">YoY Cat</th>
+                    <th className="border px-3 py-2 text-center font-medium">QoQ Cat</th>
+                    <th className="border px-3 py-2 text-right font-medium">Rev YoY%</th>
+                    <th className="border px-3 py-2 text-right font-medium">Profit YoY%</th>
+                    <th className="border px-3 py-2 text-right font-medium">Rev QoQ%</th>
+                    <th className="border px-3 py-2 text-right font-medium">Profit QoQ%</th>
+                    <th className="border px-3 py-2 text-right font-medium">Revenue (RM M)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredCompanies.map((company, idx) => (
+                    <tr key={company.code} className={idx % 2 === 0 ? "bg-background" : "bg-muted/30"}>
+                      <td className="border px-3 py-2 font-medium">
+                        <Link href={`/companies/${company.code}`} className="text-primary hover:underline">
+                          {company.code}
+                        </Link>
+                      </td>
+                      <td className="border px-3 py-2">{company.name}</td>
+                      <td className="border px-3 py-2">{company.sector}</td>
+                      <td className="border px-3 py-2 text-center">{company.yoyCategory}</td>
+                      <td className="border px-3 py-2 text-center">{company.qoqCategory}</td>
+                      <td className={cn(
+                        "border px-3 py-2 text-right tabular-nums",
+                        company.revenueYoY >= 0 ? "text-green-600" : "text-red-600"
+                      )}>
+                        {company.revenueYoY >= 0 ? "+" : ""}{company.revenueYoY.toFixed(1)}
+                      </td>
+                      <td className={cn(
+                        "border px-3 py-2 text-right tabular-nums",
+                        company.profitYoY >= 0 ? "text-green-600" : "text-red-600"
+                      )}>
+                        {company.profitYoY >= 0 ? "+" : ""}{company.profitYoY.toFixed(1)}
+                      </td>
+                      <td className={cn(
+                        "border px-3 py-2 text-right tabular-nums",
+                        company.revenueQoQ >= 0 ? "text-green-600" : "text-red-600"
+                      )}>
+                        {company.revenueQoQ >= 0 ? "+" : ""}{company.revenueQoQ.toFixed(1)}
+                      </td>
+                      <td className={cn(
+                        "border px-3 py-2 text-right tabular-nums",
+                        company.profitQoQ >= 0 ? "text-green-600" : "text-red-600"
+                      )}>
+                        {company.profitQoQ >= 0 ? "+" : ""}{company.profitQoQ.toFixed(1)}
+                      </td>
+                      <td className="border px-3 py-2 text-right tabular-nums">{company.latestRevenue.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         )}
       </div>

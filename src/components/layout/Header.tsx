@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -15,9 +16,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Bell, Search, Menu, Moon, Sun, TrendingUp, TrendingDown, Loader2 } from "lucide-react"
+import { Bell, Search, Menu, Moon, Sun, TrendingUp, Star, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useMarketIndex } from "@/hooks/use-stock-data"
+import { getStrongBuyCompanies } from "@/lib/company-data"
 
 interface HeaderProps {
   onMenuClick?: () => void
@@ -28,8 +29,8 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const { theme, setTheme } = useTheme()
 
-  // Fetch real KLCI data with 60-second refresh
-  const { index: klci, loading } = useMarketIndex(60000)
+  // Get top strong buy companies (Category 1 with highest profit growth)
+  const strongBuyCompanies = useMemo(() => getStrongBuyCompanies(3), [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,14 +39,9 @@ export function Header({ onMenuClick }: HeaderProps) {
     }
   }
 
-  // Format number with commas
-  const formatNumber = (num: number) => {
-    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
-
   return (
     <header className="flex h-14 items-center justify-between border-b border-border bg-card/50 backdrop-blur-sm px-4 gap-4">
-      {/* Left side - Menu button (mobile) + Market Ticker */}
+      {/* Left side - Menu button (mobile) + Top Strong Buy Companies */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <Button
           variant="ghost"
@@ -56,38 +52,34 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Market Ticker - Desktop */}
-        <div className="hidden lg:flex items-center gap-6 overflow-hidden">
-          {/* KLCI Index - Real Data */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-muted-foreground font-medium">KLCI</span>
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : klci ? (
-              <>
-                <span className="text-sm font-bold tabular-nums">{formatNumber(klci.value)}</span>
-                <span className={cn(
-                  "flex items-center gap-0.5 text-xs font-medium tabular-nums",
-                  klci.change >= 0 ? "text-profit" : "text-loss"
-                )}>
-                  {klci.change >= 0 ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
-                  )}
-                  {klci.change >= 0 ? "+" : ""}{formatNumber(klci.change)} ({klci.change >= 0 ? "+" : ""}{klci.changePercent.toFixed(2)}%)
+        {/* Top Strong Buy Companies - Desktop */}
+        <div className="hidden lg:flex items-center gap-3 overflow-hidden">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Star className="h-4 w-4 text-profit" />
+            <span className="text-xs font-semibold text-profit">Top Strong Buy</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {strongBuyCompanies.map((company) => (
+              <Link
+                key={company.code}
+                href={`/companies/${company.code}`}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-profit/10 hover:bg-profit/20 transition-colors"
+              >
+                <span className="text-xs font-semibold text-profit">{company.code}</span>
+                <span className="flex items-center text-[10px] font-medium text-profit tabular-nums">
+                  <TrendingUp className="h-2.5 w-2.5 mr-0.5" />
+                  +{company.profitYoY.toFixed(0)}%
                 </span>
-              </>
-            ) : (
-              <span className="text-sm text-muted-foreground">--</span>
-            )}
+              </Link>
+            ))}
           </div>
-
-          {/* Market Status */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-muted-foreground font-medium">Market</span>
-            <span className="text-sm font-semibold text-profit">Open</span>
-          </div>
+          <Link
+            href="/companies?category=1"
+            className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-profit transition-colors"
+          >
+            View all
+            <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
       </div>
 

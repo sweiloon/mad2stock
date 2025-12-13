@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,6 +35,14 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  COMPANY_DATA,
+  getCategoryCount,
+  getTopPerformers,
+  getGainersLosersCount,
+  getAllSectors,
+  getSectorStats
+} from "@/lib/company-data"
 
 // Performance Categories
 const PERFORMANCE_CATEGORIES = [
@@ -106,74 +114,16 @@ const PERFORMANCE_CATEGORIES = [
   },
 ]
 
-// Sector definitions
-const SECTORS = [
-  "All Sectors",
-  "Construction",
-  "Manufacturing",
-  "Technology",
-  "Plantation",
-  "Healthcare",
-  "Consumer",
-  "Financial",
-  "Industrial",
-  "Energy",
+// Sector definitions - dynamically generated
+const SECTORS = ["All Sectors", ...getAllSectors()]
+
+// Recent signals - sample data for demonstration
+const recentSignals = [
+  { company: "UWC", type: "earnings", title: "Q4 Profit Surges 685%", time: "30m", strength: "strong" },
+  { company: "GAMUDA", type: "news", title: "MRT3 Contract Secured", time: "2h", strength: "buy" },
+  { company: "ECOWLD", type: "breakout", title: "Breakout Above RM1.20", time: "4h", strength: "buy" },
+  { company: "PRKCORP", type: "volume", title: "Unusual Volume Spike", time: "5h", strength: "watch" },
 ]
-
-// Mock data
-const mockYoYData = {
-  categories: [
-    { id: 1, count: 22 },
-    { id: 2, count: 6 },
-    { id: 3, count: 9 },
-    { id: 4, count: 32 },
-    { id: 5, count: 5 },
-    { id: 6, count: 6 },
-  ],
-  topPerformers: [
-    { code: "UWC", name: "UWC Berhad", sector: "Manufacturing", revenueChange: 43.0, profitChange: 685.7, price: "2.45", change: 5.2 },
-    { code: "PRKCORP", name: "Prkorp Berhad", sector: "Construction", revenueChange: 19.6, profitChange: 352.7, price: "1.82", change: 3.8 },
-    { code: "UMCCA", name: "UMCCA Berhad", sector: "Plantation", revenueChange: 16.9, profitChange: 184.2, price: "5.20", change: 2.1 },
-    { code: "HIGHTEC", name: "Hightec Global", sector: "Technology", revenueChange: 44.2, profitChange: 180.6, price: "0.85", change: -1.2 },
-    { code: "MYNEWS", name: "Mynews Holdings", sector: "Consumer", revenueChange: 11.3, profitChange: 146.2, price: "0.62", change: 0.8 },
-  ],
-  recentSignals: [
-    { company: "UWC", type: "earnings", title: "Q4 Profit Surges 685%", time: "30m", strength: "strong" },
-    { company: "GAMUDA", type: "news", title: "MRT3 Contract Secured", time: "2h", strength: "buy" },
-    { company: "ECOWLD", type: "breakout", title: "Breakout Above RM1.20", time: "4h", strength: "buy" },
-    { company: "PRKCORP", type: "volume", title: "Unusual Volume Spike", time: "5h", strength: "watch" },
-  ],
-}
-
-const mockQoQData = {
-  categories: [
-    { id: 1, count: 18 },
-    { id: 2, count: 8 },
-    { id: 3, count: 12 },
-    { id: 4, count: 28 },
-    { id: 5, count: 7 },
-    { id: 6, count: 7 },
-  ],
-  topPerformers: [
-    { code: "ECOWLD", name: "Eco World Development", sector: "Property", revenueChange: 52.4, profitChange: 235.2, price: "1.18", change: 4.2 },
-    { code: "CRESNDO", name: "Crescendo Corporation", sector: "Property", revenueChange: 19.3, profitChange: 129.6, price: "1.45", change: 2.5 },
-    { code: "UWC", name: "UWC Berhad", sector: "Manufacturing", revenueChange: 28.5, profitChange: 112.4, price: "2.45", change: 5.2 },
-    { code: "HAILY", name: "Haily Group Berhad", sector: "Construction", revenueChange: 15.8, profitChange: 89.3, price: "0.95", change: 1.8 },
-    { code: "BNASTRA", name: "BNASTRA Berhad", sector: "Construction", revenueChange: 25.4, profitChange: 45.6, price: "0.42", change: -0.5 },
-  ],
-  recentSignals: mockYoYData.recentSignals,
-}
-
-// Market summary stats
-const marketStats = {
-  totalCompanies: 80,
-  marketCap: "RM 245.8B",
-  avgPE: 15.2,
-  volume: "2.8B",
-  gainers: 45,
-  losers: 28,
-  unchanged: 7,
-}
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
@@ -186,8 +136,31 @@ export default function DashboardPage() {
     return () => clearTimeout(timer)
   }, [])
 
-  const currentData = activeTab === "yoy" ? mockYoYData : mockQoQData
-  const totalCompanies = currentData.categories.reduce((sum, cat) => sum + cat.count, 0)
+  // Compute real data from COMPANY_DATA
+  const yoyCategoryCounts = useMemo(() => getCategoryCount('yoy'), [])
+  const qoqCategoryCounts = useMemo(() => getCategoryCount('qoq'), [])
+  const yoyTopPerformers = useMemo(() => getTopPerformers('yoy', 5), [])
+  const qoqTopPerformers = useMemo(() => getTopPerformers('qoq', 5), [])
+  const gainersLosers = useMemo(() => getGainersLosersCount(), [])
+  const sectorStats = useMemo(() => getSectorStats(5), [])
+
+  // Build current data based on active tab
+  const currentCategories = activeTab === "yoy"
+    ? Object.entries(yoyCategoryCounts).map(([id, count]) => ({ id: parseInt(id), count }))
+    : Object.entries(qoqCategoryCounts).map(([id, count]) => ({ id: parseInt(id), count }))
+
+  const currentTopPerformers = activeTab === "yoy" ? yoyTopPerformers : qoqTopPerformers
+  const totalCompanies = COMPANY_DATA.length
+
+  // Market stats based on real data
+  const marketStats = {
+    totalCompanies,
+    gainers: gainersLosers.gainers,
+    losers: gainersLosers.losers,
+    unchanged: gainersLosers.unchanged,
+    growthLeaders: yoyCategoryCounts[1] || 0,
+    turnarounds: yoyCategoryCounts[5] || 0,
+  }
 
   if (loading) {
     return (
@@ -249,7 +222,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Growth Leaders</p>
                   <p className="text-2xl font-bold text-profit tabular-nums">
-                    {currentData.categories.find(c => c.id === 1)?.count || 0}
+                    {marketStats.growthLeaders}
                   </p>
                 </div>
                 <div className="h-10 w-10 rounded-lg bg-profit/10 flex items-center justify-center">
@@ -265,7 +238,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Turnaround</p>
                   <p className="text-2xl font-bold text-[#ab47bc] tabular-nums">
-                    {currentData.categories.find(c => c.id === 5)?.count || 0}
+                    {marketStats.turnarounds}
                   </p>
                 </div>
                 <div className="h-10 w-10 rounded-lg bg-[#ab47bc]/10 flex items-center justify-center">
@@ -321,7 +294,7 @@ export default function DashboardPage() {
         {/* Performance Categories - Horizontal Cards */}
         <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           {PERFORMANCE_CATEGORIES.map((category) => {
-            const categoryData = currentData.categories.find(c => c.id === category.id)
+            const categoryData = currentCategories.find(c => c.id === category.id)
             const count = categoryData?.count || 0
             const percentage = ((count / totalCompanies) * 100).toFixed(0)
             const Icon = category.icon
@@ -394,48 +367,52 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-1">
-                {currentData.topPerformers.map((company, index) => (
-                  <Link
-                    key={company.code}
-                    href={`/companies/${company.code}`}
-                    className="group flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-lg font-bold text-sm",
-                      index === 0 ? "bg-[#ffd700]/20 text-[#ffd700]" :
-                      index === 1 ? "bg-[#c0c0c0]/20 text-[#a0a0a0]" :
-                      index === 2 ? "bg-[#cd7f32]/20 text-[#cd7f32]" :
-                      "bg-muted text-muted-foreground"
-                    )}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm">{company.code}</span>
-                        <Badge variant="outline" className="text-[10px] h-4 px-1.5">
-                          {company.sector}
-                        </Badge>
+                {currentTopPerformers.map((company, index) => {
+                  const profitChange = activeTab === "yoy" ? company.profitYoY : company.profitQoQ
+                  const revenueChange = activeTab === "yoy" ? company.revenueYoY : company.revenueQoQ
+                  return (
+                    <Link
+                      key={company.code}
+                      href={`/companies/${company.code}`}
+                      className="group flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-lg font-bold text-sm",
+                        index === 0 ? "bg-[#ffd700]/20 text-[#ffd700]" :
+                        index === 1 ? "bg-[#c0c0c0]/20 text-[#a0a0a0]" :
+                        index === 2 ? "bg-[#cd7f32]/20 text-[#cd7f32]" :
+                        "bg-muted text-muted-foreground"
+                      )}>
+                        {index + 1}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{company.name}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-sm font-medium tabular-nums">RM{company.price}</span>
-                        <span className={cn(
-                          "flex items-center text-xs font-medium tabular-nums",
-                          company.change >= 0 ? "text-profit" : "text-loss"
-                        )}>
-                          {company.change >= 0 ? "+" : ""}{company.change}%
-                        </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{company.code}</span>
+                          <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                            {company.sector}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{company.name}</p>
                       </div>
-                      <div className="flex items-center justify-end gap-1 text-profit">
-                        <ArrowUpRight className="h-3 w-3" />
-                        <span className="text-xs font-semibold tabular-nums">+{company.profitChange.toFixed(0)}%</span>
+                      <div className="text-right shrink-0">
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-xs text-muted-foreground">Rev:</span>
+                          <span className={cn(
+                            "flex items-center text-xs font-medium tabular-nums",
+                            revenueChange >= 0 ? "text-profit" : "text-loss"
+                          )}>
+                            {revenueChange >= 0 ? "+" : ""}{revenueChange.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-end gap-1 text-profit">
+                          <ArrowUpRight className="h-3 w-3" />
+                          <span className="text-xs font-semibold tabular-nums">+{profitChange.toFixed(0)}%</span>
+                        </div>
                       </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </Link>
-                ))}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
@@ -460,7 +437,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2">
-                {currentData.recentSignals.map((signal, index) => (
+                {recentSignals.map((signal, index) => (
                   <Link
                     key={index}
                     href={`/signals?company=${signal.company}`}
@@ -557,7 +534,7 @@ export default function DashboardPage() {
             <CardContent className="pt-0">
               <div className="space-y-3">
                 {PERFORMANCE_CATEGORIES.map((category) => {
-                  const categoryData = currentData.categories.find(c => c.id === category.id)
+                  const categoryData = currentCategories.find(c => c.id === category.id)
                   const count = categoryData?.count || 0
                   const percentage = ((count / totalCompanies) * 100).toFixed(0)
 
@@ -601,42 +578,45 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2">
-                {[
-                  { sector: "Construction", count: 18, growth: 12.5, color: "from-[#42a5f5] to-[#1e88e5]" },
-                  { sector: "Manufacturing", count: 15, growth: 8.3, color: "from-[#26a69a] to-[#00897b]" },
-                  { sector: "Technology", count: 12, growth: 15.2, color: "from-[#ab47bc] to-[#8e24aa]" },
-                  { sector: "Plantation", count: 10, growth: -5.1, color: "from-[#ff9800] to-[#f57c00]" },
-                  { sector: "Healthcare", count: 8, growth: 3.8, color: "from-[#ef5350] to-[#e53935]" },
-                ].map((item) => (
-                  <Link
-                    key={item.sector}
-                    href={`/companies?sector=${encodeURIComponent(item.sector)}`}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
-                  >
-                    <div className={cn(
-                      "h-9 w-9 rounded-lg flex items-center justify-center font-bold text-sm text-white bg-gradient-to-br",
-                      item.color
-                    )}>
-                      {item.count}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{item.sector}</p>
-                      <p className="text-[10px] text-muted-foreground">{item.count} companies</p>
-                    </div>
-                    <div className={cn(
-                      "flex items-center gap-1 text-xs font-medium tabular-nums",
-                      item.growth >= 0 ? "text-profit" : "text-loss"
-                    )}>
-                      {item.growth >= 0 ? (
-                        <ArrowUpRight className="h-3 w-3" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3" />
-                      )}
-                      {item.growth >= 0 ? "+" : ""}{item.growth}%
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </Link>
-                ))}
+                {sectorStats.map((item, index) => {
+                  const colors = [
+                    "from-[#42a5f5] to-[#1e88e5]",
+                    "from-[#26a69a] to-[#00897b]",
+                    "from-[#ab47bc] to-[#8e24aa]",
+                    "from-[#ff9800] to-[#f57c00]",
+                    "from-[#ef5350] to-[#e53935]",
+                  ]
+                  return (
+                    <Link
+                      key={item.sector}
+                      href={`/companies?sector=${encodeURIComponent(item.sector)}`}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                    >
+                      <div className={cn(
+                        "h-9 w-9 rounded-lg flex items-center justify-center font-bold text-sm text-white bg-gradient-to-br",
+                        colors[index % colors.length]
+                      )}>
+                        {item.count}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{item.sector}</p>
+                        <p className="text-[10px] text-muted-foreground">{item.count} companies</p>
+                      </div>
+                      <div className={cn(
+                        "flex items-center gap-1 text-xs font-medium tabular-nums",
+                        item.avgProfitGrowth >= 0 ? "text-profit" : "text-loss"
+                      )}>
+                        {item.avgProfitGrowth >= 0 ? (
+                          <ArrowUpRight className="h-3 w-3" />
+                        ) : (
+                          <ArrowDownRight className="h-3 w-3" />
+                        )}
+                        {item.avgProfitGrowth >= 0 ? "+" : ""}{item.avgProfitGrowth.toFixed(1)}%
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
