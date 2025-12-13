@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +29,198 @@ import {
   ArenaStatsCard
 } from "@/components/arena"
 import { ArenaChart } from "@/components/charts"
-import { AI_MODELS } from "@/lib/arena/types"
+import { AI_MODELS, Trade, AIParticipant } from "@/lib/arena/types"
+
+// Malaysian stocks for demo trades
+const KLSE_STOCKS = [
+  { code: 'GAMUDA', name: 'Gamuda Berhad' },
+  { code: 'MAYBANK', name: 'Malayan Banking Berhad' },
+  { code: 'TENAGA', name: 'Tenaga Nasional Berhad' },
+  { code: 'CIMB', name: 'CIMB Group Holdings' },
+  { code: 'PBBANK', name: 'Public Bank Berhad' },
+  { code: 'PETRONAS', name: 'Petronas Chemicals Group' },
+  { code: 'IHH', name: 'IHH Healthcare Berhad' },
+  { code: 'AXIATA', name: 'Axiata Group Berhad' },
+  { code: 'DIGI', name: 'Digi.Com Berhad' },
+  { code: 'GENTING', name: 'Genting Berhad' },
+  { code: 'TOPGLOVE', name: 'Top Glove Corporation' },
+  { code: 'HARTA', name: 'Hartalega Holdings' },
+  { code: 'MISC', name: 'MISC Berhad' },
+  { code: 'SIMEPLT', name: 'Sime Darby Plantation' },
+  { code: 'KLCC', name: 'KLCCP Stapled Group' },
+]
+
+// AI reasoning templates for demo
+const BUY_REASONS = [
+  'Strong quarterly earnings beat expectations, momentum building',
+  'Technical breakout above key resistance with high volume',
+  'Sector rotation favoring this stock, institutional buying detected',
+  'Undervalued based on DCF analysis, good entry point',
+  'Positive news catalyst, expecting price appreciation',
+  'RSI oversold condition, mean reversion opportunity',
+  'Strong dividend yield with stable fundamentals',
+  'Breaking out of consolidation pattern with bullish MACD crossover',
+]
+
+const SELL_REASONS = [
+  'Target price reached, taking profits',
+  'Technical breakdown below support, cutting losses',
+  'Sector weakness, rotating to defensive positions',
+  'Overbought RSI, expecting pullback',
+  'Negative earnings revision, reducing exposure',
+  'Stop loss triggered at predetermined level',
+  'Better opportunity identified elsewhere',
+  'Portfolio rebalancing to manage risk',
+]
+
+// Demo AI participants data
+const DEMO_PARTICIPANTS: AIParticipant[] = [
+  {
+    id: 'deepseek-1',
+    model_name: 'deepseek-chat',
+    model_provider: 'DeepSeek',
+    display_name: 'DeepSeek',
+    avatar_color: '#3B82F6',
+    initial_capital: 10000,
+    current_capital: 7250.50,
+    portfolio_value: 10520.30,
+    total_trades: 12,
+    winning_trades: 8,
+    total_profit_loss: 520.30,
+    profit_loss_pct: 5.20,
+    rank: 1,
+    status: 'active',
+    last_trade_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    created_at: '2024-12-01T00:00:00Z',
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'claude-1',
+    model_name: 'claude-sonnet-4',
+    model_provider: 'Anthropic',
+    display_name: 'Claude',
+    avatar_color: '#D97706',
+    initial_capital: 10000,
+    current_capital: 6890.25,
+    portfolio_value: 10380.75,
+    total_trades: 10,
+    winning_trades: 7,
+    total_profit_loss: 380.75,
+    profit_loss_pct: 3.81,
+    rank: 2,
+    status: 'active',
+    last_trade_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    created_at: '2024-12-01T00:00:00Z',
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'chatgpt-1',
+    model_name: 'gpt-4o',
+    model_provider: 'OpenAI',
+    display_name: 'ChatGPT',
+    avatar_color: '#10B981',
+    initial_capital: 10000,
+    current_capital: 8120.00,
+    portfolio_value: 10245.50,
+    total_trades: 8,
+    winning_trades: 5,
+    total_profit_loss: 245.50,
+    profit_loss_pct: 2.46,
+    rank: 3,
+    status: 'active',
+    last_trade_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+    created_at: '2024-12-01T00:00:00Z',
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'grok-1',
+    model_name: 'grok-2-latest',
+    model_provider: 'xAI',
+    display_name: 'Grok',
+    avatar_color: '#000000',
+    initial_capital: 10000,
+    current_capital: 5450.80,
+    portfolio_value: 10125.20,
+    total_trades: 15,
+    winning_trades: 8,
+    total_profit_loss: 125.20,
+    profit_loss_pct: 1.25,
+    rank: 4,
+    status: 'active',
+    last_trade_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    created_at: '2024-12-01T00:00:00Z',
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'gemini-1',
+    model_name: 'gemini-2.0-flash',
+    model_provider: 'Google',
+    display_name: 'Gemini',
+    avatar_color: '#8B5CF6',
+    initial_capital: 10000,
+    current_capital: 7890.00,
+    portfolio_value: 9920.40,
+    total_trades: 6,
+    winning_trades: 3,
+    total_profit_loss: -79.60,
+    profit_loss_pct: -0.80,
+    rank: 5,
+    status: 'active',
+    last_trade_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    created_at: '2024-12-01T00:00:00Z',
+    updated_at: new Date().toISOString(),
+  },
+]
+
+// Generate demo trades
+function generateDemoTrades(): Trade[] {
+  const trades: Trade[] = []
+  const now = new Date()
+
+  // Create trades for each AI participant
+  DEMO_PARTICIPANTS.forEach((participant) => {
+    const numTrades = participant.total_trades
+
+    for (let i = 0; i < numTrades; i++) {
+      const stock = KLSE_STOCKS[Math.floor(Math.random() * KLSE_STOCKS.length)]
+      const isBuy = Math.random() > 0.4 // More buys than sells
+      const price = 1.5 + Math.random() * 8 // RM 1.50 to RM 9.50
+      const quantity = Math.floor(100 + Math.random() * 900) // 100 to 1000 shares
+      const totalValue = price * quantity
+      const fees = totalValue * 0.0015 // 0.15% trading fee
+
+      // Calculate time offset (spread trades over past 2 weeks)
+      const hoursAgo = Math.floor(Math.random() * 336) // 0 to 14 days in hours
+      const executedAt = new Date(now.getTime() - hoursAgo * 60 * 60 * 1000)
+
+      const trade: Trade = {
+        id: `demo-${participant.id}-${i}`,
+        participant_id: participant.id,
+        stock_code: stock.code,
+        stock_name: stock.name,
+        trade_type: isBuy ? 'BUY' : 'SELL',
+        quantity,
+        price: Math.round(price * 10000) / 10000,
+        total_value: Math.round(totalValue * 100) / 100,
+        fees: Math.round(fees * 100) / 100,
+        realized_pnl: isBuy ? null : (Math.random() > 0.4 ? Math.random() * 200 : -Math.random() * 100),
+        reasoning: isBuy
+          ? BUY_REASONS[Math.floor(Math.random() * BUY_REASONS.length)]
+          : SELL_REASONS[Math.floor(Math.random() * SELL_REASONS.length)],
+        executed_at: executedAt.toISOString(),
+        created_at: executedAt.toISOString(),
+        participant: participant,
+      }
+
+      trades.push(trade)
+    }
+  })
+
+  // Sort by execution time (most recent first)
+  return trades.sort((a, b) =>
+    new Date(b.executed_at).getTime() - new Date(a.executed_at).getTime()
+  )
+}
 
 export default function ArenaPage() {
   const {
@@ -50,6 +241,9 @@ export default function ArenaPage() {
 
   const [activeTab, setActiveTab] = useState("overview")
 
+  // Generate demo data (memoized to prevent regeneration on every render)
+  const demoTrades = useMemo(() => generateDemoTrades(), [])
+
   useEffect(() => {
     fetchAll()
     const unsubscribe = subscribeToUpdates()
@@ -57,12 +251,17 @@ export default function ArenaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Use demo data when no real data exists
+  const displayTrades = trades.length > 0 ? trades : demoTrades
+  const displayParticipants = participants.length > 0 ? participants : DEMO_PARTICIPANTS
+  const useDemoMode = trades.length === 0
+
   // Get selected participant's data
-  const selectedModel = participants.find(p => p.id === selectedParticipant)
+  const selectedModel = displayParticipants.find(p => p.id === selectedParticipant)
   const selectedHoldings = selectedParticipant ? holdings[selectedParticipant] || [] : []
   const selectedTrades = selectedParticipant
-    ? trades.filter(t => t.participant_id === selectedParticipant)
-    : trades
+    ? displayTrades.filter(t => t.participant_id === selectedParticipant)
+    : displayTrades
 
   return (
     <MainLayout>
@@ -180,9 +379,10 @@ export default function ArenaPage() {
 
             {/* Recent Trades Preview */}
             <TradeHistory
-              trades={trades.slice(0, 10)}
+              trades={displayTrades.slice(0, 10)}
               maxHeight="350px"
               showParticipant
+              showDemoMode={useDemoMode}
             />
           </TabsContent>
 
@@ -212,6 +412,7 @@ export default function ArenaPage() {
               trades={selectedTrades}
               maxHeight="600px"
               showParticipant={!selectedParticipant}
+              showDemoMode={useDemoMode}
             />
           </TabsContent>
 

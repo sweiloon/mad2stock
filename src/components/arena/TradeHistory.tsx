@@ -22,18 +22,30 @@ interface TradeHistoryProps {
   trades: Trade[]
   maxHeight?: string
   showParticipant?: boolean
+  showDemoMode?: boolean
 }
 
-export function TradeHistory({ trades, maxHeight = "400px", showParticipant = true }: TradeHistoryProps) {
+export function TradeHistory({ trades, maxHeight = "400px", showParticipant = true, showDemoMode = false }: TradeHistoryProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5 text-blue-500" />
           Recent Trades
-          <Badge variant="secondary" className="ml-auto">
-            {trades.length} trades
-          </Badge>
+          <div className="ml-auto flex items-center gap-2">
+            {showDemoMode && (
+              <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-500/20">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                </span>
+                DEMO
+              </Badge>
+            )}
+            <Badge variant="secondary">
+              {trades.length} trades
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
