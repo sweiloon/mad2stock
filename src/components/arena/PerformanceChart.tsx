@@ -114,7 +114,7 @@ export function PerformanceChart({ data, participants, height = 400 }: Performan
                 <div className="flex flex-wrap justify-center gap-4 pt-4">
                   {payload?.map((entry: any) => (
                     <div key={entry.value} className="flex items-center gap-2">
-                      <div className="relative h-5 w-5 rounded-full overflow-hidden ring-2 ring-offset-1" style={{ ringColor: entry.color }}>
+                      <div className="relative h-5 w-5 rounded-full overflow-hidden ring-2 ring-offset-1" style={{ ['--tw-ring-color' as string]: entry.color } as React.CSSProperties}>
                         <Image
                           src={AI_LOGOS[entry.value] || ''}
                           alt={entry.value}

@@ -71,9 +71,9 @@ export function TradeHistory({ trades, maxHeight = "400px", showParticipant = tr
                           <div
                             className="relative h-4 w-4 rounded-full overflow-hidden ring-1"
                             style={{
-                              ringColor: trade.participant.avatar_color,
+                              ['--tw-ring-color' as string]: trade.participant.avatar_color,
                               backgroundColor: trade.participant.avatar_color + '20'
-                            }}
+                            } as React.CSSProperties}
                           >
                             <Image
                               src={AI_LOGOS[trade.participant.display_name] || ''}

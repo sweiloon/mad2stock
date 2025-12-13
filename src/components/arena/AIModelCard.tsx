@@ -61,9 +61,9 @@ export function AIModelCard({
             <div
               className="relative h-12 w-12 rounded-full overflow-hidden shadow-lg ring-2 ring-offset-2"
               style={{
-                ringColor: participant.avatar_color,
+                ['--tw-ring-color' as string]: participant.avatar_color,
                 backgroundColor: participant.avatar_color + '20'
-              }}
+              } as React.CSSProperties}
             >
               <Image
                 src={AI_LOGOS[participant.display_name] || ''}

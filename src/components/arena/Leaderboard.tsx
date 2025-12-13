@@ -70,9 +70,9 @@ export function Leaderboard({ entries, onSelectParticipant, selectedId }: Leader
                   <div
                     className="relative h-8 w-8 rounded-full overflow-hidden ring-2 ring-offset-1"
                     style={{
-                      ringColor: entry.participant.avatar_color,
+                      ['--tw-ring-color' as string]: entry.participant.avatar_color,
                       backgroundColor: entry.participant.avatar_color + '20'
-                    }}
+                    } as React.CSSProperties}
                   >
                     <Image
                       src={AI_LOGOS[entry.participant.display_name] || ''}
