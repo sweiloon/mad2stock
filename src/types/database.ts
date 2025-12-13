@@ -493,6 +493,271 @@ export interface Database {
           created_at?: string
         }
       }
+      // Arena tables
+      arena_participants: {
+        Row: {
+          id: string
+          model_name: string
+          model_provider: string
+          display_name: string
+          avatar_color: string
+          initial_capital: number
+          current_capital: number
+          portfolio_value: number
+          total_trades: number
+          winning_trades: number
+          total_profit_loss: number
+          profit_loss_pct: number
+          rank: number
+          status: string
+          last_trade_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          model_name: string
+          model_provider: string
+          display_name: string
+          avatar_color: string
+          initial_capital?: number
+          current_capital?: number
+          portfolio_value?: number
+          total_trades?: number
+          winning_trades?: number
+          total_profit_loss?: number
+          profit_loss_pct?: number
+          rank?: number
+          status?: string
+          last_trade_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          model_name?: string
+          model_provider?: string
+          display_name?: string
+          avatar_color?: string
+          initial_capital?: number
+          current_capital?: number
+          portfolio_value?: number
+          total_trades?: number
+          winning_trades?: number
+          total_profit_loss?: number
+          profit_loss_pct?: number
+          rank?: number
+          status?: string
+          last_trade_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      arena_holdings: {
+        Row: {
+          id: string
+          participant_id: string
+          stock_code: string
+          stock_name: string | null
+          quantity: number
+          avg_buy_price: number
+          current_price: number | null
+          market_value: number | null
+          unrealized_pnl: number
+          unrealized_pnl_pct: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          stock_code: string
+          stock_name?: string | null
+          quantity: number
+          avg_buy_price: number
+          current_price?: number | null
+          market_value?: number | null
+          unrealized_pnl?: number
+          unrealized_pnl_pct?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          stock_code?: string
+          stock_name?: string | null
+          quantity?: number
+          avg_buy_price?: number
+          current_price?: number | null
+          market_value?: number | null
+          unrealized_pnl?: number
+          unrealized_pnl_pct?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      arena_trades: {
+        Row: {
+          id: string
+          participant_id: string
+          stock_code: string
+          stock_name: string | null
+          trade_type: string
+          quantity: number
+          price: number
+          total_value: number
+          fees: number
+          realized_pnl: number | null
+          reasoning: string | null
+          executed_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          stock_code: string
+          stock_name?: string | null
+          trade_type: string
+          quantity: number
+          price: number
+          total_value: number
+          fees?: number
+          realized_pnl?: number | null
+          reasoning?: string | null
+          executed_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          stock_code?: string
+          stock_name?: string | null
+          trade_type?: string
+          quantity?: number
+          price?: number
+          total_value?: number
+          fees?: number
+          realized_pnl?: number | null
+          reasoning?: string | null
+          executed_at?: string
+          created_at?: string
+        }
+      }
+      arena_daily_snapshots: {
+        Row: {
+          id: string
+          participant_id: string
+          snapshot_date: string
+          portfolio_value: number
+          cash_balance: number
+          holdings_value: number
+          daily_change: number
+          daily_change_pct: number
+          cumulative_return_pct: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          snapshot_date: string
+          portfolio_value: number
+          cash_balance: number
+          holdings_value: number
+          daily_change?: number
+          daily_change_pct?: number
+          cumulative_return_pct?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          snapshot_date?: string
+          portfolio_value?: number
+          cash_balance?: number
+          holdings_value?: number
+          daily_change?: number
+          daily_change_pct?: number
+          cumulative_return_pct?: number
+          created_at?: string
+        }
+      }
+      arena_config: {
+        Row: {
+          id: string
+          competition_name: string
+          start_date: string
+          end_date: string
+          initial_capital: number
+          trading_fee_pct: number
+          min_trade_value: number
+          max_position_pct: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          competition_name?: string
+          start_date?: string
+          end_date?: string
+          initial_capital?: number
+          trading_fee_pct?: number
+          min_trade_value?: number
+          max_position_pct?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          competition_name?: string
+          start_date?: string
+          end_date?: string
+          initial_capital?: number
+          trading_fee_pct?: number
+          min_trade_value?: number
+          max_position_pct?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      arena_ai_decisions: {
+        Row: {
+          id: string
+          participant_id: string
+          decision_type: string
+          stocks_analyzed: string[] | null
+          market_sentiment: string | null
+          decision_summary: string | null
+          raw_response: string | null
+          tokens_used: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          decision_type: string
+          stocks_analyzed?: string[] | null
+          market_sentiment?: string | null
+          decision_summary?: string | null
+          raw_response?: string | null
+          tokens_used?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          decision_type?: string
+          stocks_analyzed?: string[] | null
+          market_sentiment?: string | null
+          decision_summary?: string | null
+          raw_response?: string | null
+          tokens_used?: number | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -518,6 +783,14 @@ export type ChatMessage = Database['public']['Tables']['chat_history']['Row']
 export type GeneratedContent = Database['public']['Tables']['generated_content']['Row']
 export type StockPrice = Database['public']['Tables']['stock_prices']['Row']
 export type PriceUpdateLog = Database['public']['Tables']['price_update_logs']['Row']
+
+// Arena types
+export type ArenaParticipant = Database['public']['Tables']['arena_participants']['Row']
+export type ArenaHolding = Database['public']['Tables']['arena_holdings']['Row']
+export type ArenaTrade = Database['public']['Tables']['arena_trades']['Row']
+export type ArenaDailySnapshot = Database['public']['Tables']['arena_daily_snapshots']['Row']
+export type ArenaConfig = Database['public']['Tables']['arena_config']['Row']
+export type ArenaAIDecision = Database['public']['Tables']['arena_ai_decisions']['Row']
 
 // Category mapping
 export const CATEGORIES = {

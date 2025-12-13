@@ -1,7 +1,9 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -14,7 +16,32 @@ import {
   Activity,
   ChevronRight,
   Zap,
+  Swords,
+  Sparkles,
+  Moon,
 } from "lucide-react"
+
+// Check if Malaysian stock market is open
+// Market hours: 9:00 AM - 5:00 PM MYT (UTC+8), Monday to Friday
+function isMarketOpen(): boolean {
+  const now = new Date()
+  // Convert to Malaysia time (UTC+8)
+  const malaysiaTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" }))
+  const hours = malaysiaTime.getHours()
+  const minutes = malaysiaTime.getMinutes()
+  const day = malaysiaTime.getDay() // 0 = Sunday, 6 = Saturday
+
+  // Check if it's a weekday (Monday = 1, Friday = 5)
+  const isWeekday = day >= 1 && day <= 5
+
+  // Check if within trading hours (9:00 AM - 5:00 PM)
+  const currentMinutes = hours * 60 + minutes
+  const marketOpen = 9 * 60 // 9:00 AM
+  const marketClose = 17 * 60 // 5:00 PM
+  const isDuringTradingHours = currentMinutes >= marketOpen && currentMinutes < marketClose
+
+  return isWeekday && isDuringTradingHours
+}
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, description: "Market overview" },
@@ -27,6 +54,18 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [marketOpen, setMarketOpen] = useState(false)
+
+  // Check market status on mount and every minute
+  useEffect(() => {
+    setMarketOpen(isMarketOpen())
+
+    const interval = setInterval(() => {
+      setMarketOpen(isMarketOpen())
+    }, 60000) // Check every minute
+
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="flex h-full w-64 flex-col bg-sidebar border-r border-sidebar-border">
@@ -46,18 +85,89 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Market Status */}
-      <div className="mx-4 mt-4 mb-2 p-3 rounded-lg bg-muted/50 border border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-profit opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-profit" />
-            </span>
-            <span className="text-xs font-medium text-profit">Market Open</span>
+      {/* Mad2Arena Premium Button */}
+      <div className="mx-3 mt-4 mb-2">
+        <Link
+          href="/arena"
+          className={cn(
+            "group relative block p-3 rounded-xl overflow-hidden transition-all duration-300",
+            "bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500",
+            "hover:from-purple-500 hover:via-pink-400 hover:to-orange-400",
+            "hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25",
+            pathname === "/arena" && "ring-2 ring-white/30"
+          )}
+        >
+          {/* Animated background shimmer */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
+          {/* Sparkle effects */}
+          <div className="absolute top-1 right-2 animate-pulse">
+            <Sparkles className="h-3 w-3 text-yellow-300" />
           </div>
-          <span className="text-xs text-muted-foreground">KLSE</span>
+
+          {/* Top row: Title and Live badge */}
+          <div className="flex items-center justify-between mb-2 relative z-10">
+            <div className="flex items-center gap-1.5">
+              <Swords className="h-4 w-4 text-white" />
+              <span className="font-bold text-white text-sm">Mad2Arena</span>
+            </div>
+            <div className="flex items-center gap-1 bg-white/20 rounded-full px-2 py-0.5 backdrop-blur-sm">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+              </span>
+              <span className="text-[9px] font-medium text-white">LIVE</span>
+            </div>
+          </div>
+
+          {/* Bottom row: AI Logos and description */}
+          <div className="flex items-center gap-2 relative z-10">
+            {/* AI Logos stack */}
+            <div className="flex -space-x-1.5">
+              <div className="relative h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm ring-1 ring-white/30 overflow-hidden z-[5]">
+                <Image src="/images/deepseek-logo.webp" alt="DeepSeek" fill sizes="24px" className="object-cover" />
+              </div>
+              <div className="relative h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm ring-1 ring-white/30 overflow-hidden z-[4]">
+                <Image src="/images/claude-logo.webp" alt="Claude" fill sizes="24px" className="object-cover" />
+              </div>
+              <div className="relative h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm ring-1 ring-white/30 overflow-hidden z-[3]">
+                <Image src="/images/openai-logo.png" alt="ChatGPT" fill sizes="24px" className="object-cover" />
+              </div>
+              <div className="relative h-6 w-6 rounded-full bg-white/10 ring-1 ring-white/20 flex items-center justify-center z-[2]">
+                <span className="text-[9px] font-bold text-white">+2</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-white/90">5 AI Trading Battle</p>
+          </div>
+        </Link>
+      </div>
+
+      {/* Market Status */}
+      <div className={cn(
+        "mx-4 mb-2 p-2.5 rounded-lg border",
+        marketOpen
+          ? "bg-green-500/10 border-green-500/20"
+          : "bg-muted/50 border-border"
+      )}>
+        <div className="flex items-center gap-2">
+          {marketOpen ? (
+            <>
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              </span>
+              <span className="text-xs font-medium text-green-600 dark:text-green-400">Market Open</span>
+            </>
+          ) : (
+            <>
+              <Moon className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">Market Closed</span>
+            </>
+          )}
         </div>
+        <p className="text-[10px] text-muted-foreground mt-1">
+          {marketOpen ? "Trading hours: 9am - 5pm MYT" : "Opens Mon-Fri 9am MYT"}
+        </p>
       </div>
 
       {/* Navigation */}
