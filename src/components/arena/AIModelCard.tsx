@@ -19,11 +19,11 @@ import type { AIParticipant, Holding } from "@/lib/arena/types"
 
 // AI Logo mapping
 const AI_LOGOS: Record<string, string> = {
-  'DeepSeek': '/images/deepseek-logo.webp',
+  'DeepSeek': '/images/deepseek-logo.png',
   'Grok': '/images/Grok-logo.png',
   'Claude': '/images/claude-logo.webp',
   'ChatGPT': '/images/openai-logo.png',
-  'Gemini': '/images/gemini-logo.webp',
+  'Gemini': '/images/gemini-logo.png',
 }
 
 interface AIModelCardProps {

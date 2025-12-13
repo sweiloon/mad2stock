@@ -131,7 +131,7 @@ export function Sidebar() {
             <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/20">
               <div className="flex -space-x-2">
                 <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[5] shadow-lg">
-                  <Image src="/images/deepseek-logo.webp" alt="DeepSeek" fill sizes="28px" className="object-cover" />
+                  <Image src="/images/deepseek-logo.png" alt="DeepSeek" fill sizes="28px" className="object-cover" />
                 </div>
                 <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[4] shadow-lg">
                   <Image src="/images/claude-logo.webp" alt="Claude" fill sizes="28px" className="object-cover" />
@@ -140,7 +140,7 @@ export function Sidebar() {
                   <Image src="/images/openai-logo.png" alt="ChatGPT" fill sizes="28px" className="object-cover" />
                 </div>
                 <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[2] shadow-lg">
-                  <Image src="/images/gemini-logo.webp" alt="Gemini" fill sizes="28px" className="object-cover" />
+                  <Image src="/images/gemini-logo.png" alt="Gemini" fill sizes="28px" className="object-cover" />
                 </div>
                 <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[1] shadow-lg">
                   <Image src="/images/Grok-logo.png" alt="Grok" fill sizes="28px" className="object-cover" />
