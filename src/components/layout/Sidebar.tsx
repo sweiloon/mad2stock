@@ -91,53 +91,66 @@ export function Sidebar() {
           href="/arena"
           className={cn(
             "group relative block p-3 rounded-xl overflow-hidden transition-all duration-300",
-            "bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500",
-            "hover:from-purple-500 hover:via-pink-400 hover:to-orange-400",
-            "hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25",
-            pathname === "/arena" && "ring-2 ring-white/30"
+            "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500",
+            "hover:from-purple-500 hover:via-pink-500 hover:to-orange-400",
+            "hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/30",
+            pathname === "/arena" && "ring-2 ring-white/40"
           )}
         >
           {/* Animated background shimmer */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
 
-          {/* Sparkle effects */}
-          <div className="absolute top-1 right-2 animate-pulse">
-            <Sparkles className="h-3 w-3 text-yellow-300" />
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+
+          {/* LIVE badge - top right */}
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/30 rounded-full px-2 py-0.5 backdrop-blur-sm z-10">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+            </span>
+            <span className="text-[9px] font-semibold text-white tracking-wide">LIVE</span>
           </div>
 
-          {/* Top row: Title and Live badge */}
-          <div className="flex items-center justify-between mb-2 relative z-10">
-            <div className="flex items-center gap-1.5">
-              <Swords className="h-4 w-4 text-white" />
-              <span className="font-bold text-white text-sm">Mad2Arena</span>
+          {/* Main content */}
+          <div className="relative z-10">
+            {/* Title row with icon */}
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-white/20 backdrop-blur-sm">
+                <Swords className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-white tracking-tight leading-tight drop-shadow-lg">
+                  Mad2Arena
+                </h3>
+                <p className="text-[10px] font-medium text-white/80 -mt-0.5">AI Trading Competition</p>
+              </div>
             </div>
-            <div className="flex items-center gap-1 bg-white/20 rounded-full px-2 py-0.5 backdrop-blur-sm">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
-              </span>
-              <span className="text-[9px] font-medium text-white">LIVE</span>
-            </div>
-          </div>
 
-          {/* Bottom row: AI Logos and description */}
-          <div className="flex items-center gap-2 relative z-10">
-            {/* AI Logos stack */}
-            <div className="flex -space-x-1.5">
-              <div className="relative h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm ring-1 ring-white/30 overflow-hidden z-[5]">
-                <Image src="/images/deepseek-logo.webp" alt="DeepSeek" fill sizes="24px" className="object-cover" />
+            {/* AI Logos row */}
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/20">
+              <div className="flex -space-x-2">
+                <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[5] shadow-lg">
+                  <Image src="/images/deepseek-logo.webp" alt="DeepSeek" fill sizes="28px" className="object-cover" />
+                </div>
+                <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[4] shadow-lg">
+                  <Image src="/images/claude-logo.webp" alt="Claude" fill sizes="28px" className="object-cover" />
+                </div>
+                <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[3] shadow-lg">
+                  <Image src="/images/openai-logo.png" alt="ChatGPT" fill sizes="28px" className="object-cover" />
+                </div>
+                <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[2] shadow-lg">
+                  <Image src="/images/gemini-logo.webp" alt="Gemini" fill sizes="28px" className="object-cover" />
+                </div>
+                <div className="relative h-7 w-7 rounded-full bg-white/90 ring-2 ring-white/50 overflow-hidden z-[1] shadow-lg">
+                  <Image src="/images/Grok-logo.png" alt="Grok" fill sizes="28px" className="object-cover" />
+                </div>
               </div>
-              <div className="relative h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm ring-1 ring-white/30 overflow-hidden z-[4]">
-                <Image src="/images/claude-logo.webp" alt="Claude" fill sizes="24px" className="object-cover" />
-              </div>
-              <div className="relative h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm ring-1 ring-white/30 overflow-hidden z-[3]">
-                <Image src="/images/openai-logo.png" alt="ChatGPT" fill sizes="24px" className="object-cover" />
-              </div>
-              <div className="relative h-6 w-6 rounded-full bg-white/10 ring-1 ring-white/20 flex items-center justify-center z-[2]">
-                <span className="text-[9px] font-bold text-white">+2</span>
+              <div className="flex items-center gap-1 text-white/90">
+                <Sparkles className="h-3.5 w-3.5 text-yellow-300 animate-pulse" />
+                <span className="text-xs font-bold">5 AIs</span>
               </div>
             </div>
-            <p className="text-[11px] text-white/90">5 AI Trading Battle</p>
           </div>
         </Link>
       </div>

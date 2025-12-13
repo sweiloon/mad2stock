@@ -245,35 +245,6 @@ export default function ArenaPage() {
               </div>
             )}
 
-            {/* API Setup Info */}
-            <Card className="bg-muted/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Info className="h-4 w-4" />
-                  API Configuration Required
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  To enable AI trading, add the following API keys to your environment variables:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm font-mono">
-                  {AI_MODELS.map((model) => (
-                    <div
-                      key={model.id}
-                      className="flex items-center justify-between p-2 rounded bg-background"
-                    >
-                      <span className="text-muted-foreground">{model.name}:</span>
-                      <code className="text-xs">{model.apiKeyEnvVar}</code>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Add these to your <code>.env.local</code> file. The trading system will
-                  automatically detect available API keys and enable those models.
-                </p>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
 
