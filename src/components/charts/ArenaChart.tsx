@@ -107,6 +107,14 @@ function generateDemoData(): AIPerformanceData[] {
 
 type TimeRange = '1D' | '1W' | '1M' | '3M' | 'ALL'
 
+interface LogoPosition {
+  name: string
+  x: number
+  y: number
+  color: string
+  visible: boolean
+}
+
 export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
@@ -117,9 +125,40 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
   const [timeRange, setTimeRange] = useState<TimeRange>('ALL')
   const [isPlaying, setIsPlaying] = useState(false)
   const [crosshairData, setCrosshairData] = useState<{ time: string; values: Record<string, number> } | null>(null)
+  const [logoPositions, setLogoPositions] = useState<LogoPosition[]>([])
 
   // Sort by performance
   const sortedData = [...demoData].sort((a, b) => b.changePercent - a.changePercent)
+
+  // Function to update logo positions based on chart coordinates
+  const updateLogoPositions = useCallback(() => {
+    if (!chartRef.current || !chartContainerRef.current) return
+
+    const chart = chartRef.current
+    const timeScale = chart.timeScale()
+    const positions: LogoPosition[] = []
+
+    demoData.forEach(ai => {
+      const series = seriesRefs.current.get(ai.name)
+      if (!series || ai.data.length === 0) return
+
+      const lastDataPoint = ai.data[ai.data.length - 1]
+      const timeCoordinate = timeScale.timeToCoordinate(lastDataPoint.time)
+      const priceCoordinate = series.priceToCoordinate(lastDataPoint.value)
+
+      if (timeCoordinate !== null && priceCoordinate !== null) {
+        positions.push({
+          name: ai.name,
+          x: timeCoordinate,
+          y: priceCoordinate,
+          color: ai.color,
+          visible: true
+        })
+      }
+    })
+
+    setLogoPositions(positions)
+  }, [demoData])
 
   // Initialize chart
   useEffect(() => {
@@ -242,12 +281,27 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
     // Fit content
     chart.timeScale().fitContent()
 
+    // Update logo positions after initial render
+    setTimeout(() => updateLogoPositions(), 100)
+
+    // Subscribe to time scale changes to update logo positions
+    chart.timeScale().subscribeVisibleTimeRangeChange(() => {
+      updateLogoPositions()
+    })
+
+    // Subscribe to visible logical range change for better tracking
+    chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+      updateLogoPositions()
+    })
+
     // Handle resize
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
         chartRef.current.applyOptions({
           width: chartContainerRef.current.clientWidth,
         })
+        // Update logo positions after resize
+        setTimeout(() => updateLogoPositions(), 50)
       }
     }
 
@@ -258,7 +312,7 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
       chart.remove()
       seriesRefs.current.clear()
     }
-  }, [demoData])
+  }, [demoData, updateLogoPositions])
 
   // Handle AI selection (highlight/dim)
   useEffect(() => {
@@ -391,11 +445,45 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
         )}
 
         {/* Chart Container */}
-        <div
-          ref={chartContainerRef}
-          style={{ height: height }}
-          className="w-full"
-        />
+        <div className="relative">
+          <div
+            ref={chartContainerRef}
+            style={{ height: height }}
+            className="w-full"
+          />
+
+          {/* AI Logo Overlay at end of each line */}
+          {logoPositions.map((logo) => (
+            <div
+              key={logo.name}
+              className={cn(
+                "absolute pointer-events-none transition-all duration-150 ease-out",
+                selectedAI !== null && selectedAI !== logo.name && "opacity-30"
+              )}
+              style={{
+                left: logo.x - 12, // Center the 24px logo
+                top: logo.y - 12,
+                zIndex: 10,
+              }}
+            >
+              <div
+                className="relative h-6 w-6 rounded-full overflow-hidden ring-2 bg-background shadow-lg"
+                style={{
+                  ['--tw-ring-color' as string]: logo.color,
+                  boxShadow: `0 0 8px ${logo.color}40`
+                } as React.CSSProperties}
+              >
+                <Image
+                  src={AI_LOGOS[logo.name] || ''}
+                  alt={logo.name}
+                  fill
+                  sizes="24px"
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* AI Legend / Selector */}
         <div className="px-6 py-4 border-t bg-muted/20">
