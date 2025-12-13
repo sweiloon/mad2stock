@@ -15,7 +15,8 @@ import {
   Users,
   RefreshCw,
   Bot,
-  Info
+  Info,
+  Sparkles
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useArenaStore } from "@/stores/arena"
@@ -27,6 +28,7 @@ import {
   CompetitionTimer,
   ArenaStatsCard
 } from "@/components/arena"
+import { ArenaChart } from "@/components/charts"
 import { AI_MODELS } from "@/lib/arena/types"
 
 export default function ArenaPage() {
@@ -69,12 +71,24 @@ export default function ArenaPage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                <Swords className="h-6 w-6 text-white" />
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 flex items-center justify-center shadow-lg">
+                <Swords className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Mad2Arena</h1>
-                <p className="text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                    Mad2Arena
+                  </h1>
+                  <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 gap-1">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                    </span>
+                    LIVE
+                  </Badge>
+                </div>
+                <p className="text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-yellow-500" />
                   AI Stock Trading Competition - 5 Models Battle for Supremacy
                 </p>
               </div>
@@ -93,7 +107,7 @@ export default function ArenaPage() {
             </Button>
             <Badge variant="secondary" className="gap-1.5">
               <Bot className="h-3.5 w-3.5" />
-              {participants.length} AI Traders
+              {participants.length || 5} AI Traders
             </Badge>
           </div>
         </div>
@@ -127,6 +141,10 @@ export default function ArenaPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6 mt-6">
+            {/* Hero Chart - Main Focus */}
+            <ArenaChart height={500} showDemoData={true} />
+
+            {/* Stats Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column - Timer & Stats */}
               <div className="space-y-6">
@@ -159,13 +177,6 @@ export default function ArenaPage() {
                 )}
               </div>
             </div>
-
-            {/* Performance Chart */}
-            <PerformanceChart
-              data={chartData}
-              participants={participants}
-              height={350}
-            />
 
             {/* Recent Trades Preview */}
             <TradeHistory
