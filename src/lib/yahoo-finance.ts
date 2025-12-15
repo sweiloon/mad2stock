@@ -16,10 +16,11 @@
  */
 
 const YAHOO_BATCH_URL = 'https://query1.finance.yahoo.com/v7/finance/quote'
-const MAX_SYMBOLS_PER_REQUEST = 50
-const REQUEST_DELAY_MS = 500
+const MAX_SYMBOLS_PER_REQUEST = 20  // Reduced from 50 to avoid rate limiting
+const REQUEST_DELAY_MS = 2000  // Increased from 500ms to 2s between batches
 const MAX_RETRIES = 3
-const INITIAL_RETRY_DELAY = 1000
+const INITIAL_RETRY_DELAY = 3000  // Increased from 1000ms for rate limit recovery
+const INITIAL_WARMUP_DELAY = 1000  // Delay before first request
 
 export interface YahooQuoteResult {
   symbol: string
@@ -83,7 +84,16 @@ export function fromYahooSymbol(yahooSymbol: string): string {
 }
 
 /**
+ * Add random jitter to delays to avoid detection patterns
+ */
+function addJitter(baseMs: number): number {
+  const jitter = Math.random() * 0.3 * baseMs  // ±30% jitter
+  return Math.round(baseMs + jitter)
+}
+
+/**
  * Fetch with retry and exponential backoff
+ * Handles both HTTP 429 and edge-level "Too Many Requests" text responses
  */
 async function fetchWithRetry(
   url: string,
@@ -96,23 +106,43 @@ async function fetchWithRetry(
 
     // Handle rate limiting (429)
     if (response.status === 429 && retries > 0) {
-      console.warn(`[Yahoo Finance] Rate limited, waiting ${retryDelay}ms before retry`)
-      await delay(retryDelay)
+      const waitTime = addJitter(retryDelay)
+      console.warn(`[Yahoo Finance] Rate limited (429), waiting ${waitTime}ms before retry`)
+      await delay(waitTime)
       return fetchWithRetry(url, options, retries - 1, retryDelay * 2)
+    }
+
+    // Check for edge-level rate limiting (returns HTML/text with "Too Many Requests")
+    const contentType = response.headers.get('content-type') || ''
+    if (!contentType.includes('application/json') && response.ok) {
+      const text = await response.text()
+      if (text.toLowerCase().includes('too many requests') || text.toLowerCase().includes('rate limit')) {
+        if (retries > 0) {
+          const waitTime = addJitter(retryDelay * 2)  // Extra wait for edge-level limits
+          console.warn(`[Yahoo Finance] Edge rate limited, waiting ${waitTime}ms before retry`)
+          await delay(waitTime)
+          return fetchWithRetry(url, options, retries - 1, retryDelay * 2)
+        }
+        throw new Error('Edge rate limit exceeded')
+      }
+      // Return a synthetic response with the text for other non-JSON responses
+      return new Response(text, { status: response.status, headers: response.headers })
     }
 
     // Handle server errors with retry
     if (!response.ok && retries > 0 && response.status >= 500) {
-      console.warn(`[Yahoo Finance] Server error ${response.status}, retrying in ${retryDelay}ms`)
-      await delay(retryDelay)
+      const waitTime = addJitter(retryDelay)
+      console.warn(`[Yahoo Finance] Server error ${response.status}, retrying in ${waitTime}ms`)
+      await delay(waitTime)
       return fetchWithRetry(url, options, retries - 1, retryDelay * 2)
     }
 
     return response
   } catch (error) {
     if (retries > 0) {
-      console.warn(`[Yahoo Finance] Fetch error, retrying in ${retryDelay}ms:`, error)
-      await delay(retryDelay)
+      const waitTime = addJitter(retryDelay)
+      console.warn(`[Yahoo Finance] Fetch error, retrying in ${waitTime}ms:`, error)
+      await delay(waitTime)
       return fetchWithRetry(url, options, retries - 1, retryDelay * 2)
     }
     throw error
@@ -197,6 +227,11 @@ async function fetchBatch(symbols: string[]): Promise<Map<string, YahooQuoteResu
  * @param onProgress - Optional callback for progress updates
  * @returns BatchFetchResult with success map, failed codes, and total time
  *
+ * Uses conservative rate limiting to avoid Yahoo Finance edge-level blocks:
+ * - 20 symbols per batch (reduced from 50)
+ * - 2-3s delay between batches with jitter
+ * - Initial warmup delay
+ *
  * @example
  * const result = await fetchBatchQuotes(['1155', '5398', 'MAYBANK'])
  * console.log(result.success.get('1155')?.regularMarketPrice)
@@ -215,12 +250,41 @@ export async function fetchBatchQuotes(
   // Split into batches
   const batches = chunkArray(yahooSymbols, MAX_SYMBOLS_PER_REQUEST)
 
-  console.log(`[Yahoo Finance] Fetching ${stockCodes.length} stocks in ${batches.length} batches`)
+  const estimatedTime = batches.length * (REQUEST_DELAY_MS + 500)
+  console.log(`[Yahoo Finance] Fetching ${stockCodes.length} stocks in ${batches.length} batches (est. ${Math.round(estimatedTime/1000)}s)`)
+
+  // Initial warmup delay to avoid immediate rate limiting
+  await delay(INITIAL_WARMUP_DELAY)
 
   let completedBatches = 0
+  let consecutiveFailures = 0
+  const MAX_CONSECUTIVE_FAILURES = 3
 
   for (const batch of batches) {
+    // If we hit too many consecutive failures, abort early
+    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+      console.error(`[Yahoo Finance] Aborting: ${MAX_CONSECUTIVE_FAILURES} consecutive batch failures`)
+      // Add remaining stocks to failed list
+      for (let i = completedBatches; i < batches.length; i++) {
+        for (const symbol of batches[i]) {
+          failedCodes.push(fromYahooSymbol(symbol))
+        }
+      }
+      break
+    }
+
     const batchResults = await fetchBatch(batch)
+
+    // Track consecutive failures
+    if (batchResults.size === 0) {
+      consecutiveFailures++
+      // Extra delay after a failed batch
+      const recoveryDelay = addJitter(REQUEST_DELAY_MS * 2)
+      console.warn(`[Yahoo Finance] Batch failed, waiting ${recoveryDelay}ms for recovery...`)
+      await delay(recoveryDelay)
+    } else {
+      consecutiveFailures = 0  // Reset on success
+    }
 
     // Merge results
     batchResults.forEach((value, key) => {
@@ -239,12 +303,13 @@ export async function fetchBatchQuotes(
 
     // Progress callback
     if (onProgress) {
-      onProgress(completedBatches * MAX_SYMBOLS_PER_REQUEST, stockCodes.length)
+      onProgress(Math.min(completedBatches * MAX_SYMBOLS_PER_REQUEST, stockCodes.length), stockCodes.length)
     }
 
-    // Rate limiting delay between batches
+    // Rate limiting delay between batches with jitter
     if (completedBatches < batches.length) {
-      await delay(REQUEST_DELAY_MS)
+      const delayMs = addJitter(REQUEST_DELAY_MS)
+      await delay(delayMs)
     }
   }
 
@@ -308,6 +373,6 @@ export function estimateApiCalls(stockCount: number): number {
  */
 export function estimateFetchTime(stockCount: number): number {
   const batches = estimateApiCalls(stockCount)
-  // Each batch takes ~200-500ms + delay between batches
-  return batches * (400 + REQUEST_DELAY_MS)
+  // Warmup + (batches * (fetch time + delay between batches))
+  return INITIAL_WARMUP_DELAY + batches * (500 + REQUEST_DELAY_MS)
 }

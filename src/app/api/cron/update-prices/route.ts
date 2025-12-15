@@ -18,12 +18,12 @@ type StockPriceInsert = Database['public']['Tables']['stock_prices']['Insert']
 type PriceUpdateLogInsert = Database['public']['Tables']['price_update_logs']['Insert']
 type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['Update']
 
-// Configuration
-const BATCH_SIZE = 50 // Yahoo Finance batch size
+// Configuration - Conservative limits to avoid timeout and rate limiting
+const BATCH_SIZE = 20 // Yahoo Finance batch size (reduced from 50)
 const MAX_STOCKS_PER_TIER = {
-  1: 100, // Core + large cap
-  2: 150, // Mid cap
-  3: 1000, // All others
+  1: 80, // Core stocks only - fits in 4 batches (~12s)
+  2: 60, // Mid cap - fits in 3 batches (~9s)
+  3: 100, // Small cap - fits in 5 batches (~15s)
 }
 
 interface TierUpdateResult {
