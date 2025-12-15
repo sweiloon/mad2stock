@@ -31,6 +31,7 @@ import {
   Twitter,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { COMPANY_DATA, hasFinancialData, getTotalCompanyCount, CompanyData } from "@/lib/company-data"
 
 interface GeneratedContent {
   platform: string
@@ -47,13 +48,15 @@ const PLATFORMS = [
   { id: "twitter", label: "Twitter/X", icon: Twitter, color: "text-foreground" },
 ]
 
-const COMPANIES = [
-  { code: "UWC", name: "UWC Berhad", category: 1, revenueChange: 43.0, profitChange: 685.7 },
-  { code: "ECOWLD", name: "Eco World Development", category: 1, revenueChange: 17.6, profitChange: 51.9 },
-  { code: "ASTRO", name: "Astro Malaysia", category: 5, revenueChange: -13.0, profitChange: 0 },
-  { code: "GAMUDA", name: "Gamuda Berhad", category: 1, revenueChange: 25.4, profitChange: 18.9 },
-  { code: "HIGHTEC", name: "Hightec Global", category: 1, revenueChange: 44.2, profitChange: 180.6 },
-]
+// Get companies with financial data for content generation
+const getCompaniesForContent = (): CompanyData[] => {
+  return COMPANY_DATA.filter(hasFinancialData).sort((a, b) => {
+    // Sort by profit growth (highest first)
+    const profitA = a.profitYoY ?? 0
+    const profitB = b.profitYoY ?? 0
+    return profitB - profitA
+  })
+}
 
 const mockGeneratedContent: Record<string, GeneratedContent> = {
   facebook: {
@@ -190,7 +193,8 @@ export default function ContentPage() {
     handleGenerate()
   }
 
-  const selectedCompanyData = COMPANIES.find((c) => c.code === selectedCompany)
+  const companies = getCompaniesForContent()
+  const selectedCompanyData = COMPANY_DATA.find((c) => c.code === selectedCompany)
 
   return (
     <MainLayout>
@@ -219,39 +223,53 @@ export default function ContentPage() {
                   <SelectTrigger>
                     <SelectValue placeholder="Select a company..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    {COMPANIES.map((company) => (
+                  <SelectContent className="max-h-[400px]">
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      Companies with Analysis ({companies.length})
+                    </div>
+                    {companies.slice(0, 50).map((company) => (
                       <SelectItem key={company.code} value={company.code}>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{company.code}</span>
                           <span className="text-muted-foreground">- {company.name}</span>
-                          <Badge variant="outline" className="ml-2">
-                            Cat {company.category}
-                          </Badge>
+                          {company.yoyCategory && (
+                            <Badge variant="outline" className="ml-2">
+                              Cat {company.yoyCategory}
+                            </Badge>
+                          )}
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
 
-                {selectedCompanyData && (
+                {selectedCompanyData && hasFinancialData(selectedCompanyData) && (
                   <div className="mt-4 p-4 rounded-lg bg-muted">
                     <div className="grid gap-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Revenue Change YoY</span>
-                        <span className={selectedCompanyData.revenueChange >= 0 ? "text-green-600" : "text-red-600"}>
-                          {selectedCompanyData.revenueChange > 0 ? "+" : ""}
-                          {selectedCompanyData.revenueChange}%
+                        <span className={(selectedCompanyData.revenueYoY ?? 0) >= 0 ? "text-green-600" : "text-red-600"}>
+                          {(selectedCompanyData.revenueYoY ?? 0) > 0 ? "+" : ""}
+                          {(selectedCompanyData.revenueYoY ?? 0).toFixed(1)}%
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Profit Change YoY</span>
-                        <span className={selectedCompanyData.profitChange >= 0 ? "text-green-600" : "text-red-600"}>
-                          {selectedCompanyData.profitChange > 0 ? "+" : ""}
-                          {selectedCompanyData.profitChange}%
+                        <span className={(selectedCompanyData.profitYoY ?? 0) >= 0 ? "text-green-600" : "text-red-600"}>
+                          {(selectedCompanyData.profitYoY ?? 0) > 0 ? "+" : ""}
+                          {(selectedCompanyData.profitYoY ?? 0).toFixed(1)}%
                         </span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Sector</span>
+                        <span>{selectedCompanyData.sector}</span>
+                      </div>
                     </div>
+                  </div>
+                )}
+                {selectedCompanyData && !hasFinancialData(selectedCompanyData) && (
+                  <div className="mt-4 p-4 rounded-lg bg-muted text-muted-foreground text-sm">
+                    No financial analysis data available for this company.
                   </div>
                 )}
               </CardContent>

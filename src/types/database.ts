@@ -406,6 +406,10 @@ export interface Database {
           day_high: number | null
           day_low: number | null
           volume: number | null
+          market_cap: number | null
+          pe_ratio: number | null
+          tier: number | null
+          next_update_at: string | null
           data_source: string | null
           scrape_status: string | null
           error_message: string | null
@@ -424,6 +428,10 @@ export interface Database {
           day_high?: number | null
           day_low?: number | null
           volume?: number | null
+          market_cap?: number | null
+          pe_ratio?: number | null
+          tier?: number | null
+          next_update_at?: string | null
           data_source?: string | null
           scrape_status?: string | null
           error_message?: string | null
@@ -442,6 +450,10 @@ export interface Database {
           day_high?: number | null
           day_low?: number | null
           volume?: number | null
+          market_cap?: number | null
+          pe_ratio?: number | null
+          tier?: number | null
+          next_update_at?: string | null
           data_source?: string | null
           scrape_status?: string | null
           error_message?: string | null

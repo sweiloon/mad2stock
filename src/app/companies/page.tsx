@@ -32,9 +32,10 @@ import {
   LayoutGrid,
   List,
   FileSpreadsheet,
+  Minus,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { COMPANY_DATA, getAllSectors } from "@/lib/company-data"
+import { COMPANY_DATA, getAllSectors, hasFinancialData, getTotalCompanyCount, CompanyData } from "@/lib/company-data"
 
 const CATEGORIES = {
   1: { label: "Revenue UP, Profit UP", color: "bg-green-100 text-green-700" },
@@ -51,6 +52,7 @@ export default function CompaniesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [sectorFilter, setSectorFilter] = useState<string>("all")
+  const [dataFilter, setDataFilter] = useState<string>("all") // "all" | "analyzed" | "pending"
   const [analysisType, setAnalysisType] = useState<"yoy" | "qoq">("yoy")
   const [viewMode, setViewMode] = useState<ViewMode>("table")
   const [sortField, setSortField] = useState<string>("code")
@@ -60,30 +62,42 @@ export default function CompaniesPage() {
     return getAllSectors()
   }, [])
 
+  const totalCount = getTotalCompanyCount()
+  const analyzedCount = COMPANY_DATA.filter(c => hasFinancialData(c)).length
+
   const filteredCompanies = useMemo(() => {
     return COMPANY_DATA
       .filter(company => {
         const matchesSearch = company.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
           company.name.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesCategory = categoryFilter === "all" ||
+
+        // Data availability filter
+        const hasData = hasFinancialData(company)
+        const matchesDataFilter = dataFilter === "all" ||
+          (dataFilter === "analyzed" && hasData) ||
+          (dataFilter === "pending" && !hasData)
+
+        // Category filter only applies to companies with data
+        const matchesCategory = categoryFilter === "all" || !hasData ||
           (analysisType === "yoy" ? company.yoyCategory : company.qoqCategory) === parseInt(categoryFilter)
+
         const matchesSector = sectorFilter === "all" || company.sector === sectorFilter
-        return matchesSearch && matchesCategory && matchesSector
+        return matchesSearch && matchesDataFilter && matchesCategory && matchesSector
       })
       .sort((a, b) => {
         let aVal: number | string, bVal: number | string
         switch (sortField) {
           case "revenue":
-            aVal = analysisType === "yoy" ? a.revenueYoY : a.revenueQoQ
-            bVal = analysisType === "yoy" ? b.revenueYoY : b.revenueQoQ
+            aVal = analysisType === "yoy" ? (a.revenueYoY ?? -999999) : (a.revenueQoQ ?? -999999)
+            bVal = analysisType === "yoy" ? (b.revenueYoY ?? -999999) : (b.revenueQoQ ?? -999999)
             break
           case "profit":
-            aVal = analysisType === "yoy" ? a.profitYoY : a.profitQoQ
-            bVal = analysisType === "yoy" ? b.profitYoY : b.profitQoQ
+            aVal = analysisType === "yoy" ? (a.profitYoY ?? -999999) : (a.profitQoQ ?? -999999)
+            bVal = analysisType === "yoy" ? (b.profitYoY ?? -999999) : (b.profitQoQ ?? -999999)
             break
           case "latestRevenue":
-            aVal = a.latestRevenue
-            bVal = b.latestRevenue
+            aVal = a.latestRevenue ?? -999999
+            bVal = b.latestRevenue ?? -999999
             break
           default:
             aVal = a.code
@@ -94,7 +108,7 @@ export default function CompaniesPage() {
         }
         return aVal < bVal ? 1 : -1
       })
-  }, [searchQuery, categoryFilter, sectorFilter, analysisType, sortField, sortDirection])
+  }, [searchQuery, categoryFilter, sectorFilter, dataFilter, analysisType, sortField, sortDirection])
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -105,7 +119,15 @@ export default function CompaniesPage() {
     }
   }
 
-  const renderChange = (value: number) => {
+  const renderChange = (value: number | undefined) => {
+    if (value === undefined || value === null) {
+      return (
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Minus className="h-3 w-3" />
+          N/A
+        </div>
+      )
+    }
     const isPositive = value >= 0
     return (
       <div className={cn(
@@ -126,7 +148,7 @@ export default function CompaniesPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
             <p className="text-muted-foreground">
-              Browse and analyze {filteredCompanies.length} KLSE listed companies
+              Browse {filteredCompanies.length} of {totalCount} KLSE listed companies ({analyzedCount} with full analysis)
             </p>
           </div>
         </div>
@@ -171,6 +193,17 @@ export default function CompaniesPage() {
                         {sector}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={dataFilter} onValueChange={setDataFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Data Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Companies</SelectItem>
+                    <SelectItem value="analyzed">Analyzed ({analyzedCount})</SelectItem>
+                    <SelectItem value="pending">Pending Analysis ({totalCount - analyzedCount})</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -258,7 +291,8 @@ export default function CompaniesPage() {
                 <TableBody>
                   {filteredCompanies.map((company) => {
                     const category = analysisType === "yoy" ? company.yoyCategory : company.qoqCategory
-                    const catInfo = CATEGORIES[category as keyof typeof CATEGORIES]
+                    const catInfo = category ? CATEGORIES[category as keyof typeof CATEGORIES] : null
+                    const hasData = hasFinancialData(company)
                     return (
                       <TableRow key={company.code}>
                         <TableCell>
@@ -274,9 +308,15 @@ export default function CompaniesPage() {
                           <Badge variant="outline">{company.sector}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={catInfo.color}>
-                            Cat {category}
-                          </Badge>
+                          {catInfo ? (
+                            <Badge className={catInfo.color}>
+                              Cat {category}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="bg-gray-100 text-gray-500">
+                              Pending
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end">
@@ -289,7 +329,7 @@ export default function CompaniesPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-medium tabular-nums">
-                          {company.latestRevenue.toLocaleString()}
+                          {company.latestRevenue !== undefined ? company.latestRevenue.toLocaleString() : "—"}
                         </TableCell>
                       </TableRow>
                     )
@@ -305,14 +345,18 @@ export default function CompaniesPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-h-[700px] overflow-auto">
             {filteredCompanies.map((company) => {
               const category = analysisType === "yoy" ? company.yoyCategory : company.qoqCategory
-              const catInfo = CATEGORIES[category as keyof typeof CATEGORIES]
+              const catInfo = category ? CATEGORIES[category as keyof typeof CATEGORIES] : null
               return (
                 <Link key={company.code} href={`/companies/${company.code}`}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{company.code}</CardTitle>
-                        <Badge className={catInfo.color}>Cat {category}</Badge>
+                        {catInfo ? (
+                          <Badge className={catInfo.color}>Cat {category}</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-gray-100 text-gray-500">Pending</Badge>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{company.name}</p>
                     </CardHeader>
@@ -327,7 +371,9 @@ export default function CompaniesPage() {
                       </div>
                       <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t">
                         <Badge variant="outline">{company.sector}</Badge>
-                        <span className="font-medium tabular-nums">RM {company.latestRevenue.toLocaleString()}M</span>
+                        <span className="font-medium tabular-nums">
+                          {company.latestRevenue !== undefined ? `RM ${company.latestRevenue.toLocaleString()}M` : "—"}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -366,33 +412,51 @@ export default function CompaniesPage() {
                       </td>
                       <td className="border px-3 py-2">{company.name}</td>
                       <td className="border px-3 py-2">{company.sector}</td>
-                      <td className="border px-3 py-2 text-center">{company.yoyCategory}</td>
-                      <td className="border px-3 py-2 text-center">{company.qoqCategory}</td>
+                      <td className="border px-3 py-2 text-center">{company.yoyCategory ?? "—"}</td>
+                      <td className="border px-3 py-2 text-center">{company.qoqCategory ?? "—"}</td>
                       <td className={cn(
                         "border px-3 py-2 text-right tabular-nums",
-                        company.revenueYoY >= 0 ? "text-green-600" : "text-red-600"
+                        company.revenueYoY !== undefined
+                          ? (company.revenueYoY >= 0 ? "text-green-600" : "text-red-600")
+                          : "text-muted-foreground"
                       )}>
-                        {company.revenueYoY >= 0 ? "+" : ""}{company.revenueYoY.toFixed(1)}
+                        {company.revenueYoY !== undefined
+                          ? `${company.revenueYoY >= 0 ? "+" : ""}${company.revenueYoY.toFixed(1)}`
+                          : "—"}
                       </td>
                       <td className={cn(
                         "border px-3 py-2 text-right tabular-nums",
-                        company.profitYoY >= 0 ? "text-green-600" : "text-red-600"
+                        company.profitYoY !== undefined
+                          ? (company.profitYoY >= 0 ? "text-green-600" : "text-red-600")
+                          : "text-muted-foreground"
                       )}>
-                        {company.profitYoY >= 0 ? "+" : ""}{company.profitYoY.toFixed(1)}
+                        {company.profitYoY !== undefined
+                          ? `${company.profitYoY >= 0 ? "+" : ""}${company.profitYoY.toFixed(1)}`
+                          : "—"}
                       </td>
                       <td className={cn(
                         "border px-3 py-2 text-right tabular-nums",
-                        company.revenueQoQ >= 0 ? "text-green-600" : "text-red-600"
+                        company.revenueQoQ !== undefined
+                          ? (company.revenueQoQ >= 0 ? "text-green-600" : "text-red-600")
+                          : "text-muted-foreground"
                       )}>
-                        {company.revenueQoQ >= 0 ? "+" : ""}{company.revenueQoQ.toFixed(1)}
+                        {company.revenueQoQ !== undefined
+                          ? `${company.revenueQoQ >= 0 ? "+" : ""}${company.revenueQoQ.toFixed(1)}`
+                          : "—"}
                       </td>
                       <td className={cn(
                         "border px-3 py-2 text-right tabular-nums",
-                        company.profitQoQ >= 0 ? "text-green-600" : "text-red-600"
+                        company.profitQoQ !== undefined
+                          ? (company.profitQoQ >= 0 ? "text-green-600" : "text-red-600")
+                          : "text-muted-foreground"
                       )}>
-                        {company.profitQoQ >= 0 ? "+" : ""}{company.profitQoQ.toFixed(1)}
+                        {company.profitQoQ !== undefined
+                          ? `${company.profitQoQ >= 0 ? "+" : ""}${company.profitQoQ.toFixed(1)}`
+                          : "—"}
                       </td>
-                      <td className="border px-3 py-2 text-right tabular-nums">{company.latestRevenue.toLocaleString()}</td>
+                      <td className="border px-3 py-2 text-right tabular-nums">
+                        {company.latestRevenue !== undefined ? company.latestRevenue.toLocaleString() : "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

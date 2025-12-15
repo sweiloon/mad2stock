@@ -48,6 +48,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCompanyDocuments, formatFileSize } from "@/hooks/use-documents"
+import { COMPANY_DATA, hasFinancialData, getTotalCompanyCount, getCompaniesWithData, CompanyData } from "@/lib/company-data"
 
 interface Message {
   id: string
@@ -55,16 +56,6 @@ interface Message {
   content: string
   timestamp: Date
   companyContext?: string
-}
-
-interface Company {
-  code: string
-  name: string
-  sector: string
-  category: number
-  revenueChange: number
-  profitChange: number
-  hasReport: boolean
 }
 
 interface CompanyReport {
@@ -76,18 +67,20 @@ interface CompanyReport {
   generatedAt: string
 }
 
-const COMPANIES: Company[] = [
-  { code: "UWC", name: "UWC Berhad", sector: "Manufacturing", category: 1, revenueChange: 43.0, profitChange: 685.7, hasReport: true },
-  { code: "ECOWLD", name: "Eco World Development", sector: "Property", category: 1, revenueChange: 17.6, profitChange: 51.9, hasReport: true },
-  { code: "ASTRO", name: "Astro Malaysia", sector: "Media", category: 5, revenueChange: -13.0, profitChange: 0, hasReport: true },
-  { code: "GAMUDA", name: "Gamuda Berhad", sector: "Construction", category: 1, revenueChange: 25.4, profitChange: 18.9, hasReport: true },
-  { code: "HIGHTEC", name: "Hightec Global", sector: "Technology", category: 1, revenueChange: 44.2, profitChange: 180.6, hasReport: true },
-  { code: "PRKCORP", name: "Park Corporation", sector: "Consumer", category: 1, revenueChange: 19.6, profitChange: 352.7, hasReport: true },
-  { code: "UMCCA", name: "UMCCA Berhad", sector: "Plantation", category: 1, revenueChange: 16.9, profitChange: 184.2, hasReport: true },
-  { code: "MYNEWS", name: "MyNews Holdings", sector: "Retail", category: 1, revenueChange: 11.3, profitChange: 146.2, hasReport: true },
-  { code: "TENAGA", name: "Tenaga Nasional", sector: "Utilities", category: 2, revenueChange: -5.2, profitChange: 12.4, hasReport: true },
-  { code: "MAYBANK", name: "Maybank", sector: "Banking", category: 1, revenueChange: 8.7, profitChange: 15.2, hasReport: true },
-]
+// Get companies with financial data for the selector
+const getCompaniesForSelector = (): CompanyData[] => {
+  return COMPANY_DATA.filter(hasFinancialData).sort((a, b) => {
+    // Sort by profit growth (highest first)
+    const profitA = a.profitYoY ?? 0
+    const profitB = b.profitYoY ?? 0
+    return profitB - profitA
+  })
+}
+
+// Get all companies (including those without financial data)
+const getAllCompaniesForSelector = (): CompanyData[] => {
+  return [...COMPANY_DATA].sort((a, b) => a.code.localeCompare(b.code))
+}
 
 const MOCK_REPORTS: Record<string, CompanyReport> = {
   "UWC": {
@@ -220,7 +213,7 @@ export default function ChatPage() {
         "List all turnaround companies",
       ]
     }
-    const company = COMPANIES.find(c => c.code === selectedCompany)
+    const company = COMPANY_DATA.find(c => c.code === selectedCompany)
     if (company) {
       return [
         `Analyze ${company.code}'s financial performance`,
@@ -250,20 +243,40 @@ export default function ChatPage() {
     setTimeout(() => {
       let response = ""
       const lowerInput = userMessage.content.toLowerCase()
-      const company = COMPANIES.find(c => c.code === selectedCompany)
+      const company = COMPANY_DATA.find(c => c.code === selectedCompany)
 
       if (selectedCompany !== "all" && company) {
-        if (lowerInput.includes("performance") || lowerInput.includes("analyze")) {
+        const revenueYoY = company.revenueYoY ?? 0
+        const profitYoY = company.profitYoY ?? 0
+        const category = company.yoyCategory ?? 0
+        const hasData = hasFinancialData(company)
+
+        if (!hasData) {
+          response = `## ${company.name} (${company.code})
+
+**Sector:** ${company.sector}
+
+⚠️ **No financial data available yet**
+
+This company is in our database but doesn't have detailed financial analysis data.
+
+Once quarterly reports are processed, you'll see:
+- YoY and QoQ performance metrics
+- Category classification
+- Investment analysis
+
+Would you like to explore other companies with available data?`
+        } else if (lowerInput.includes("performance") || lowerInput.includes("analyze")) {
           response = `## ${company.name} Performance Analysis
 
-**Category:** ${CATEGORY_NAMES[company.category]}
+**Category:** ${CATEGORY_NAMES[category]}
 **Sector:** ${company.sector}
 
 ### YoY Performance
-- Revenue: ${company.revenueChange > 0 ? "+" : ""}${company.revenueChange}%
-- Profit: ${company.profitChange > 0 ? "+" : ""}${company.profitChange}%
+- Revenue: ${revenueYoY > 0 ? "+" : ""}${revenueYoY.toFixed(1)}%
+- Profit: ${profitYoY > 0 ? "+" : ""}${profitYoY.toFixed(1)}%
 
-${company.category === 1 ? "Strong growth in both revenue and profit indicates healthy business expansion." : "Performance requires careful monitoring."}
+${category === 1 ? "Strong growth in both revenue and profit indicates healthy business expansion." : "Performance requires careful monitoring."}
 
 Would you like me to dive deeper into any specific aspect?`
         } else if (lowerInput.includes("risk")) {
@@ -272,7 +285,7 @@ Would you like me to dive deeper into any specific aspect?`
 ### Key Risks
 1. **Sector Risks:** ${company.sector} sector cyclicality
 2. **Market Risks:** Global economic uncertainty
-3. **Company Specific:** ${company.profitChange < 0 ? "Declining profitability" : "Maintaining growth rate"}
+3. **Company Specific:** ${profitYoY < 0 ? "Declining profitability" : "Maintaining growth rate"}
 
 ### Mitigation
 - Monitor quarterly results
@@ -282,52 +295,97 @@ Would you like me to dive deeper into any specific aspect?`
           response = `## ${company.name} Overview
 
 **Sector:** ${company.sector}
-**Category:** ${CATEGORY_NAMES[company.category]}
+**Category:** ${CATEGORY_NAMES[category]}
 
 | Metric | Value |
 |--------|-------|
-| Revenue YoY | ${company.revenueChange > 0 ? "+" : ""}${company.revenueChange}% |
-| Profit YoY | ${company.profitChange > 0 ? "+" : ""}${company.profitChange}% |
+| Revenue YoY | ${revenueYoY > 0 ? "+" : ""}${revenueYoY.toFixed(1)}% |
+| Profit YoY | ${profitYoY > 0 ? "+" : ""}${profitYoY.toFixed(1)}% |
 
 How can I help you with ${company.code}?`
         }
       } else {
+        // Get dynamic data for responses
+        const analyzedCompanies = COMPANY_DATA.filter(hasFinancialData)
+        const totalCompanies = getTotalCompanyCount()
+        const analyzedCount = getCompaniesWithData().length
+
+        // Get top performers
+        const topPerformers = analyzedCompanies
+          .filter(c => c.yoyCategory === 1)
+          .sort((a, b) => (b.profitYoY ?? 0) - (a.profitYoY ?? 0))
+          .slice(0, 5)
+
+        // Count by category
+        const categoryCounts = analyzedCompanies.reduce((acc, c) => {
+          const cat = c.yoyCategory ?? 0
+          acc[cat] = (acc[cat] || 0) + 1
+          return acc
+        }, {} as Record<number, number>)
+
         if (lowerInput.includes("top") || lowerInput.includes("best")) {
+          const topTable = topPerformers.map(c =>
+            `| ${c.code} | ${(c.revenueYoY ?? 0) > 0 ? "+" : ""}${(c.revenueYoY ?? 0).toFixed(1)}% | ${(c.profitYoY ?? 0) > 0 ? "+" : ""}${(c.profitYoY ?? 0).toFixed(1)}% |`
+          ).join('\n')
+
           response = `## Top Performers - KLSE Analysis
 
 ### Category 1: Revenue UP, Profit UP
 
 | Company | Revenue YoY | Profit YoY |
 |---------|------------|------------|
-| UWC | +43.0% | +685.7% |
-| PRKCORP | +19.6% | +352.7% |
-| UMCCA | +16.9% | +184.2% |
-| HIGHTEC | +44.2% | +180.6% |
-| MYNEWS | +11.3% | +146.2% |
+${topTable}
 
-Manufacturing and Technology sectors are leading growth.`
+These are the top ${topPerformers.length} performers out of ${categoryCounts[1] || 0} Category 1 companies.`
         } else if (lowerInput.includes("sector")) {
+          // Group by sector
+          const sectorPerformance = analyzedCompanies.reduce((acc, c) => {
+            if (!acc[c.sector]) {
+              acc[c.sector] = { total: 0, positive: 0, bestProfit: 0, bestCompany: '' }
+            }
+            acc[c.sector].total++
+            if ((c.profitYoY ?? 0) > 0) acc[c.sector].positive++
+            if ((c.profitYoY ?? 0) > acc[c.sector].bestProfit) {
+              acc[c.sector].bestProfit = c.profitYoY ?? 0
+              acc[c.sector].bestCompany = c.code
+            }
+            return acc
+          }, {} as Record<string, { total: number; positive: number; bestProfit: number; bestCompany: string }>)
+
+          const topSectors = Object.entries(sectorPerformance)
+            .sort((a, b) => b[1].bestProfit - a[1].bestProfit)
+            .slice(0, 5)
+
           response = `## Sector Analysis
 
-### Strong Sectors
-1. **Manufacturing** - UWC leading with +685.7% profit
-2. **Technology** - HIGHTEC at +180.6% profit
-3. **Consumer** - PRKCORP at +352.7% profit
+### Top Performing Sectors
+${topSectors.map(([sector, data], i) =>
+`${i + 1}. **${sector}** - ${data.bestCompany} leading with +${data.bestProfit.toFixed(1)}% profit (${data.positive}/${data.total} positive)`
+).join('\n')}
 
-### Recovering
-- **Property** - ECOWLD +51.9% profit
+Total sectors tracked: ${Object.keys(sectorPerformance).length}`
+        } else if (lowerInput.includes("turnaround")) {
+          const turnarounds = analyzedCompanies.filter(c => c.yoyCategory === 5)
+          response = `## Turnaround Companies (Category 5)
 
-### Challenging
-- **Media** - ASTRO facing headwinds`
+${turnarounds.length > 0 ? turnarounds.map(c =>
+`- **${c.code}** (${c.name}): Revenue ${(c.revenueYoY ?? 0) > 0 ? "+" : ""}${(c.revenueYoY ?? 0).toFixed(1)}% YoY`
+).join('\n') : 'No turnaround companies identified in current period.'}
+
+These companies have turned from loss to profit.`
         } else {
           response = `## KLSE Market Intelligence
 
-Data available on **80 Malaysian listed companies**.
+Data available on **${totalCompanies} Malaysian listed companies**.
+Financial analysis completed for **${analyzedCount} companies**.
 
-### Quick Stats
-- Growth Leaders: 45 companies
-- Turnaround Stories: 3 companies
-- Under Pressure: 10 companies
+### Quick Stats by Category
+- 📈 Category 1 (Growth): ${categoryCounts[1] || 0} companies
+- 💡 Category 2 (Efficiency): ${categoryCounts[2] || 0} companies
+- ⚠️ Category 3 (Margin Pressure): ${categoryCounts[3] || 0} companies
+- 📉 Category 4 (Declining): ${categoryCounts[4] || 0} companies
+- 🔄 Category 5 (Turnaround): ${categoryCounts[5] || 0} companies
+- ❌ Category 6 (Deteriorating): ${categoryCounts[6] || 0} companies
 
 What would you like to explore?`
         }
@@ -357,7 +415,9 @@ What would you like to explore?`
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const selectedCompanyData = COMPANIES.find(c => c.code === selectedCompany)
+  const selectedCompanyData = COMPANY_DATA.find(c => c.code === selectedCompany)
+  const allCompanies = getAllCompaniesForSelector()
+  const analyzedCompanies = getCompaniesForSelector()
 
   return (
     <MainLayout>
@@ -406,26 +466,51 @@ What would you like to explore?`
               <SelectTrigger className="w-full sm:w-[280px] bg-background">
                 <SelectValue placeholder="Select company..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[400px]">
                 <SelectItem value="all">
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4" />
-                    All Companies (80 stocks)
+                    All Companies ({getTotalCompanyCount()} stocks)
                   </div>
                 </SelectItem>
                 <Separator className="my-1" />
-                {COMPANIES.map((company) => (
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Analyzed ({analyzedCompanies.length})
+                </div>
+                {analyzedCompanies.slice(0, 50).map((company) => (
                   <SelectItem key={company.code} value={company.code}>
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-medium">{company.code}</span>
                       <span className="text-muted-foreground text-sm truncate">- {company.name}</span>
+                      {company.yoyCategory === 1 && (
+                        <TrendingUp className="h-3 w-3 text-emerald-500 shrink-0" />
+                      )}
                     </div>
                   </SelectItem>
                 ))}
+                {allCompanies.length > analyzedCompanies.length && (
+                  <>
+                    <Separator className="my-1" />
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      Other Companies ({allCompanies.length - analyzedCompanies.length})
+                    </div>
+                    {allCompanies
+                      .filter(c => !hasFinancialData(c))
+                      .slice(0, 20)
+                      .map((company) => (
+                        <SelectItem key={company.code} value={company.code}>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-medium text-muted-foreground">{company.code}</span>
+                            <span className="text-muted-foreground text-sm truncate">- {company.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
 
-            {selectedCompanyData && (
+            {selectedCompanyData && hasFinancialData(selectedCompanyData) && (
               <>
                 <Separator orientation="vertical" className="h-8 hidden sm:block" />
                 <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
@@ -433,25 +518,30 @@ What would you like to explore?`
                     <span className="text-xs text-muted-foreground">Rev:</span>
                     <span className={cn(
                       "text-sm font-semibold",
-                      selectedCompanyData.revenueChange >= 0 ? "text-emerald-500" : "text-red-500"
+                      (selectedCompanyData.revenueYoY ?? 0) >= 0 ? "text-emerald-500" : "text-red-500"
                     )}>
-                      {selectedCompanyData.revenueChange > 0 ? "+" : ""}{selectedCompanyData.revenueChange}%
+                      {(selectedCompanyData.revenueYoY ?? 0) > 0 ? "+" : ""}{(selectedCompanyData.revenueYoY ?? 0).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-muted-foreground">Profit:</span>
                     <span className={cn(
                       "text-sm font-semibold",
-                      selectedCompanyData.profitChange >= 0 ? "text-emerald-500" : "text-red-500"
+                      (selectedCompanyData.profitYoY ?? 0) >= 0 ? "text-emerald-500" : "text-red-500"
                     )}>
-                      {selectedCompanyData.profitChange > 0 ? "+" : ""}{selectedCompanyData.profitChange}%
+                      {(selectedCompanyData.profitYoY ?? 0) > 0 ? "+" : ""}{(selectedCompanyData.profitYoY ?? 0).toFixed(1)}%
                     </span>
                   </div>
                   <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
-                    {CATEGORY_NAMES[selectedCompanyData.category]}
+                    {CATEGORY_NAMES[selectedCompanyData.yoyCategory ?? 0]}
                   </Badge>
                 </div>
               </>
+            )}
+            {selectedCompanyData && !hasFinancialData(selectedCompanyData) && (
+              <Badge variant="outline" className="text-xs text-muted-foreground">
+                No financial data
+              </Badge>
             )}
           </div>
         </div>
@@ -582,7 +672,7 @@ What would you like to explore?`
                 {selectedCompany === "all" ? (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground mb-3">Select a company to view reports</p>
-                    {COMPANIES.filter(c => c.hasReport).slice(0, 6).map((company) => (
+                    {analyzedCompanies.slice(0, 10).map((company) => (
                       <button
                         key={company.code}
                         className="w-full p-3 rounded-lg border bg-background hover:bg-muted transition-colors text-left flex items-center gap-3"
@@ -595,7 +685,14 @@ What would you like to explore?`
                           <div className="font-medium text-sm">{company.code}</div>
                           <div className="text-xs text-muted-foreground truncate">{company.name}</div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-1">
+                          {(company.profitYoY ?? 0) > 0 ? (
+                            <TrendingUp className="h-3 w-3 text-emerald-500" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3 text-red-500" />
+                          )}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       </button>
                     ))}
                   </div>

@@ -68,7 +68,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <span className="text-xs font-semibold text-profit">{company.code}</span>
                 <span className="flex items-center text-[10px] font-medium text-profit tabular-nums">
                   <TrendingUp className="h-2.5 w-2.5 mr-0.5" />
-                  +{company.profitYoY.toFixed(0)}%
+                  +{(company.profitYoY ?? 0).toFixed(0)}%
                 </span>
               </Link>
             ))}

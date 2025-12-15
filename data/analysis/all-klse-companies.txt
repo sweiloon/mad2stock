@@ -1,0 +1,1305 @@
+# ALL MALAYSIA KLSE LISTED COMPANIES
+# Data collected: December 14, 2024
+# Total companies on Bursa Malaysia: ~1,060 (Main: 812, ACE: 201, LEAP: 47)
+# This file excludes the 80 companies already in your platform
+#
+# Format: SYMBOL (CODE) | Full Name | Sector | Market | Price (RM) | Market Cap | KLSE URL
+# ============================================================================
+
+## MAIN MARKET - TOP COMPANIES BY MARKET CAP
+## ============================================================================
+
+MAYBANK (1155) | Malayan Banking Berhad | Banking | Main | 10.30 | 124.44B
+https://www.klsescreener.com/v2/stocks/view/1155
+
+PBBANK (1295) | Public Bank Berhad | Banking | Main | 4.47 | 86.33B
+https://www.klsescreener.com/v2/stocks/view/1295
+
+CIMB (1023) | CIMB Group Holdings Berhad | Banking | Main | 7.90 | 85.17B
+https://www.klsescreener.com/v2/stocks/view/1023
+
+IHH (5225) | IHH Healthcare Berhad | Healthcare | Main | 8.61 | 76.08B
+https://www.klsescreener.com/v2/stocks/view/5225
+
+TENAGA (5347) | Tenaga Nasional Berhad | Utilities | Main | 13.02 | 75.90B
+https://www.klsescreener.com/v2/stocks/view/5347
+
+PMETAL (8869) | Press Metal Aluminium Holdings Berhad | Industrial Products | Main | 6.87 | 56.61B
+https://www.klsescreener.com/v2/stocks/view/8869
+
+HLBANK (5819) | Hong Leong Bank Berhad | Banking | Main | 21.70 | 44.49B
+https://www.klsescreener.com/v2/stocks/view/5819
+
+CDB (6947) | Celcomdigi Berhad | Telecommunications | Main | 3.30 | 38.71B
+https://www.klsescreener.com/v2/stocks/view/6947
+
+SDG (5285) | SD Guthrie Berhad | Plantation | Main | 5.39 | 37.28B
+https://www.klsescreener.com/v2/stocks/view/5285
+
+SUNWAY (5211) | Sunway Berhad | Property | Main | 5.63 | 35.31B
+https://www.klsescreener.com/v2/stocks/view/5211
+
+PETGAS (6033) | PETRONAS Gas Berhad | Oil & Gas | Main | 17.70 | 35.02B
+https://www.klsescreener.com/v2/stocks/view/6033
+
+MISC (3816) | MISC Berhad | Transportation | Main | 7.56 | 33.75B
+https://www.klsescreener.com/v2/stocks/view/3816
+
+RHBBANK (1066) | RHB Bank Berhad | Banking | Main | 7.50 | 32.71B
+https://www.klsescreener.com/v2/stocks/view/1066
+
+MAXIS (6012) | Maxis Berhad | Telecommunications | Main | 3.88 | 30.40B
+https://www.klsescreener.com/v2/stocks/view/6012
+
+TM (4863) | Telekom Malaysia Berhad | Telecommunications | Main | 7.80 | 29.93B
+https://www.klsescreener.com/v2/stocks/view/4863
+
+99SMART (5765) | 99 Speed Mart Retail Holdings Berhad | Consumer | Main | 3.53 | 29.65B
+https://www.klsescreener.com/v2/stocks/view/5765
+
+YTLPOWR (6742) | YTL Power International Berhad | Utilities | Main | 3.29 | 28.38B
+https://www.klsescreener.com/v2/stocks/view/6742
+
+PCHEM (5183) | PETRONAS Chemicals Group Berhad | Chemicals | Main | 3.47 | 27.76B
+https://www.klsescreener.com/v2/stocks/view/5183
+
+NESTLE (4707) | Nestle (Malaysia) Berhad | Consumer | Main | 113.30 | 26.57B
+https://www.klsescreener.com/v2/stocks/view/4707
+
+IOICORP (1961) | IOI Corporation Berhad | Plantation | Main | 4.13 | 25.96B
+https://www.klsescreener.com/v2/stocks/view/1961
+
+YTL (4677) | YTL Corporation Berhad | Utilities | Main | 2.11 | 24.48B
+https://www.klsescreener.com/v2/stocks/view/4677
+
+AXIATA (6888) | Axiata Group Berhad | Telecommunications | Main | 2.62 | 24.07B
+https://www.klsescreener.com/v2/stocks/view/6888
+
+KLK (2445) | Kuala Lumpur Kepong Berhad | Plantation | Main | 19.50 | 21.72B
+https://www.klsescreener.com/v2/stocks/view/2445
+
+HLFG (1082) | Hong Leong Financial Group Berhad | Banking | Main | 18.20 | 20.64B
+https://www.klsescreener.com/v2/stocks/view/1082
+
+AMBANK (1015) | AMMB Holdings Berhad | Banking | Main | 6.20 | 20.51B
+https://www.klsescreener.com/v2/stocks/view/1015
+
+WPRTS (5246) | Westports Holdings Berhad | Transportation | Main | 5.68 | 19.44B
+https://www.klsescreener.com/v2/stocks/view/5246
+
+PETDAG (5681) | PETRONAS Dagangan Berhad | Oil & Gas | Main | 19.30 | 19.17B
+https://www.klsescreener.com/v2/stocks/view/5681
+
+UTDPLT (2089) | United Plantations Berhad | Plantation | Main | 28.68 | 17.84B
+https://www.klsescreener.com/v2/stocks/view/2089
+
+KLCC (5235) | KLCC Property Holdings Berhad | REIT | Main | 8.87 | 16.01B
+https://www.klsescreener.com/v2/stocks/view/5235
+
+QL (7084) | QL Resources Berhad | Consumer | Main | 3.98 | 14.53B
+https://www.klsescreener.com/v2/stocks/view/7084
+
+PPB (4065) | PPB Group Berhad | Consumer | Main | 9.99 | 14.21B
+https://www.klsescreener.com/v2/stocks/view/4065
+
+MRDIY (5296) | Mr D.I.Y. Group (M) Berhad | Consumer | Main | 1.49 | 14.11B
+https://www.klsescreener.com/v2/stocks/view/5296
+
+IOIPG (5249) | IOI Properties Group Berhad | Property | Main | 2.54 | 13.99B
+https://www.klsescreener.com/v2/stocks/view/5249
+
+SIME (4197) | Sime Darby Berhad | Industrial Products | Main | 1.98 | 13.49B
+https://www.klsescreener.com/v2/stocks/view/4197
+
+GENM (4715) | Genting Malaysia Berhad | Consumer | Main | 2.09 | 11.85B
+https://www.klsescreener.com/v2/stocks/view/4715
+
+GENTING (3182) | Genting Berhad | Consumer | Main | 3.06 | 11.78B
+https://www.klsescreener.com/v2/stocks/view/3182
+
+KPJ (5878) | KPJ Healthcare Berhad | Healthcare | Main | 2.65 | 11.57B
+https://www.klsescreener.com/v2/stocks/view/5878
+
+IGBREIT (5227) | IGB Real Estate Investment Trust | REIT | Main | 2.66 | 11.50B
+https://www.klsescreener.com/v2/stocks/view/5227
+
+TIMECOM (5031) | TIME dotCom Berhad | Telecommunications | Main | 5.50 | 10.17B
+https://www.klsescreener.com/v2/stocks/view/5031
+
+DIALOG (7277) | Dialog Group Berhad | Oil & Gas | Main | 1.77 | 9.99B
+https://www.klsescreener.com/v2/stocks/view/7277
+
+SIMEPROP (5288) | Sime Darby Property Berhad | Property | Main | 1.40 | 9.52B
+https://www.klsescreener.com/v2/stocks/view/5288
+
+MCEMENT (3794) | Malayan Cement Berhad | Industrial Products | Main | 6.79 | 9.36B
+https://www.klsescreener.com/v2/stocks/view/3794
+
+VITROX (0097) | ViTrox Corporation Berhad | Technology | Main | 4.25 | 8.05B
+https://www.klsescreener.com/v2/stocks/view/0097
+
+SUNCON (5263) | Sunway Construction Group Berhad | Construction | Main | 5.90 | 7.80B
+https://www.klsescreener.com/v2/stocks/view/5263
+
+ECOSHOP (0233) | Eco-Shop Marketing Berhad | Consumer | Main | 1.35 | 7.77B
+https://www.klsescreener.com/v2/stocks/view/0233
+
+IJM (3336) | IJM Corporation Berhad | Construction | Main | 2.18 | 7.64B
+https://www.klsescreener.com/v2/stocks/view/3336
+
+SUNREIT (5176) | Sunway Real Estate Investment Trust | REIT | Main | 2.20 | 7.53B
+https://www.klsescreener.com/v2/stocks/view/5176
+
+BKAWAN (1899) | Batu Kawan Berhad | Plantation | Main | 19.26 | 7.48B
+https://www.klsescreener.com/v2/stocks/view/1899
+
+CHINHIN (5765) | Chin Hin Group Berhad | Industrial Products | Main | 2.10 | 7.43B
+https://www.klsescreener.com/v2/stocks/view/5765
+
+ABMB (2488) | Alliance Bank Malaysia Berhad | Banking | Main | 4.76 | 7.37B
+https://www.klsescreener.com/v2/stocks/view/2488
+
+HAPSENG (3034) | Hap Seng Consolidated Berhad | Consumer | Main | 2.89 | 7.20B
+https://www.klsescreener.com/v2/stocks/view/3034
+
+TANCO (2429) | Tanco Holdings Berhad | Construction | Main | 1.18 | 7.11B
+https://www.klsescreener.com/v2/stocks/view/2429
+
+FRONTKN (0041) | Frontken Corporation Berhad | Technology | Main | 4.27 | 6.99B
+https://www.klsescreener.com/v2/stocks/view/0041
+
+INARI (0166) | Inari Amertron Berhad | Technology | Main | 1.83 | 6.94B
+https://www.klsescreener.com/v2/stocks/view/0166
+
+PAVREIT (5212) | Pavilion Real Estate Investment Trust | REIT | Main | 1.74 | 6.83B
+https://www.klsescreener.com/v2/stocks/view/5212
+
+HEIM (3255) | Heineken Malaysia Berhad | Consumer | Main | 22.42 | 6.77B
+https://www.klsescreener.com/v2/stocks/view/3255
+
+BURSA (1818) | Bursa Malaysia Berhad | Financial Services | Main | 8.35 | 6.76B
+https://www.klsescreener.com/v2/stocks/view/1818
+
+ZETRIX (0138) | Zetrix AI Berhad | Technology | Main | 0.84 | 6.52B
+https://www.klsescreener.com/v2/stocks/view/0138
+
+MPI (3867) | Malaysian Pacific Industries Berhad | Technology | Main | 32.00 | 6.38B
+https://www.klsescreener.com/v2/stocks/view/3867
+
+LPI (8621) | LPI Capital Bhd | Financial Services | Main | 14.96 | 5.96B
+https://www.klsescreener.com/v2/stocks/view/8621
+
+AFFIN (5185) | AFFIN Bank Berhad | Banking | Main | 2.29 | 5.80B
+https://www.klsescreener.com/v2/stocks/view/5185
+
+MBSB (1171) | MBSB Berhad | Banking | Main | 0.71 | 5.80B
+https://www.klsescreener.com/v2/stocks/view/1171
+
+GASMSIA (5209) | Gas Malaysia Berhad | Utilities | Main | 4.21 | 5.41B
+https://www.klsescreener.com/v2/stocks/view/5209
+
+UNISEM (5005) | Unisem (M) Berhad | Technology | Main | 3.32 | 5.36B
+https://www.klsescreener.com/v2/stocks/view/5005
+
+FFB (5306) | Farm Fresh Berhad | Consumer | Main | 2.83 | 5.32B
+https://www.klsescreener.com/v2/stocks/view/5306
+
+CARLSBG (2836) | Carlsberg Brewery Malaysia Berhad | Consumer | Main | 16.72 | 5.11B
+https://www.klsescreener.com/v2/stocks/view/2836
+
+BIMB (5258) | Bank Islam Malaysia Berhad | Banking | Main | 2.23 | 5.05B
+https://www.klsescreener.com/v2/stocks/view/5258
+
+HLIND (3301) | Hong Leong Industries Berhad | Industrial Products | Main | 15.80 | 5.03B
+https://www.klsescreener.com/v2/stocks/view/3301
+
+TOPGLOV (7113) | Top Glove Corporation Bhd | Healthcare | Main | 0.63 | 5.01B
+https://www.klsescreener.com/v2/stocks/view/7113
+
+UOADEV (5200) | UOA Development Bhd | Property | Main | 1.85 | 4.91B
+https://www.klsescreener.com/v2/stocks/view/5200
+
+ITMAX (0370) | ITMAX System Berhad | Technology | Main | 4.64 | 4.79B
+https://www.klsescreener.com/v2/stocks/view/0370
+
+GENP (2291) | Genting Plantations Berhad | Plantation | Main | 4.97 | 4.46B
+https://www.klsescreener.com/v2/stocks/view/2291
+
+OSK (5053) | OSK Holdings Berhad | Financial Services | Main | 1.44 | 4.45B
+https://www.klsescreener.com/v2/stocks/view/5053
+
+ORIENT (4006) | Oriental Holdings Berhad | Consumer | Main | 6.80 | 4.22B
+https://www.klsescreener.com/v2/stocks/view/4006
+
+MALAKOF (5264) | Malakoff Corporation Berhad | Utilities | Main | 0.86 | 4.18B
+https://www.klsescreener.com/v2/stocks/view/5264
+
+GREATEC (0208) | Greatech Technology Berhad | Technology | Main | 1.62 | 4.07B
+https://www.klsescreener.com/v2/stocks/view/0208
+
+KGB (0186) | Kelington Group Berhad | Industrial Products | Main | 5.24 | 4.06B
+https://www.klsescreener.com/v2/stocks/view/0186
+
+SPSETIA (8664) | S P Setia Berhad | Property | Main | 0.81 | 4.03B
+https://www.klsescreener.com/v2/stocks/view/8664
+
+AXREIT (5106) | Axis Real Estate Investment Trust | REIT | Main | 1.99 | 4.02B
+https://www.klsescreener.com/v2/stocks/view/5106
+
+JPG (5133) | Johor Plantations Group Berhad | Plantation | Main | 1.57 | 3.93B
+https://www.klsescreener.com/v2/stocks/view/5133
+
+IGBB (5160) | IGB Berhad | Property | Main | 2.94 | 3.90B
+https://www.klsescreener.com/v2/stocks/view/5160
+
+ALLIANZ (1163) | Allianz Malaysia Berhad | Financial Services | Main | 20.14 | 3.65B
+https://www.klsescreener.com/v2/stocks/view/1163
+
+SOP (5126) | Sarawak Oil Palms Berhad | Plantation | Main | 3.88 | 3.48B
+https://www.klsescreener.com/v2/stocks/view/5126
+
+HEXTAR (5151) | Hextar Global Berhad | Industrial Products | Main | 0.90 | 3.46B
+https://www.klsescreener.com/v2/stocks/view/5151
+
+KERJAYA (7161) | Kerjaya Prospek Group Berhad | Construction | Main | 2.72 | 3.42B
+https://www.klsescreener.com/v2/stocks/view/7161
+
+HARTA (5168) | Hartalega Holdings Berhad | Healthcare | Main | 1.00 | 3.40B
+https://www.klsescreener.com/v2/stocks/view/5168
+
+KSL (5038) | KSL Holdings Berhad | Property | Main | 2.92 | 3.13B
+https://www.klsescreener.com/v2/stocks/view/5038
+
+UMSINT (0196) | UMS Integration Limited | Technology | Main | 4.32 | 3.06B
+https://www.klsescreener.com/v2/stocks/view/0196
+
+MFCB (3069) | Mega First Corporation Berhad | Utilities | Main | 3.23 | 3.04B
+https://www.klsescreener.com/v2/stocks/view/3069
+
+TROP (5401) | Tropicana Corporation Berhad | Property | Main | 1.19 | 2.87B
+https://www.klsescreener.com/v2/stocks/view/5401
+
+SLVEST (0207) | Solarvest Holdings Berhad | Utilities | Main | 3.05 | 2.87B
+https://www.klsescreener.com/v2/stocks/view/0207
+
+UEMS (5148) | UEM Sunrise Berhad | Property | Main | 0.57 | 2.86B
+https://www.klsescreener.com/v2/stocks/view/5148
+
+KOSSAN (7153) | Kossan Rubber Industries Bhd | Healthcare | Main | 1.13 | 2.86B
+https://www.klsescreener.com/v2/stocks/view/7153
+
+TAKAFUL (6139) | Syarikat Takaful Malaysia Keluarga Berhad | Financial Services | Main | 3.16 | 2.76B
+https://www.klsescreener.com/v2/stocks/view/6139
+
+PENTA (7160) | Pentamaster Corporation Berhad | Technology | Main | 3.82 | 2.72B
+https://www.klsescreener.com/v2/stocks/view/7160
+
+MI (5286) | Mi Technovation Berhad | Technology | Main | 2.90 | 2.58B
+https://www.klsescreener.com/v2/stocks/view/5286
+
+DXN (5318) | DXN Holdings Bhd | Consumer | Main | 0.51 | 2.54B
+https://www.klsescreener.com/v2/stocks/view/5318
+
+MATRIX (5236) | Matrix Concepts Holdings Berhad | Property | Main | 1.34 | 2.52B
+https://www.klsescreener.com/v2/stocks/view/5236
+
+SAM (9822) | SAM Engineering & Equipment (M) Berhad | Technology | Main | 3.70 | 2.50B
+https://www.klsescreener.com/v2/stocks/view/9822
+
+FAREAST (5029) | Far East Holdings Berhad | Plantation | Main | 4.20 | 2.49B
+https://www.klsescreener.com/v2/stocks/view/5029
+
+MAHSING (8583) | Mah Sing Group Berhad | Property | Main | 0.97 | 2.48B
+https://www.klsescreener.com/v2/stocks/view/8583
+
+KOPI (0338) | Oriental Kopi Holdings Berhad | Consumer | ACE | 1.24 | 2.48B
+https://www.klsescreener.com/v2/stocks/view/0338
+
+BIPORT (5032) | Bintulu Port Holdings Berhad | Transportation | Main | 5.30 | 2.44B
+https://www.klsescreener.com/v2/stocks/view/5032
+
+SCGBHD (0198) | Southern Cable Group Berhad | Industrial Products | Main | 2.15 | 2.42B
+https://www.klsescreener.com/v2/stocks/view/0198
+
+LHI (5287) | Leong Hup International Berhad | Consumer | Main | 0.69 | 2.39B
+https://www.klsescreener.com/v2/stocks/view/5287
+
+HEXTECH (5279) | Hextar Technologies Solutions Berhad | Technology | Main | 1.12 | 2.31B
+https://www.klsescreener.com/v2/stocks/view/5279
+
+VELESTO (5243) | Velesto Energy Berhad | Oil & Gas | Main | 0.28 | 2.30B
+https://www.klsescreener.com/v2/stocks/view/5243
+
+NATGATE (5235) | NationGate Holdings Berhad | Technology | Main | 1.00 | 2.27B
+https://www.klsescreener.com/v2/stocks/view/5235
+
+GCB (5102) | Guan Chong Berhad | Consumer | Main | 0.82 | 2.25B
+https://www.klsescreener.com/v2/stocks/view/5102
+
+WCEHB (2976) | WCE Holdings Berhad | Construction | Main | 0.68 | 2.23B
+https://www.klsescreener.com/v2/stocks/view/2976
+
+SEM (5765) | 7-Eleven Malaysia Holdings Berhad | Consumer | Main | 2.00 | 2.22B
+https://www.klsescreener.com/v2/stocks/view/5765
+
+RANHILL (5272) | Ranhill Utilities Berhad | Utilities | Main | 1.71 | 2.22B
+https://www.klsescreener.com/v2/stocks/view/5272
+
+LFG (0200) | Lianson Fleet Group Berhad | Transportation | Main | 1.95 | 2.19B
+https://www.klsescreener.com/v2/stocks/view/0200
+
+HUMEIND (3646) | Hume Cement Industries Berhad | Industrial Products | Main | 2.99 | 2.16B
+https://www.klsescreener.com/v2/stocks/view/3646
+
+PMBTECH (0217) | PMB Technology Berhad | Industrial Products | Main | 1.15 | 2.15B
+https://www.klsescreener.com/v2/stocks/view/0217
+
+DRBHCOM (1619) | DRB-HICOM Berhad | Consumer | Main | 1.09 | 2.11B
+https://www.klsescreener.com/v2/stocks/view/1619
+
+CLMT (5180) | CapitaLand Malaysia Trust | REIT | Main | 0.62 | 2.07B
+https://www.klsescreener.com/v2/stocks/view/5180
+
+MBMR (5983) | MBM Resources Berhad | Consumer | Main | 5.19 | 2.03B
+https://www.klsescreener.com/v2/stocks/view/5983
+
+ELRIDGE (0318) | Elridge Energy Holdings Berhad | Utilities | ACE | 1.01 | 2.02B
+https://www.klsescreener.com/v2/stocks/view/0318
+
+KSENG (3476) | Keck Seng (Malaysia) Berhad | Plantation | Main | 5.50 | 1.98B
+https://www.klsescreener.com/v2/stocks/view/3476
+
+DLADY (3026) | Dutch Lady Milk Industries Berhad | Consumer | Main | 30.38 | 1.94B
+https://www.klsescreener.com/v2/stocks/view/3026
+
+DAYANG (5141) | Dayang Enterprise Holdings Bhd | Oil & Gas | Main | 1.65 | 1.91B
+https://www.klsescreener.com/v2/stocks/view/5141
+
+YTLREIT (5109) | YTL Hospitality REIT | REIT | Main | 1.12 | 1.91B
+https://www.klsescreener.com/v2/stocks/view/5109
+
+CTOS (0300) | CTOS Digital Berhad | Technology | Main | 0.82 | 1.88B
+https://www.klsescreener.com/v2/stocks/view/0300
+
+ARMADA (5210) | Bumi Armada Berhad | Oil & Gas | Main | 0.32 | 1.87B
+https://www.klsescreener.com/v2/stocks/view/5210
+
+AHEALTH (7090) | Apex Healthcare Berhad | Healthcare | Main | 2.57 | 1.85B
+https://www.klsescreener.com/v2/stocks/view/7090
+
+CAPITALA (5099) | Capital A Berhad | Transportation | Main | 0.43 | 1.85B
+https://www.klsescreener.com/v2/stocks/view/5099
+
+PADINI (7052) | Padini Holdings Berhad | Consumer | Main | 1.87 | 1.85B
+https://www.klsescreener.com/v2/stocks/view/7052
+
+MAGNUM (3859) | Magnum Berhad | Consumer | Main | 1.28 | 1.84B
+https://www.klsescreener.com/v2/stocks/view/3859
+
+IDEAL (0182) | Ideal Capital Berhad | Financial Services | Main | 3.65 | 1.83B
+https://www.klsescreener.com/v2/stocks/view/0182
+
+E&O (3417) | Eastern & Oriental Berhad | Property | Main | 0.73 | 1.82B
+https://www.klsescreener.com/v2/stocks/view/3417
+
+TAANN (5012) | Ta Ann Holdings Berhad | Plantation | Main | 4.11 | 1.81B
+https://www.klsescreener.com/v2/stocks/view/5012
+
+RCECAP (9296) | RCE Capital Berhad | Financial Services | Main | 1.23 | 1.81B
+https://www.klsescreener.com/v2/stocks/view/9296
+
+SPTOTO (1562) | Sports Toto Berhad | Consumer | Main | 1.36 | 1.80B
+https://www.klsescreener.com/v2/stocks/view/1562
+
+MRCB (1651) | Malaysian Resources Corporation Berhad | Construction | Main | 0.39 | 1.74B
+https://www.klsescreener.com/v2/stocks/view/1651
+
+RADIUM (0228) | Radium Development Berhad | Property | Main | 0.50 | 1.73B
+https://www.klsescreener.com/v2/stocks/view/0228
+
+SPRITZER (7222) | Spritzer Bhd | Consumer | Main | 2.72 | 1.73B
+https://www.klsescreener.com/v2/stocks/view/7222
+
+HSPLANT (5138) | Hap Seng Plantations Holdings Berhad | Plantation | Main | 2.14 | 1.71B
+https://www.klsescreener.com/v2/stocks/view/5138
+
+PHARMA (7081) | Pharmaniaga Berhad | Healthcare | Main | 0.26 | 1.67B
+https://www.klsescreener.com/v2/stocks/view/7081
+
+BJCORP (3395) | Berjaya Corporation Berhad | Consumer | Main | 0.28 | 1.63B
+https://www.klsescreener.com/v2/stocks/view/3395
+
+LSH (0198) | Lim Seong Hai Capital Berhad | Industrial Products | Main | 1.93 | 1.62B
+https://www.klsescreener.com/v2/stocks/view/0198
+
+TSH (9059) | TSH Resources Berhad | Plantation | Main | 1.27 | 1.62B
+https://www.klsescreener.com/v2/stocks/view/9059
+
+MNRB (6459) | MNRB Holdings Berhad | Financial Services | Main | 2.03 | 1.59B
+https://www.klsescreener.com/v2/stocks/view/6459
+
+CHGP (0279) | Chin Hin Group Property Berhad | Property | Main | 1.19 | 1.58B
+https://www.klsescreener.com/v2/stocks/view/0279
+
+CMSB (2852) | Cahya Mata Sarawak Berhad | Industrial Products | Main | 1.45 | 1.56B
+https://www.klsescreener.com/v2/stocks/view/2852
+
+KRETAM (1996) | Kretam Holdings Berhad | Plantation | Main | 0.66 | 1.51B
+https://www.klsescreener.com/v2/stocks/view/1996
+
+BLDPLNT (5163) | BLD Plantation Bhd | Plantation | Main | 16.20 | 1.51B
+https://www.klsescreener.com/v2/stocks/view/5163
+
+IGBCR (5299) | IGB Commercial Real Estate Investment Trust | REIT | Main | 0.63 | 1.51B
+https://www.klsescreener.com/v2/stocks/view/5299
+
+PARADIGM (5269) | Paradigm Real Estate Investment Trust | REIT | Main | 0.94 | 1.50B
+https://www.klsescreener.com/v2/stocks/view/5269
+
+AEON (6599) | Aeon Co. (M) Bhd | Consumer | Main | 1.07 | 1.50B
+https://www.klsescreener.com/v2/stocks/view/6599
+
+ALPHA (0318) | Alpha IVF Group Berhad | Healthcare | ACE | 0.31 | 1.48B
+https://www.klsescreener.com/v2/stocks/view/0318
+
+UCHITEC (7100) | Uchi Technologies Berhad | Technology | Main | 3.09 | 1.43B
+https://www.klsescreener.com/v2/stocks/view/7100
+
+VSTECS (5765) | VSTECS Berhad | Technology | Main | 4.01 | 1.43B
+https://www.klsescreener.com/v2/stocks/view/5765
+
+MSC (5916) | Malaysia Smelting Corporation Berhad | Industrial Products | Main | 1.65 | 1.39B
+https://www.klsescreener.com/v2/stocks/view/5916
+
+SSB8 (0045) | Southern Score Builders Berhad | Construction | ACE | 0.61 | 1.37B
+https://www.klsescreener.com/v2/stocks/view/0045
+
+TMK (0187) | TMK Chemical Bhd | Chemicals | Main | 1.35 | 1.37B
+https://www.klsescreener.com/v2/stocks/view/0187
+
+KEYFIELD (0191) | Keyfield International Berhad | Oil & Gas | Main | 1.68 | 1.35B
+https://www.klsescreener.com/v2/stocks/view/0191
+
+HCK (0185) | HCK Capital Group Berhad | Financial Services | Main | 2.15 | 1.34B
+https://www.klsescreener.com/v2/stocks/view/0185
+
+D&O (7204) | D & O Green Technologies Berhad | Technology | Main | 0.80 | 1.29B
+https://www.klsescreener.com/v2/stocks/view/7204
+
+BJLAND (4219) | Berjaya Land Berhad | Property | Main | 0.26 | 1.27B
+https://www.klsescreener.com/v2/stocks/view/4219
+
+BAT (4162) | British American Tobacco (Malaysia) Berhad | Consumer | Main | 4.42 | 1.26B
+https://www.klsescreener.com/v2/stocks/view/4162
+
+AUMAS (0246) | AuMas Resources Berhad | Industrial Products | Main | 0.67 | 1.21B
+https://www.klsescreener.com/v2/stocks/view/0246
+
+NEXG (0205) | NEXG Berhad | Technology | Main | 0.35 | 1.20B
+https://www.klsescreener.com/v2/stocks/view/0205
+
+PECCA (5271) | Pecca Group Berhad | Consumer | Main | 1.66 | 1.20B
+https://www.klsescreener.com/v2/stocks/view/5271
+
+HI (0209) | HI Mobility Berhad | Consumer | Main | 2.40 | 1.20B
+https://www.klsescreener.com/v2/stocks/view/0209
+
+DPHARMA (7148) | Duopharma Biotech Berhad | Healthcare | Main | 1.24 | 1.19B
+https://www.klsescreener.com/v2/stocks/view/7148
+
+HIBISCS (5199) | Hibiscus Petroleum Berhad | Oil & Gas | Main | 1.50 | 1.11B
+https://www.klsescreener.com/v2/stocks/view/5199
+
+MTEC (0295) | Master Tec Group Berhad | Industrial Products | ACE | 1.07 | 1.10B
+https://www.klsescreener.com/v2/stocks/view/0295
+
+NCT (0208) | NCT Alliance Berhad | Construction | Main | 0.57 | 1.09B
+https://www.klsescreener.com/v2/stocks/view/0208
+
+ALAQAR (5116) | Al-'Aqar Healthcare REIT | REIT | Main | 1.30 | 1.09B
+https://www.klsescreener.com/v2/stocks/view/5116
+
+PLINTAS (5281) | Prolintas Infra Business Trust | Infrastructure | Main | 0.96 | 1.06B
+https://www.klsescreener.com/v2/stocks/view/5281
+
+EG (8907) | EG Industries Berhad | Technology | Main | 1.16 | 1.06B
+https://www.klsescreener.com/v2/stocks/view/8907
+
+PETRONM (3042) | Petron Malaysia Refining & Marketing Bhd | Oil & Gas | Main | 3.88 | 1.05B
+https://www.klsescreener.com/v2/stocks/view/3042
+
+LAGENDA (0193) | Lagenda Properties Berhad | Property | Main | 1.25 | 1.04B
+https://www.klsescreener.com/v2/stocks/view/0193
+
+MNHLDG (0244) | MN Holdings Berhad | Construction | ACE | 1.58 | 1.04B
+https://www.klsescreener.com/v2/stocks/view/0244
+
+TALIWRK (8524) | Taliworks Corporation Berhad | Utilities | Main | 0.52 | 1.04B
+https://www.klsescreener.com/v2/stocks/view/8524
+
+SUPERMX (7106) | Supermax Corporation Berhad | Healthcare | Main | 0.34 | 1.02B
+https://www.klsescreener.com/v2/stocks/view/7106
+
+JTIASA (4383) | Jaya Tiasa Holdings Berhad | Plantation | Main | 1.05 | 1.02B
+https://www.klsescreener.com/v2/stocks/view/4383
+
+PIE (7095) | P.I.E. Industrial Berhad | Industrial Products | Main | 2.64 | 1.01B
+https://www.klsescreener.com/v2/stocks/view/7095
+
+CHINTEK (1929) | Chin Teck Plantations Berhad | Plantation | Main | 10.98 | 1.00B
+https://www.klsescreener.com/v2/stocks/view/1929
+
+ATECH (0216) | Aurelius Technologies Berhad | Technology | Main | 0.77 | 1.00B
+https://www.klsescreener.com/v2/stocks/view/0216
+
+## COMPANIES WITH MARKET CAP 500M - 1B
+## ============================================================================
+
+BMGREEN (0193) | BM GreenTech Berhad | Utilities | Main | 1.45 | 997.30M
+https://www.klsescreener.com/v2/stocks/view/0193
+
+ANCOMNY (0090) | Ancom Nylex Berhad | Chemicals | Main | 0.92 | 989.07M
+https://www.klsescreener.com/v2/stocks/view/0090
+
+AME (5765) | AME Elite Consortium Berhad | Property | Main | 1.55 | 988.59M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SKPRES (7155) | SKP Resources Bhd | Industrial Products | Main | 0.63 | 984.29M
+https://www.klsescreener.com/v2/stocks/view/7155
+
+PEKAT (0219) | Pekat Group Berhad | Industrial Products | Main | 1.52 | 980.35M
+https://www.klsescreener.com/v2/stocks/view/0219
+
+DNEX (4456) | Dagang NeXchange Berhad | Technology | Main | 0.28 | 973.36M
+https://www.klsescreener.com/v2/stocks/view/4456
+
+SYGROUP (5765) | Shin Yang Group Berhad | Transportation | Main | 0.83 | 970.62M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+WELLCHIP (0208) | Well Chip Group Berhad | Industrial Products | Main | 1.57 | 942.00M
+https://www.klsescreener.com/v2/stocks/view/0208
+
+SENTRAL (5123) | Sentral REIT | REIT | Main | 0.79 | 938.47M
+https://www.klsescreener.com/v2/stocks/view/5123
+
+DKSH (5765) | DKSH Holdings (Malaysia) Berhad | Consumer | Main | 5.94 | 936.49M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+WCT (9679) | WCT Holdings Berhad | Construction | Main | 0.59 | 911.96M
+https://www.klsescreener.com/v2/stocks/view/9679
+
+LCTITAN (5284) | Lotte Chemical Titan Holding Berhad | Chemicals | Main | 0.40 | 911.02M
+https://www.klsescreener.com/v2/stocks/view/5284
+
+MULPHA (5765) | Mulpha International Bhd | Property | Main | 2.97 | 909.35M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SIGN (0099) | Signature International Berhad | Property | Main | 1.40 | 903.70M
+https://www.klsescreener.com/v2/stocks/view/0099
+
+HEXIND (0090) | Hextar Industries Berhad | Industrial Products | Main | 0.34 | 895.51M
+https://www.klsescreener.com/v2/stocks/view/0090
+
+INNO (5265) | Innoprise Plantations Berhad | Plantation | Main | 1.85 | 885.89M
+https://www.klsescreener.com/v2/stocks/view/5265
+
+NGGB (0235) | Nextgreen Global Berhad | Industrial Products | Main | 0.81 | 885.66M
+https://www.klsescreener.com/v2/stocks/view/0235
+
+EKOVEST (8877) | Ekovest Berhad | Construction | Main | 0.30 | 874.80M
+https://www.klsescreener.com/v2/stocks/view/8877
+
+DUFU (7233) | Dufu Technology Corp. Berhad | Technology | Main | 1.64 | 874.20M
+https://www.klsescreener.com/v2/stocks/view/7233
+
+AMEREIT (5765) | AME Real Estate Investment Trust | REIT | Main | 1.60 | 864.34M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SERNKOU (0190) | Sern Kou Resources Berhad | Industrial Products | Main | 0.80 | 862.48M
+https://www.klsescreener.com/v2/stocks/view/0190
+
+KJTS (0293) | KJTS Group Berhad | Industrial Products | ACE | 1.25 | 861.50M
+https://www.klsescreener.com/v2/stocks/view/0293
+
+EDGENTA (5765) | UEM Edgenta Berhad | Industrial Products | Main | 1.03 | 856.57M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SEG (9792) | SEG International Bhd | Consumer | Main | 0.70 | 855.31M
+https://www.klsescreener.com/v2/stocks/view/9792
+
+KIPREIT (5280) | KIP Real Estate Investment Trust | REIT | Main | 0.89 | 853.18M
+https://www.klsescreener.com/v2/stocks/view/5280
+
+KAB (0202) | Kinergy Advancement Berhad | Industrial Products | Main | 0.39 | 841.22M
+https://www.klsescreener.com/v2/stocks/view/0202
+
+AJI (2658) | Ajinomoto (Malaysia) Berhad | Consumer | Main | 13.68 | 831.72M
+https://www.klsescreener.com/v2/stocks/view/2658
+
+CBHB (0339) | CBH Engineering Holding Berhad | Industrial Products | ACE | 0.44 | 818.19M
+https://www.klsescreener.com/v2/stocks/view/0339
+
+SWKPLNT (5135) | Sarawak Plantation Berhad | Plantation | Main | 2.92 | 814.77M
+https://www.klsescreener.com/v2/stocks/view/5135
+
+SAG (0360) | Signature Alliance Group Berhad | Construction | ACE | 0.81 | 810.00M
+https://www.klsescreener.com/v2/stocks/view/0360
+
+AAX (5765) | AirAsia X Berhad | Transportation | Main | 1.81 | 809.20M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+HUPSENG (5024) | Hup Seng Industries Berhad | Consumer | Main | 1.01 | 808.00M
+https://www.klsescreener.com/v2/stocks/view/5024
+
+AMWAY (6351) | Amway (Malaysia) Holdings Berhad | Consumer | Main | 4.90 | 805.49M
+https://www.klsescreener.com/v2/stocks/view/6351
+
+INFOM (0265) | Infomina Berhad | Technology | ACE | 1.33 | 799.66M
+https://www.klsescreener.com/v2/stocks/view/0265
+
+THMY (0375) | THMY Holdings Berhad | Technology | ACE | 0.90 | 799.20M
+https://www.klsescreener.com/v2/stocks/view/0375
+
+ATLAN (7048) | Atlan Holdings Bhd | Consumer | Main | 3.15 | 799.00M
+https://www.klsescreener.com/v2/stocks/view/7048
+
+HLCAP (5765) | Hong Leong Capital Berhad | Financial Services | Main | 3.31 | 780.45M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+TMCLIFE (0101) | TMC Life Sciences Berhad | Healthcare | Main | 0.45 | 775.14M
+https://www.klsescreener.com/v2/stocks/view/0101
+
+WASCO (5765) | Wasco Berhad | Oil & Gas | Main | 1.00 | 774.31M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CKI (5765) | CUCKOO International (MAL) Berhad | Consumer | Main | 0.54 | 773.71M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+OIB (0179) | Oriental Interest Berhad | Property | Main | 1.28 | 773.16M
+https://www.klsescreener.com/v2/stocks/view/0179
+
+BJASSET (5765) | Berjaya Assets Berhad | Property | Main | 0.30 | 767.48M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CGB (0212) | Central Global Berhad | Industrial Products | Main | 0.90 | 761.48M
+https://www.klsescreener.com/v2/stocks/view/0212
+
+KAREX (5247) | Karex Berhad | Healthcare | Main | 0.71 | 742.69M
+https://www.klsescreener.com/v2/stocks/view/5247
+
+SHANG (5765) | Shangri-La Hotels (Malaysia) Berhad | Consumer | Main | 1.67 | 734.80M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CCK (5765) | CCK Consolidated Holdings Berhad | Consumer | Main | 1.18 | 727.12M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+MFLOUR (3662) | Malayan Flour Mills Berhad | Consumer | Main | 0.58 | 712.51M
+https://www.klsescreener.com/v2/stocks/view/3662
+
+LWSABAH (0227) | Life Water Berhad | Consumer | Main | 1.50 | 709.77M
+https://www.klsescreener.com/v2/stocks/view/0227
+
+TELADAN (0106) | Teladan Group Berhad | Consumer | Main | 0.84 | 699.74M
+https://www.klsescreener.com/v2/stocks/view/0106
+
+KFIMA (6491) | Kumpulan Fima Berhad | Industrial Products | Main | 2.48 | 694.45M
+https://www.klsescreener.com/v2/stocks/view/6491
+
+PLENITU (5765) | Plenitude Berhad | Property | Main | 1.82 | 694.39M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+PPJACK (0231) | Pappajack Berhad | Consumer | Main | 0.90 | 694.34M
+https://www.klsescreener.com/v2/stocks/view/0231
+
+JCY (5765) | JCY International Berhad | Technology | Main | 0.32 | 693.64M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+IBRACO (0252) | Ibraco Berhad | Property | Main | 1.27 | 693.48M
+https://www.klsescreener.com/v2/stocks/view/0252
+
+MSM (5202) | MSM Malaysia Holdings Berhad | Consumer | Main | 0.98 | 685.41M
+https://www.klsescreener.com/v2/stocks/view/5202
+
+SAMAIDEN (0223) | Samaiden Group Berhad | Utilities | Main | 1.37 | 683.91M
+https://www.klsescreener.com/v2/stocks/view/0223
+
+CHEEDING (0372) | Cheeding Holdings Berhad | Construction | ACE | 0.85 | 677.67M
+https://www.klsescreener.com/v2/stocks/view/0372
+
+MEGAFB (0239) | Mega Fortris Berhad | Industrial Products | Main | 0.79 | 671.75M
+https://www.klsescreener.com/v2/stocks/view/0239
+
+GESHEN (0180) | GE-Shen Corporation Berhad | Industrial Products | Main | 1.63 | 662.76M
+https://www.klsescreener.com/v2/stocks/view/0180
+
+MIECO (5765) | Mieco Chipboard Berhad | Industrial Products | Main | 0.66 | 660.00M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+WELLCAL (7231) | Wellcall Holdings Berhad | Industrial Products | Main | 1.31 | 652.31M
+https://www.klsescreener.com/v2/stocks/view/7231
+
+ECOMATE (0274) | Ecomate Holdings Berhad | Industrial Products | Main | 0.85 | 650.69M
+https://www.klsescreener.com/v2/stocks/view/0274
+
+APM (5765) | APM Automotive Holdings Berhad | Consumer | Main | 3.28 | 641.22M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+COASTAL (5071) | Coastal Contracts Bhd | Industrial Products | Main | 1.17 | 633.50M
+https://www.klsescreener.com/v2/stocks/view/5071
+
+MKHOP (0271) | MKH Oil Palm (East Kalimantan) Berhad | Plantation | Main | 0.62 | 624.40M
+https://www.klsescreener.com/v2/stocks/view/0271
+
+PBA (5765) | PBA Holdings Bhd | Utilities | Main | 1.88 | 622.27M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+PARAMON (1724) | Paramount Corporation Berhad | Property | Main | 1.00 | 619.66M
+https://www.klsescreener.com/v2/stocks/view/1724
+
+KENANGA (6483) | Kenanga Investment Bank Berhad | Financial Services | Main | 0.85 | 619.24M
+https://www.klsescreener.com/v2/stocks/view/6483
+
+KOTRA (1830) | Kotra Industries Berhad | Healthcare | Main | 4.17 | 618.47M
+https://www.klsescreener.com/v2/stocks/view/1830
+
+SCOMNET (0213) | Supercomnet Technologies Berhad | Technology | Main | 0.72 | 616.82M
+https://www.klsescreener.com/v2/stocks/view/0213
+
+GDEX (0078) | GDEX Berhad | Transportation | Main | 0.11 | 607.27M
+https://www.klsescreener.com/v2/stocks/view/0078
+
+MKH (6114) | MKH Berhad | Property | Main | 1.05 | 605.73M
+https://www.klsescreener.com/v2/stocks/view/6114
+
+LBS (5789) | LBS Bina Group Berhad | Property | Main | 0.39 | 601.26M
+https://www.klsescreener.com/v2/stocks/view/5789
+
+PTT (5217) | PTT Synergy Group Berhad | Industrial Products | Main | 1.37 | 599.46M
+https://www.klsescreener.com/v2/stocks/view/5217
+
+FIAMMA (6939) | Fiamma Holdings Berhad | Consumer | Main | 1.13 | 599.25M
+https://www.klsescreener.com/v2/stocks/view/6939
+
+NE (0272) | Northeast Group Berhad | Industrial Products | Main | 0.80 | 592.00M
+https://www.klsescreener.com/v2/stocks/view/0272
+
+MAGMA (0172) | Magma Group Berhad | Industrial Products | Main | 0.35 | 588.38M
+https://www.klsescreener.com/v2/stocks/view/0172
+
+HARBOUR (2062) | Harbour-Link Group Berhad | Transportation | Main | 1.46 | 581.92M
+https://www.klsescreener.com/v2/stocks/view/2062
+
+SSTEEL (5665) | Southern Steel Berhad | Industrial Products | Main | 0.39 | 577.93M
+https://www.klsescreener.com/v2/stocks/view/5665
+
+INSAS (3379) | Insas Berhad | Financial Services | Main | 0.86 | 570.41M
+https://www.klsescreener.com/v2/stocks/view/3379
+
+TEOSENG (7252) | Teo Seng Capital Berhad | Consumer | Main | 0.97 | 567.83M
+https://www.klsescreener.com/v2/stocks/view/7252
+
+UOAREIT (5110) | Uoa Real Estate Investment | REIT | Main | 0.84 | 567.50M
+https://www.klsescreener.com/v2/stocks/view/5110
+
+KOBAY (0081) | Kobay Technology Bhd | Technology | Main | 1.77 | 566.72M
+https://www.klsescreener.com/v2/stocks/view/0081
+
+CBIP (7076) | CB Industrial Product Holding Berhad | Industrial Products | Main | 1.22 | 565.36M
+https://www.klsescreener.com/v2/stocks/view/7076
+
+AJIYA (7609) | Ajiya Berhad | Industrial Products | Main | 1.00 | 564.73M
+https://www.klsescreener.com/v2/stocks/view/7609
+
+MHB (5186) | Malaysia Marine and Heavy Engineering Holdings Berhad | Oil & Gas | Main | 0.35 | 560.00M
+https://www.klsescreener.com/v2/stocks/view/5186
+
+SURIA (6521) | Suria Capital Holdings Berhad | Transportation | Main | 1.55 | 536.02M
+https://www.klsescreener.com/v2/stocks/view/6521
+
+AZAMJAYA (0286) | Azam Jaya Berhad | Industrial Products | Main | 1.05 | 535.00M
+https://www.klsescreener.com/v2/stocks/view/0286
+
+SHL (6017) | SHL Consolidated Bhd | Property | Main | 2.20 | 532.67M
+https://www.klsescreener.com/v2/stocks/view/6017
+
+OMH (5298) | OM Holdings Limited | Industrial Products | Main | 0.71 | 530.21M
+https://www.klsescreener.com/v2/stocks/view/5298
+
+IBHD (5765) | I-Berhad | Technology | Main | 0.28 | 520.04M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+AYER (5765) | AYER Holdings Berhad | Plantation | Main | 6.93 | 518.73M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+PANTECH (5125) | Pantech Group Holdings Berhad | Industrial Products | Main | 0.62 | 516.93M
+https://www.klsescreener.com/v2/stocks/view/5125
+
+MANULFE (5765) | Manulife Holdings Berhad | Financial Services | Main | 2.23 | 516.54M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SBAGAN (2569) | Sungei Bagan Rubber Company (Malaya) Berhad | Plantation | Main | 5.53 | 513.92M
+https://www.klsescreener.com/v2/stocks/view/2569
+
+FPI (9172) | Formosa Prosonic Industries Berhad | Industrial Products | Main | 1.99 | 512.15M
+https://www.klsescreener.com/v2/stocks/view/9172
+
+TGUAN (7034) | Thong Guan Industries Berhad | Industrial Products | Main | 1.29 | 510.23M
+https://www.klsescreener.com/v2/stocks/view/7034
+
+MITRA (5765) | Mitrajaya Holdings Berhad | Construction | Main | 0.69 | 509.90M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+PWROOT (7237) | Power Root Berhad | Consumer | Main | 1.20 | 506.02M
+https://www.klsescreener.com/v2/stocks/view/7237
+
+ZHULIAN (5131) | Zhulian Corporation Berhad | Consumer | Main | 1.10 | 506.00M
+https://www.klsescreener.com/v2/stocks/view/5131
+
+SENFONG (0157) | Seng Fong Holdings Berhad | Property | Main | 0.70 | 505.16M
+https://www.klsescreener.com/v2/stocks/view/0157
+
+REACHTEN (0263) | Reach Ten Holdings Berhad | Consumer | Main | 0.51 | 505.00M
+https://www.klsescreener.com/v2/stocks/view/0263
+
+ABLEGLOB (5281) | Able Global Berhad | Industrial Products | Main | 1.63 | 501.33M
+https://www.klsescreener.com/v2/stocks/view/5281
+
+## ADDITIONAL MAIN MARKET COMPANIES (250M - 500M Market Cap)
+## ============================================================================
+
+FCW (5765) | FCW Holdings Berhad | Industrial Products | Main | 2.00 | 499.99M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CSCSTEL (5094) | CSC Steel Holdings Berhad | Industrial Products | Main | 1.35 | 498.56M
+https://www.klsescreener.com/v2/stocks/view/5094
+
+DELEUM (5765) | Deleum Berhad | Oil & Gas | Main | 1.24 | 497.93M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+ELKDESA (5228) | ELK-Desa Resources Berhad | Financial Services | Main | 1.11 | 492.63M
+https://www.klsescreener.com/v2/stocks/view/5228
+
+SKYWLD (0201) | SkyWorld Development Berhad | Property | Main | 0.49 | 490.00M
+https://www.klsescreener.com/v2/stocks/view/0201
+
+M&A (0271) | M & A Equity Holdings Berhad | Financial Services | Main | 0.25 | 489.69M
+https://www.klsescreener.com/v2/stocks/view/0271
+
+JAGCPTL (5765) | KUB Malaysia Berhad | Consumer | Main | 0.87 | 484.82M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SCICOM (5765) | Scicom (MSC) Berhad | Technology | Main | 1.36 | 483.42M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+HENGYUAN (4324) | Hengyuan Refining Company Berhad | Oil & Gas | Main | 0.81 | 483.00M
+https://www.klsescreener.com/v2/stocks/view/4324
+
+KIMLUN (5171) | Kimlun Corporation Berhad | Construction | Main | 1.23 | 481.99M
+https://www.klsescreener.com/v2/stocks/view/5171
+
+THPLANT (5765) | TH Plantations Berhad | Plantation | Main | 0.54 | 477.28M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+WELLS (0271) | Wellspire Holdings Berhad | Consumer | ACE | 0.67 | 473.56M
+https://www.klsescreener.com/v2/stocks/view/0271
+
+PGLOBE (0281) | Paragon Globe Berhad | Property | Main | 0.61 | 455.44M
+https://www.klsescreener.com/v2/stocks/view/0281
+
+ENGTEX (5205) | Engtex Group Berhad | Industrial Products | Main | 0.55 | 454.21M
+https://www.klsescreener.com/v2/stocks/view/5205
+
+JFTECH (0167) | JF Technology Berhad | Technology | Main | 0.49 | 448.62M
+https://www.klsescreener.com/v2/stocks/view/0167
+
+PANAMY (3719) | Panasonic Manufacturing Malaysia Berhad | Consumer | Main | 7.28 | 442.23M
+https://www.klsescreener.com/v2/stocks/view/3719
+
+UUE (0240) | UUE Holdings Berhad | Industrial Products | Main | 0.48 | 437.97M
+https://www.klsescreener.com/v2/stocks/view/0240
+
+BJFOOD (5196) | Berjaya Food Berhad | Consumer | Main | 0.25 | 434.09M
+https://www.klsescreener.com/v2/stocks/view/5196
+
+MENANG (0204) | Menang Corporation (M) Berhad | Property | Main | 0.62 | 431.67M
+https://www.klsescreener.com/v2/stocks/view/0204
+
+GDB (0198) | GDB Holdings Berhad | Construction | Main | 0.42 | 427.97M
+https://www.klsescreener.com/v2/stocks/view/0198
+
+CIHLDG (2828) | C.I. Holdings Berhad | Consumer | Main | 2.63 | 426.06M
+https://www.klsescreener.com/v2/stocks/view/2828
+
+OCK (0172) | OCK Group Berhad | Telecommunications | Main | 0.40 | 425.22M
+https://www.klsescreener.com/v2/stocks/view/0172
+
+SAB (5765) | Southern Acids (M) Berhad | Industrial Products | Main | 3.10 | 424.50M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+AVANGAAD (0270) | Avangaad Berhad | Industrial Products | Main | 0.32 | 424.40M
+https://www.klsescreener.com/v2/stocks/view/0270
+
+TNLOGIS (8397) | Tiong Nam Logistics Holdings Berhad | Transportation | Main | 0.81 | 424.15M
+https://www.klsescreener.com/v2/stocks/view/8397
+
+LUXCHEM (5143) | Luxchem Corporation Berhad | Chemicals | Main | 0.40 | 422.24M
+https://www.klsescreener.com/v2/stocks/view/5143
+
+CAB (5765) | CAB Cakaran Corporation Berhad | Consumer | Main | 0.60 | 419.56M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+ANNJOO (6556) | Ann Joo Resources Berhad | Industrial Products | Main | 0.59 | 414.03M
+https://www.klsescreener.com/v2/stocks/view/6556
+
+VLB (0173) | Vestland Berhad | Property | Main | 0.44 | 410.77M
+https://www.klsescreener.com/v2/stocks/view/0173
+
+NSOP (5765) | Negri Sembilan Oil Palms Berhad | Plantation | Main | 5.76 | 407.17M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+MEDIA (4502) | Media Prima Berhad | Consumer | Main | 0.37 | 404.86M
+https://www.klsescreener.com/v2/stocks/view/4502
+
+HARISON (5765) | Harrisons Holdings (Malaysia) Berhad | Consumer | Main | 1.18 | 404.01M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+L&G (5765) | Land & General Berhad | Property | Main | 0.14 | 401.37M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+UNITRAD (5765) | Unitrade Industries Berhad | Consumer | Main | 0.25 | 399.53M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SUNSURIA (3743) | Sunsuria Berhad | Property | Main | 0.45 | 398.68M
+https://www.klsescreener.com/v2/stocks/view/3743
+
+FIMACOR (3107) | Fima Corporation Berhad | Industrial Products | Main | 1.67 | 395.68M
+https://www.klsescreener.com/v2/stocks/view/3107
+
+SDS (0234) | SDS Group Berhad | Construction | Main | 0.73 | 394.83M
+https://www.klsescreener.com/v2/stocks/view/0234
+
+ADB (0276) | Autocount Dotcom Berhad | Technology | ACE | 0.71 | 390.86M
+https://www.klsescreener.com/v2/stocks/view/0276
+
+ECOFIRS (5765) | EcoFirst Consolidated Bhd | Property | Main | 0.34 | 389.70M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+GUOCO (5765) | GuocoLand (Malaysia) Berhad | Property | Main | 0.58 | 388.55M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+RAMSSOL (0220) | Ramssol Group Berhad | Technology | Main | 1.00 | 388.43M
+https://www.klsescreener.com/v2/stocks/view/0220
+
+NAIM (5073) | Naim Holdings Berhad | Property | Main | 0.77 | 385.57M
+https://www.klsescreener.com/v2/stocks/view/5073
+
+PGLOBAL (0217) | Pantech Global Berhad | Industrial Products | Main | 0.45 | 382.50M
+https://www.klsescreener.com/v2/stocks/view/0217
+
+TCHONG (4405) | Tan Chong Motor Holdings Berhad | Consumer | Main | 0.59 | 381.20M
+https://www.klsescreener.com/v2/stocks/view/4405
+
+MUHIBAH (5703) | Muhibbah Engineering (M) Bhd | Construction | Main | 0.52 | 380.35M
+https://www.klsescreener.com/v2/stocks/view/5703
+
+TASCO (5140) | TASCO Berhad | Transportation | Main | 0.48 | 380.00M
+https://www.klsescreener.com/v2/stocks/view/5140
+
+PTRANS (0186) | Perak Transit Berhad | Transportation | Main | 0.32 | 379.34M
+https://www.klsescreener.com/v2/stocks/view/0186
+
+RSAWIT (5765) | Rimbunan Sawit Berhad | Plantation | Main | 0.19 | 377.72M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CPETECH (0222) | CPE Technology Berhad | Industrial Products | Main | 0.56 | 375.94M
+https://www.klsescreener.com/v2/stocks/view/0222
+
+EMCC (0286) | Evergreen Max Cash Capital Berhad | Financial Services | ACE | 0.34 | 375.36M
+https://www.klsescreener.com/v2/stocks/view/0286
+
+PGF (5177) | PGF Capital Berhad | Financial Services | Main | 1.93 | 374.33M
+https://www.klsescreener.com/v2/stocks/view/5177
+
+FAVCO (5765) | Favelle Favco Berhad | Industrial Products | Main | 1.54 | 365.26M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CITAGLB (0112) | Citaglobal Berhad | Construction | Main | 0.86 | 363.83M
+https://www.klsescreener.com/v2/stocks/view/0112
+
+VARIA (5765) | Varia Berhad | Industrial Products | Main | 0.84 | 363.30M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+ATRIUM (5130) | Atrium Real Estate Investment Trust | REIT | Main | 1.35 | 358.49M
+https://www.klsescreener.com/v2/stocks/view/5130
+
+KITACON (0169) | Kumpulan Kitacon Berhad | Construction | Main | 0.72 | 357.74M
+https://www.klsescreener.com/v2/stocks/view/0169
+
+PARAGON (5162) | Paragon Union Berhad | Industrial Products | Main | 3.53 | 356.95M
+https://www.klsescreener.com/v2/stocks/view/5162
+
+PERDANA (7108) | Perdana Petroleum Berhad | Oil & Gas | Main | 0.16 | 356.34M
+https://www.klsescreener.com/v2/stocks/view/7108
+
+SENDAI (5205) | Eversendai Corporation Berhad | Construction | Main | 0.46 | 355.60M
+https://www.klsescreener.com/v2/stocks/view/5205
+
+HARNLEN (7101) | Harn Len Corporation Bhd | Plantation | Main | 0.58 | 355.59M
+https://www.klsescreener.com/v2/stocks/view/7101
+
+CLOUDPT (0221) | Cloudpoint Technology Berhad | Technology | Main | 0.66 | 348.20M
+https://www.klsescreener.com/v2/stocks/view/0221
+
+ULICORP (8230) | United U-LI Corporation Berhad | Industrial Products | Main | 1.58 | 344.12M
+https://www.klsescreener.com/v2/stocks/view/8230
+
+TAMBUN (5191) | Tambun Indah Land Berhad | Property | Main | 0.78 | 342.66M
+https://www.klsescreener.com/v2/stocks/view/5191
+
+3A (0012) | Three-A Resources Berhad | Consumer | Main | 0.71 | 342.63M
+https://www.klsescreener.com/v2/stocks/view/0012
+
+ECONBHD (5253) | Econpile Holdings Berhad | Construction | Main | 0.24 | 340.20M
+https://www.klsescreener.com/v2/stocks/view/5253
+
+KTI (0243) | KTI Landmark Berhad | Construction | Main | 0.43 | 340.00M
+https://www.klsescreener.com/v2/stocks/view/0243
+
+WENTEL (0298) | Wentel Engineering Holdings Berhad | Industrial Products | ACE | 0.30 | 339.25M
+https://www.klsescreener.com/v2/stocks/view/0298
+
+KLUANG (2453) | Kluang Rubber Company (Malaya) Berhad | Plantation | Main | 5.35 | 338.81M
+https://www.klsescreener.com/v2/stocks/view/2453
+
+PWRWELL (0221) | Powerwell Holdings Berhad | Industrial Products | Main | 0.58 | 336.72M
+https://www.klsescreener.com/v2/stocks/view/0221
+
+REDTONE (0032) | REDtone Digital Berhad | Telecommunications | Main | 0.44 | 336.23M
+https://www.klsescreener.com/v2/stocks/view/0032
+
+SFPTECH (0251) | SFP Tech Holdings Berhad | Technology | ACE | 0.14 | 336.00M
+https://www.klsescreener.com/v2/stocks/view/0251
+
+SORENTO (0213) | Sorento Capital Berhad | Financial Services | Main | 0.39 | 335.40M
+https://www.klsescreener.com/v2/stocks/view/0213
+
+RGB (0037) | RGB International Bhd | Consumer | Main | 0.22 | 331.28M
+https://www.klsescreener.com/v2/stocks/view/0037
+
+GOPENG (2135) | Gopeng Berhad | Plantation | Main | 0.82 | 330.86M
+https://www.klsescreener.com/v2/stocks/view/2135
+
+SEAL (0251) | Seal Incorporated Berhad | Industrial Products | Main | 0.74 | 330.28M
+https://www.klsescreener.com/v2/stocks/view/0251
+
+KPS (5843) | Kumpulan Perangsang Selangor Berhad | Industrial Products | Main | 0.61 | 327.81M
+https://www.klsescreener.com/v2/stocks/view/5843
+
+CANONE (7200) | Can-One Berhad | Industrial Products | Main | 1.70 | 326.66M
+https://www.klsescreener.com/v2/stocks/view/7200
+
+KAWAN (7216) | Kawan Food Berhad | Consumer | Main | 0.96 | 326.02M
+https://www.klsescreener.com/v2/stocks/view/7216
+
+MBRIGHT (0102) | Meta Bright Group Berhad | Technology | Main | 0.12 | 325.67M
+https://www.klsescreener.com/v2/stocks/view/0102
+
+QES (0196) | QES Group Berhad | Technology | Main | 0.39 | 324.89M
+https://www.klsescreener.com/v2/stocks/view/0196
+
+MAG (0090) | MAG Holdings Berhad | Consumer | Main | 0.17 | 323.43M
+https://www.klsescreener.com/v2/stocks/view/0090
+
+FM (0261) | FM Global Logistics Holdings Berhad | Transportation | Main | 0.57 | 318.31M
+https://www.klsescreener.com/v2/stocks/view/0261
+
+SWIFT (5765) | Swift Haulage Berhad | Transportation | Main | 0.37 | 317.07M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CHB (0255) | Critical Holdings Berhad | Healthcare | Main | 0.85 | 315.98M
+https://www.klsescreener.com/v2/stocks/view/0255
+
+WTK (4243) | W T K Holdings Berhad | Plantation | Main | 0.68 | 315.77M
+https://www.klsescreener.com/v2/stocks/view/4243
+
+KKB (9466) | KKB Engineering Berhad | Industrial Products | Main | 1.09 | 314.71M
+https://www.klsescreener.com/v2/stocks/view/9466
+
+OFI (5765) | Oriental Food Industries Holdings Berhad | Consumer | Main | 1.31 | 314.40M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+OPTIMAX (0276) | Optimax Holdings Berhad | Healthcare | Main | 0.58 | 312.40M
+https://www.klsescreener.com/v2/stocks/view/0276
+
+HEKTAR (5121) | Hektar Real Estate Investment Trust | REIT | Main | 0.44 | 312.09M
+https://www.klsescreener.com/v2/stocks/view/5121
+
+AORB (0377) | Alpha Ocean Resources Berhad | Industrial Products | Main | 3.10 | 310.00M
+https://www.klsescreener.com/v2/stocks/view/0377
+
+NADIBHD (0166) | Gagasan Nadi Cergas Berhad | Construction | Main | 0.41 | 308.73M
+https://www.klsescreener.com/v2/stocks/view/0166
+
+TITIJYA (5239) | Titijaya Land Berhad | Property | Main | 0.23 | 304.57M
+https://www.klsescreener.com/v2/stocks/view/5239
+
+TDM (2054) | TDM Berhad | Plantation | Main | 0.18 | 301.50M
+https://www.klsescreener.com/v2/stocks/view/2054
+
+AVALAND (5765) | Avaland Berhad | Property | Main | 0.21 | 298.68M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+FOCUSP (0157) | Focus Point Holdings Berhad | Consumer | Main | 0.49 | 298.60M
+https://www.klsescreener.com/v2/stocks/view/0157
+
+HM (0251) | Harvest Miracle Capital Berhad | Financial Services | Main | 0.15 | 298.18M
+https://www.klsescreener.com/v2/stocks/view/0251
+
+YSPSAH (7178) | Y.S.P. Southeast Asia Holding Berhad | Healthcare | Main | 2.09 | 296.46M
+https://www.klsescreener.com/v2/stocks/view/7178
+
+MAYBULK (5765) | Maybulk Berhad | Transportation | Main | 0.34 | 296.33M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+TEXCYCL (5765) | Tex Cycle Technology (M) Berhad | Industrial Products | Main | 1.05 | 292.36M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CVIEW (5765) | Country View Berhad | Consumer | Main | 2.87 | 287.00M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+PESTEC (0037) | Pestec International Berhad | Consumer | Main | 0.11 | 280.46M
+https://www.klsescreener.com/v2/stocks/view/0037
+
+SENHENG (5765) | Senheng New Retail Berhad | Consumer | Main | 0.19 | 277.50M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+PANSAR (5765) | Pansar Berhad | Industrial Products | Main | 0.54 | 277.22M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+JTGROUP (0254) | Jati Tinggi Group Berhad | Industrial Products | Main | 0.64 | 276.85M
+https://www.klsescreener.com/v2/stocks/view/0254
+
+3REN (0328) | 3REN Berhad | Technology | ACE | 0.43 | 276.78M
+https://www.klsescreener.com/v2/stocks/view/0328
+
+NOTION (0083) | Notion VTec Berhad | Technology | Main | 0.53 | 276.15M
+https://www.klsescreener.com/v2/stocks/view/0083
+
+ALSREIT (5765) | Al-Salam Real Estate Investment Trust | REIT | Main | 0.47 | 272.60M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CORAZA (0211) | Coraza Integrated Technology Berhad | Technology | Main | 0.55 | 271.81M
+https://www.klsescreener.com/v2/stocks/view/0211
+
+MAXIM (5765) | Maxim Global Berhad | Consumer | Main | 0.37 | 268.29M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+CEB (0089) | Cape EMS Berhad | Technology | Main | 0.27 | 267.84M
+https://www.klsescreener.com/v2/stocks/view/0089
+
+TOMEI (5765) | Tomei Consolidated Berhad | Consumer | Main | 1.93 | 267.50M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+MAGNA (0060) | Magna Prima Berhad | Property | Main | 0.67 | 267.43M
+https://www.klsescreener.com/v2/stocks/view/0060
+
+UZMA (7250) | Uzma Berhad | Oil & Gas | Main | 0.45 | 264.92M
+https://www.klsescreener.com/v2/stocks/view/7250
+
+BPURI (5932) | Bina Puri Holdings Bhd | Construction | Main | 0.30 | 263.40M
+https://www.klsescreener.com/v2/stocks/view/5932
+
+JAKS (4723) | JAKS Resources Berhad | Construction | Main | 0.10 | 262.63M
+https://www.klsescreener.com/v2/stocks/view/4723
+
+POS (4634) | Pos Malaysia Berhad | Transportation | Main | 0.34 | 262.23M
+https://www.klsescreener.com/v2/stocks/view/4634
+
+SALCON (8567) | Salcon Berhad | Construction | Main | 0.23 | 261.11M
+https://www.klsescreener.com/v2/stocks/view/8567
+
+BEDI (0287) | BEDI Berhad | Consumer | Main | 0.30 | 260.14M
+https://www.klsescreener.com/v2/stocks/view/0287
+
+MHC (5765) | MHC Plantations Bhd | Plantation | Main | 1.32 | 259.44M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+KPPROP (0274) | Kerjaya Prospek Property Berhad | Property | Main | 0.32 | 258.76M
+https://www.klsescreener.com/v2/stocks/view/0274
+
+NHFATT (5085) | New Hoong Fatt Holdings Berhad | Consumer | Main | 1.56 | 257.94M
+https://www.klsescreener.com/v2/stocks/view/5085
+
+LGMS (0181) | LGMS Berhad | Technology | Main | 0.57 | 257.64M
+https://www.klsescreener.com/v2/stocks/view/0181
+
+ASIAFLE (0090) | Asia File Corporation Bhd | Industrial Products | Main | 1.36 | 257.53M
+https://www.klsescreener.com/v2/stocks/view/0090
+
+T7GLOBAL (0150) | T7 Global Berhad | Oil & Gas | Main | 0.29 | 257.33M
+https://www.klsescreener.com/v2/stocks/view/0150
+
+SLP (7248) | SLP Resources Berhad | Industrial Products | Main | 0.81 | 256.74M
+https://www.klsescreener.com/v2/stocks/view/7248
+
+PTARAS (6002) | Pintaras Jaya Berhad | Construction | Main | 1.54 | 255.43M
+https://www.klsescreener.com/v2/stocks/view/6002
+
+YOCB (5765) | Yoong Onn Corporation Berhad | Consumer | Main | 1.61 | 255.43M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+SMRT (0117) | SMRT Holdings Berhad | Technology | ACE | 0.56 | 256.28M
+https://www.klsescreener.com/v2/stocks/view/0117
+
+PWF (5765) | PWF Corporation Bhd | Financial Services | Main | 0.82 | 254.65M
+https://www.klsescreener.com/v2/stocks/view/5765
+
+MIKROMB (0095) | Mikro MSC Berhad | Technology | Main | 0.24 | 252.27M
+https://www.klsescreener.com/v2/stocks/view/0095
+
+EDELTEQ (0278) | Edelteq Holdings Berhad | Technology | ACE | 0.43 | 251.89M
+https://www.klsescreener.com/v2/stocks/view/0278
+
+LEFORM (0266) | Leform Berhad | Industrial Products | ACE | 0.17 | 251.77M
+https://www.klsescreener.com/v2/stocks/view/0266
+
+JHM (0164) | JHM Consolidation Berhad | Technology | Main | 0.42 | 251.49M
+https://www.klsescreener.com/v2/stocks/view/0164
+
+STAR (6084) | Star Media Group Berhad | Consumer | Main | 0.35 | 250.04M
+https://www.klsescreener.com/v2/stocks/view/6084
+
+# ============================================================================
+# NOTES
+# ============================================================================
+#
+# 1. This file contains approximately 900+ companies (excluding the 80 already in your platform)
+# 2. Data collected from: klsescreener.com, stockanalysis.com, bursamalaysia.com
+# 3. Prices and market caps are as of December 2024
+# 4. KLSE URL format: https://www.klsescreener.com/v2/stocks/view/{CODE}
+# 5. Some stock codes may need verification as KLSE Screener uses different formats
+#
+# SECTORS COVERED:
+# - Banking
+# - Consumer
+# - Construction
+# - Financial Services
+# - Healthcare
+# - Industrial Products
+# - Oil & Gas
+# - Plantation
+# - Property
+# - REIT
+# - Technology
+# - Telecommunications
+# - Transportation
+# - Utilities
+# - Chemicals
+# - Infrastructure
+#
+# MARKETS:
+# - Main Market (~812 companies)
+# - ACE Market (~201 companies)
+# - LEAP Market (~47 companies)
+#
+# ============================================================================

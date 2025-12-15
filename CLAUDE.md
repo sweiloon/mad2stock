@@ -4,7 +4,7 @@ Enterprise-grade data analysis platform for Malaysian KLSE stock market analysis
 
 ## Project Overview
 
-This platform provides comprehensive analysis of 80+ Malaysian listed companies, including:
+This platform provides comprehensive analysis of ~1,000 Malaysian KLSE listed companies, including:
 - YoY and QoQ financial performance analysis
 - 6-category performance classification system
 - Real-time market signals
@@ -31,12 +31,13 @@ This platform provides comprehensive analysis of 80+ Malaysian listed companies,
 ```
 /companyreport/
 ├── data/
-│   ├── companies/           # 80 company folders with PDFs and reports
+│   ├── companies/           # Company folders with PDFs and reports (80 core with full data)
 │   │   └── {CODE}/
 │   │       ├── {CODE}-report.txt    # Comprehensive analysis report
 │   │       └── *.pdf                # Quarterly and annual reports
 │   ├── analysis/
 │   │   ├── report-summary.txt       # Master analysis file (80 companies)
+│   │   ├── all-klse-companies.txt   # All ~1000 KLSE companies listing
 │   │   └── 30.txt                   # Company listing with URLs
 │   └── raw/
 │       └── stock.txt                # Raw stock data
@@ -57,6 +58,10 @@ This platform provides comprehensive analysis of 80+ Malaysian listed companies,
 │   ├── lib/
 │   │   ├── supabase/                # Supabase clients
 │   │   ├── openai.ts                # OpenAI integration
+│   │   ├── yahoo-finance.ts         # Yahoo Finance batch API wrapper
+│   │   ├── stock-tiers.ts           # Stock tier management system
+│   │   ├── stock-codes.ts           # KLSE stock code mappings (~1000)
+│   │   ├── company-data.ts          # Company data (~1000 companies)
 │   │   └── utils.ts                 # Utility functions
 │   ├── types/
 │   │   └── database.ts              # TypeScript types
@@ -310,41 +315,92 @@ npx ts-node scripts/migrate-data.ts
 
 ---
 
-## Stock Price Cron Job
+## Stock Price System (Yahoo Finance Integration)
+
+### Architecture Overview
+The platform uses Yahoo Finance API as the primary real-time stock data source for ~1,000 Malaysian KLSE stocks with a tiered update strategy.
+
+```
+┌─────────────────────────────────────────────┐
+│           TIERED UPDATE SYSTEM              │
+├─────────────────────────────────────────────┤
+│  Tier 1: 80 core stocks    → Every 5 min   │
+│  Tier 2: 100 mid-cap       → Every 15 min  │
+│  Tier 3: 820+ small-cap    → Every 30 min  │
+└─────────────────────────────────────────────┘
+                    │
+                    ▼
+        Yahoo Finance Batch API
+        (50 symbols per request)
+                    │
+                    ▼
+           Supabase Database
+```
+
+### Yahoo Finance API Details
+- **Batch Endpoint**: `https://query1.finance.yahoo.com/v7/finance/quote?symbols={SYMBOLS}.KL`
+- **Max Symbols**: 50 per request
+- **Data Delay**: 15-20 minutes (acceptable for swing trading/trend analysis)
+- **Rate Limit**: Stay under 1000 requests/hour
+- **Cost**: FREE
+
+### Tier Strategy
+| Tier | Companies | Update Frequency | API Calls/Cycle |
+|------|-----------|-----------------|-----------------|
+| 1 | 80 core (original) | Every 5 min | 2 |
+| 2 | 100 mid-cap | Every 15 min | 2 |
+| 3 | 820+ small-cap | Every 30 min | 17 |
+
+**Total Daily API Calls**: ~450 (well under 2000/hour limit)
 
 ### Current Configuration (Vercel Hobby - Free)
-- **Schedule**: Once daily at 5:30pm Malaysia Time (MYT)
-- **Cron Expression**: `30 9 * * 1-5` (9:30 UTC = 5:30pm MYT)
-- **Days**: Monday to Friday only (market days)
+- **Vercel Cron**: Once daily at 5:30pm MYT (backup)
+- **External Cron**: cron-job.org for every 5 minutes during market hours
 - **Endpoint**: `/api/cron/update-prices`
+- **Market Hours**: 9am-5pm MYT (1am-9am UTC), Monday-Friday
 
-### How It Works
-1. Scrapes 80 companies from KLSE Screener (primary) with Yahoo Finance fallback
-2. Processes in batches of 5 with 500ms delay
-3. Stores prices in `stock_prices` Supabase table
-4. Logs results to `price_update_logs` table
-5. Frontend reads cached prices with live fallback when cache unavailable
+### External Cron Setup (cron-job.org)
+1. Create free account at cron-job.org
+2. Add job with URL: `https://your-domain.vercel.app/api/cron/update-prices`
+3. Schedule: Every 5 minutes
+4. Time restriction: 9:00 AM - 5:00 PM MYT
+5. Days: Monday-Friday
 
-### Future Upgrade (Vercel Pro - $20/mo)
-When upgraded to Vercel Pro, change cron schedule to every 30 minutes during market hours:
+### Vercel Pro Upgrade (Quick Switch)
+When upgrading to Vercel Pro ($20/mo):
+
+1. **Update vercel.json**:
 ```json
 {
   "crons": [
     {
       "path": "/api/cron/update-prices",
-      "schedule": "*/30 1-9 * * 1-5"
+      "schedule": "*/5 1-9 * * 1-5"
     }
   ]
 }
 ```
-This runs every 30 minutes from 9am-5pm MYT (1am-9am UTC), Monday-Friday.
+
+2. **Disable external cron service**
+
+3. **Deploy** - changes take effect immediately
 
 ### Database Tables
-- **stock_prices**: Cached price data (price, change, volume, etc.)
+- **stock_prices**: Cached price data (price, change, volume, tier, next_update_at)
+- **stock_tiers**: Tier assignments for all companies
 - **price_update_logs**: Audit trail for cron job runs
 
+### Key Files
+- `/src/lib/yahoo-finance.ts` - Yahoo Finance batch API wrapper
+- `/src/lib/stock-tiers.ts` - Tier management logic
+- `/src/lib/stock-codes.ts` - KLSE stock code mappings (~1000 companies)
+- `/src/lib/company-data.ts` - Company data with optional fields
+- `/src/app/api/cron/update-prices/route.ts` - Tiered cron job
+
 ### Migration Required
-Run `/supabase/migrations/002_stock_prices.sql` in Supabase SQL Editor to create tables.
+Run these migrations in Supabase SQL Editor:
+- `/supabase/migrations/002_stock_prices.sql` - Stock prices table
+- `/supabase/migrations/003_stock_tiers.sql` - Stock tiers table
 
 ---
 

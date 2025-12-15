@@ -368,8 +368,8 @@ export default function DashboardPage() {
             <CardContent className="pt-0">
               <div className="space-y-1">
                 {currentTopPerformers.map((company, index) => {
-                  const profitChange = activeTab === "yoy" ? company.profitYoY : company.profitQoQ
-                  const revenueChange = activeTab === "yoy" ? company.revenueYoY : company.revenueQoQ
+                  const profitChange = (activeTab === "yoy" ? company.profitYoY : company.profitQoQ) ?? 0
+                  const revenueChange = (activeTab === "yoy" ? company.revenueYoY : company.revenueQoQ) ?? 0
                   return (
                     <Link
                       key={company.code}

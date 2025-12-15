@@ -1,22 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { STOCK_CODE_MAP } from '@/lib/stock-codes'
+import { STOCK_CODE_MAP, getAllStockCodes, isCore80Stock } from '@/lib/stock-codes'
+import { fetchBatchQuotes, toYahooSymbol, YahooQuoteResult } from '@/lib/yahoo-finance'
+import {
+  TIER_1,
+  TIER_2,
+  TIER_3,
+  getTiersToUpdate,
+  calculateTier,
+  calculateNextUpdate,
+  getTierInterval,
+  isMarketHours,
+} from '@/lib/stock-tiers'
+import type { Database } from '@/types/database'
 
-const BATCH_SIZE = 5
-const BATCH_DELAY = 500 // ms between batches
-const REQUEST_TIMEOUT = 10000 // 10 seconds per request
-const MAX_RETRIES = 2
+type StockPriceInsert = Database['public']['Tables']['stock_prices']['Insert']
+type PriceUpdateLogInsert = Database['public']['Tables']['price_update_logs']['Insert']
+type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['Update']
 
-interface PriceData {
-  price: number | null
-  change: number | null
-  changePercent: number | null
-  previousClose: number | null
-  dayOpen: number | null
-  dayHigh: number | null
-  dayLow: number | null
-  volume: number | null
-  dataSource: 'klsescreener' | 'yahoo'
+// Configuration
+const BATCH_SIZE = 50 // Yahoo Finance batch size
+const MAX_STOCKS_PER_TIER = {
+  1: 100, // Core + large cap
+  2: 150, // Mid cap
+  3: 1000, // All others
+}
+
+interface TierUpdateResult {
+  tier: number
+  stocksUpdated: number
+  stocksFailed: number
+  duration: number
 }
 
 // Security validation
@@ -32,149 +46,126 @@ function validateRequest(request: NextRequest): boolean {
     return token === process.env.CRON_SECRET
   }
 
+  // Also check for cron_secret query param (for external cron services)
+  const url = new URL(request.url)
+  const secret = url.searchParams.get('secret')
+  if (secret && secret === process.env.CRON_SECRET) return true
+
   // In development, allow without auth
   if (process.env.NODE_ENV === 'development') return true
 
   return false
 }
 
-// Fetch with timeout
-async function fetchWithTimeout(url: string, timeout: number): Promise<Response> {
-  const controller = new AbortController()
-  const id = setTimeout(() => controller.abort(), timeout)
+// Get stocks for a specific tier
+async function getStocksForTier(tier: 1 | 2 | 3): Promise<string[]> {
+  const allCodes = getAllStockCodes()
+  const tieredStocks: string[] = []
 
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    })
-    clearTimeout(id)
-    return response
-  } catch (error) {
-    clearTimeout(id)
-    throw error
-  }
-}
+  for (const code of allCodes) {
+    const isCore = isCore80Stock(code)
+    // For simplicity, we use the core 80 status to determine tier
+    // In production, you'd also check market cap from the database
+    const stockTier = isCore ? TIER_1 : TIER_3
 
-// Scrape price from KLSE Screener
-async function scrapeKLSEScreener(stockCode: string): Promise<PriceData | null> {
-  try {
-    const url = `https://www.klsescreener.com/v2/stocks/view/${stockCode}`
-    const response = await fetchWithTimeout(url, REQUEST_TIMEOUT)
-
-    if (!response.ok) return null
-
-    const html = await response.text()
-
-    // Extract price data using regex patterns
-    const priceMatch = html.match(/class="price[^"]*"[^>]*>[\s]*RM\s*([\d,.]+)/i)
-    const changeMatch = html.match(/class="change[^"]*"[^>]*>[\s]*([+-]?[\d,.]+)/i)
-    const percentMatch = html.match(/\(([+-]?[\d,.]+)%\)/i)
-    const volumeMatch = html.match(/Volume[\s:]*<[^>]+>[\s]*([\d,]+)/i)
-    const highMatch = html.match(/High[\s:]*<[^>]+>[\s]*([\d,.]+)/i)
-    const lowMatch = html.match(/Low[\s:]*<[^>]+>[\s]*([\d,.]+)/i)
-    const openMatch = html.match(/Open[\s:]*<[^>]+>[\s]*([\d,.]+)/i)
-    const prevCloseMatch = html.match(/Prev[\s.]*Close[\s:]*<[^>]+>[\s]*([\d,.]+)/i)
-
-    const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : null
-
-    if (!price) return null
-
-    return {
-      price,
-      change: changeMatch ? parseFloat(changeMatch[1].replace(/,/g, '')) : null,
-      changePercent: percentMatch ? parseFloat(percentMatch[1].replace(/,/g, '')) : null,
-      previousClose: prevCloseMatch ? parseFloat(prevCloseMatch[1].replace(/,/g, '')) : null,
-      dayOpen: openMatch ? parseFloat(openMatch[1].replace(/,/g, '')) : null,
-      dayHigh: highMatch ? parseFloat(highMatch[1].replace(/,/g, '')) : null,
-      dayLow: lowMatch ? parseFloat(lowMatch[1].replace(/,/g, '')) : null,
-      volume: volumeMatch ? parseInt(volumeMatch[1].replace(/,/g, '')) : null,
-      dataSource: 'klsescreener',
+    if (stockTier === tier) {
+      tieredStocks.push(code)
     }
-  } catch (error) {
-    console.error(`KLSE Screener failed for ${stockCode}:`, error)
-    return null
   }
+
+  // Limit stocks per tier for API efficiency
+  return tieredStocks.slice(0, MAX_STOCKS_PER_TIER[tier])
 }
 
-// Fallback to Yahoo Finance
-async function scrapeYahooFinance(stockCode: string): Promise<PriceData | null> {
-  try {
-    const symbol = `${stockCode}.KL`
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`
-    const response = await fetchWithTimeout(url, REQUEST_TIMEOUT)
+// Update prices for a tier using Yahoo Finance batch API
+async function updateTierPrices(
+  tier: 1 | 2 | 3,
+  supabase: ReturnType<typeof createAdminClient>
+): Promise<TierUpdateResult> {
+  const startTime = Date.now()
+  const stocks = await getStocksForTier(tier)
 
-    if (!response.ok) return null
-
-    const data = await response.json()
-    const result = data?.chart?.result?.[0]
-
-    if (!result) return null
-
-    const meta = result.meta
-    const quote = result.indicators?.quote?.[0]
-
+  if (stocks.length === 0) {
     return {
-      price: meta.regularMarketPrice || null,
-      change: meta.regularMarketPrice && meta.previousClose
-        ? meta.regularMarketPrice - meta.previousClose
-        : null,
-      changePercent: meta.regularMarketPrice && meta.previousClose
-        ? ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100
-        : null,
-      previousClose: meta.previousClose || null,
-      dayOpen: quote?.open?.[0] || meta.regularMarketOpen || null,
-      dayHigh: quote?.high?.[0] || meta.regularMarketDayHigh || null,
-      dayLow: quote?.low?.[0] || meta.regularMarketDayLow || null,
-      volume: quote?.volume?.[0] || meta.regularMarketVolume || null,
-      dataSource: 'yahoo',
+      tier,
+      stocksUpdated: 0,
+      stocksFailed: 0,
+      duration: Date.now() - startTime,
     }
-  } catch (error) {
-    console.error(`Yahoo Finance failed for ${stockCode}:`, error)
-    return null
-  }
-}
-
-// Fetch price with retry and fallback
-async function fetchPrice(
-  companyName: string,
-  stockCode: string,
-  retries = MAX_RETRIES
-): Promise<{ name: string; code: string; data: PriceData | null; error?: string }> {
-  // Try KLSE Screener first
-  let data = await scrapeKLSEScreener(stockCode)
-
-  // Fallback to Yahoo Finance if KLSE fails
-  if (!data) {
-    data = await scrapeYahooFinance(stockCode)
   }
 
-  // Retry if both failed
-  if (!data && retries > 0) {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    return fetchPrice(companyName, stockCode, retries - 1)
+  console.log(`[Tier ${tier}] Updating ${stocks.length} stocks...`)
+
+  // Fetch prices using Yahoo Finance batch API
+  const result = await fetchBatchQuotes(stocks)
+
+  const now = new Date()
+  const nextUpdateTime = calculateNextUpdate(tier, now)
+  let successCount = 0
+  let failCount = 0
+
+  // Update successful prices
+  for (const [stockCode, quote] of result.success) {
+    try {
+      const priceData: StockPriceInsert = {
+        stock_code: stockCode,
+        price: quote.regularMarketPrice,
+        change: quote.regularMarketChange,
+        change_percent: quote.regularMarketChangePercent,
+        previous_close: quote.regularMarketPreviousClose,
+        day_open: quote.regularMarketOpen,
+        day_high: quote.regularMarketDayHigh,
+        day_low: quote.regularMarketDayLow,
+        volume: quote.regularMarketVolume,
+        market_cap: quote.marketCap,
+        pe_ratio: quote.trailingPE,
+        data_source: 'yahoo',
+        tier,
+        next_update_at: nextUpdateTime.toISOString(),
+        scrape_status: 'success',
+        error_message: null,
+        updated_at: now.toISOString(),
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('stock_prices') as any).upsert(priceData, { onConflict: 'stock_code' })
+      successCount++
+    } catch (error) {
+      console.error(`Failed to update ${stockCode}:`, error)
+      failCount++
+    }
   }
+
+  // Mark failed stocks
+  for (const stockCode of result.failed) {
+    try {
+      const failedData: StockPriceInsert = {
+        stock_code: stockCode,
+        tier,
+        next_update_at: nextUpdateTime.toISOString(),
+        scrape_status: 'failed',
+        error_message: 'Yahoo Finance fetch failed',
+        updated_at: now.toISOString(),
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('stock_prices') as any).upsert(failedData, { onConflict: 'stock_code' })
+      failCount++
+    } catch (error) {
+      console.error(`Failed to mark ${stockCode} as failed:`, error)
+    }
+  }
+
+  const duration = Date.now() - startTime
+  console.log(
+    `[Tier ${tier}] Complete: ${successCount} updated, ${failCount} failed in ${duration}ms`
+  )
 
   return {
-    name: companyName,
-    code: stockCode,
-    data,
-    error: data ? undefined : 'Failed to fetch price from all sources',
+    tier,
+    stocksUpdated: successCount,
+    stocksFailed: failCount,
+    duration,
   }
 }
-
-// Process batch of companies
-async function processBatch(
-  companies: Array<[string, string]>
-): Promise<Array<{ name: string; code: string; data: PriceData | null; error?: string }>> {
-  const promises = companies.map(([name, code]) => fetchPrice(name, code))
-  return Promise.all(promises)
-}
-
-// Sleep helper
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
@@ -186,119 +177,133 @@ export async function GET(request: NextRequest) {
 
   const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(7)}`
   const supabase = createAdminClient()
+  const now = new Date()
 
-  // Log job start - using 'as any' because tables are new and types may not be generated yet
-  await (supabase.from('price_update_logs') as any).insert({
-    job_id: jobId,
-    started_at: new Date().toISOString(),
-    total_companies: Object.keys(STOCK_CODE_MAP).length,
-    status: 'running',
-  })
+  // Check if we're in market hours (optional - can be disabled for testing)
+  const url = new URL(request.url)
+  const forceUpdate = url.searchParams.get('force') === 'true'
+  const specificTier = url.searchParams.get('tier')
+
+  if (!forceUpdate && !isMarketHours(now)) {
+    console.log('[Cron] Outside market hours, skipping update')
+    return NextResponse.json({
+      success: true,
+      message: 'Outside market hours',
+      marketHours: false,
+    })
+  }
+
+  // Determine which tiers to update
+  let tiersToUpdate: (1 | 2 | 3)[]
+
+  if (specificTier) {
+    // Manual trigger for specific tier
+    const tier = parseInt(specificTier) as 1 | 2 | 3
+    if (tier >= 1 && tier <= 3) {
+      tiersToUpdate = [tier]
+    } else {
+      tiersToUpdate = getTiersToUpdate(now)
+    }
+  } else {
+    // Automatic tier selection based on current time
+    tiersToUpdate = getTiersToUpdate(now)
+  }
+
+  // If no tiers to update (shouldn't happen at 5-minute intervals)
+  if (tiersToUpdate.length === 0) {
+    // Default to Tier 1 (core stocks)
+    tiersToUpdate = [TIER_1]
+  }
+
+  console.log(`[Cron] Job ${jobId} starting for tiers: ${tiersToUpdate.join(', ')}`)
+
+  // Log job start
+  try {
+    const logData: PriceUpdateLogInsert = {
+      job_id: jobId,
+      started_at: now.toISOString(),
+      total_companies: tiersToUpdate.reduce(
+        (sum, tier) => sum + MAX_STOCKS_PER_TIER[tier],
+        0
+      ),
+      status: 'running',
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('price_update_logs') as any).insert(logData)
+  } catch (error) {
+    console.error('Failed to log job start:', error)
+  }
 
   try {
-    const companies = Object.entries(STOCK_CODE_MAP)
-    const totalCompanies = companies.length
-    const results: Array<{ name: string; code: string; data: PriceData | null; error?: string }> = []
+    const results: TierUpdateResult[] = []
 
-    // Process in batches
-    for (let i = 0; i < companies.length; i += BATCH_SIZE) {
-      const batch = companies.slice(i, i + BATCH_SIZE)
-      const batchResults = await processBatch(batch)
-      results.push(...batchResults)
-
-      // Delay between batches (except last batch)
-      if (i + BATCH_SIZE < companies.length) {
-        await sleep(BATCH_DELAY)
-      }
-    }
-
-    // Separate successes and failures
-    const successes = results.filter(r => r.data)
-    const failures = results.filter(r => !r.data)
-
-    // Upsert successful prices to database
-    if (successes.length > 0) {
-      const priceRecords = successes.map(({ name, code, data }) => ({
-        stock_code: code,
-        price: data!.price,
-        change: data!.change,
-        change_percent: data!.changePercent,
-        previous_close: data!.previousClose,
-        day_open: data!.dayOpen,
-        day_high: data!.dayHigh,
-        day_low: data!.dayLow,
-        volume: data!.volume,
-        data_source: data!.dataSource,
-        scrape_status: 'success' as const,
-        error_message: null,
-        updated_at: new Date().toISOString(),
-      }))
-
-      // Upsert each record
-      for (const record of priceRecords) {
-        await (supabase.from('stock_prices') as any)
-          .upsert(record, { onConflict: 'stock_code' })
-      }
-    }
-
-    // Mark failures in database
-    if (failures.length > 0) {
-      for (const failure of failures) {
-        await (supabase.from('stock_prices') as any)
-          .upsert(
-            {
-              stock_code: failure.code,
-              scrape_status: 'failed',
-              error_message: failure.error,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'stock_code' }
-          )
-      }
+    // Update each tier
+    for (const tier of tiersToUpdate) {
+      const result = await updateTierPrices(tier, supabase)
+      results.push(result)
     }
 
     const executionTime = Date.now() - startTime
+    const totalUpdated = results.reduce((sum, r) => sum + r.stocksUpdated, 0)
+    const totalFailed = results.reduce((sum, r) => sum + r.stocksFailed, 0)
 
     // Update job log
-    await (supabase.from('price_update_logs') as any)
-      .update({
+    try {
+      const updateData: PriceUpdateLogUpdate = {
         completed_at: new Date().toISOString(),
         execution_time_ms: executionTime,
-        successful_updates: successes.length,
-        failed_updates: failures.length,
-        failed_codes: failures.map(f => f.code),
-        error_summary: failures.length > 0
-          ? `${failures.length} companies failed to update`
-          : null,
+        successful_updates: totalUpdated,
+        failed_updates: totalFailed,
         status: 'completed',
-      })
-      .eq('job_id', jobId)
+        error_summary:
+          totalFailed > 0
+            ? `${totalFailed} stocks failed across ${tiersToUpdate.length} tiers`
+            : null,
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('price_update_logs') as any)
+        .update(updateData)
+        .eq('job_id', jobId)
+    } catch (error) {
+      console.error('Failed to update job log:', error)
+    }
+
+    console.log(
+      `[Cron] Job ${jobId} completed: ${totalUpdated} updated, ${totalFailed} failed in ${executionTime}ms`
+    )
 
     return NextResponse.json({
       success: true,
       jobId,
+      marketHours: true,
+      tiersUpdated: tiersToUpdate,
       summary: {
-        total: totalCompanies,
-        successful: successes.length,
-        failed: failures.length,
+        totalUpdated,
+        totalFailed,
         executionTimeMs: executionTime,
+        tierResults: results,
       },
-      failedCodes: failures.map(f => ({ code: f.code, name: f.name })),
     })
   } catch (error) {
     const executionTime = Date.now() - startTime
 
     // Update job log with error
-    await (supabase.from('price_update_logs') as any)
-      .update({
+    try {
+      const errorData: PriceUpdateLogUpdate = {
         completed_at: new Date().toISOString(),
         execution_time_ms: executionTime,
         status: 'failed',
         error_summary: error instanceof Error ? error.message : 'Unknown error',
-      })
-      .eq('job_id', jobId)
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('price_update_logs') as any)
+        .update(errorData)
+        .eq('job_id', jobId)
+    } catch (logError) {
+      console.error('Failed to update job log:', logError)
+    }
 
-    console.error('Cron job failed:', error)
+    console.error(`[Cron] Job ${jobId} failed:`, error)
 
     return NextResponse.json(
       {

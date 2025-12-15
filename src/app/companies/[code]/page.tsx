@@ -28,6 +28,7 @@ import { useCompanyDocuments, formatFileSize } from "@/hooks/use-documents"
 import { getStockCode } from "@/lib/stock-codes"
 import { useCachedStockPrice, formatLastUpdated } from "@/hooks/use-cached-prices"
 import { LastUpdatedBadge, LastUpdatedDot } from "@/components/LastUpdatedBadge"
+import { COMPANY_DATA, getCompanyByCode, hasFinancialData } from "@/lib/company-data"
 
 // ============================================================================
 // TYPES
@@ -66,14 +67,25 @@ const CATEGORIES = [
   { id: 6, name: "Deteriorating", short: "Warning", color: "text-slate-500", bg: "bg-slate-500/10", border: "border-slate-500/30" },
 ]
 
-// Mock company data - will be replaced with database data
-const MOCK_COMPANIES: Record<string, CompanyInfo> = {
-  "GAMUDA": { code: "GAMUDA", name: "Gamuda Berhad", sector: "Construction", latestQuarter: "Q2 2025", revenue: 2847.5, profit: 312.8, yoyRevenueChange: 15.2, yoyProfitChange: 22.4, qoqRevenueChange: 8.5, qoqProfitChange: 12.1, yoyCategory: 1, qoqCategory: 1 },
-  "AEONCR": { code: "AEONCR", name: "AEON Credit Service", sector: "Financial Services", latestQuarter: "Q2 2025", revenue: 617.9, profit: 72.2, yoyRevenueChange: 14.1, yoyProfitChange: 1.4, qoqRevenueChange: 5.2, qoqProfitChange: 3.8, yoyCategory: 1, qoqCategory: 1 },
-  "ECOWLD": { code: "ECOWLD", name: "Eco World Development", sector: "Property", latestQuarter: "Q4 2025", revenue: 750.8, profit: 126.7, yoyRevenueChange: 17.6, yoyProfitChange: 51.9, qoqRevenueChange: 12.3, qoqProfitChange: 25.6, yoyCategory: 1, qoqCategory: 1 },
-  "MYNEWS": { code: "MYNEWS", name: "Mynews Holdings", sector: "Retail", latestQuarter: "Q3 2025", revenue: 230.9, profit: 6.4, yoyRevenueChange: 11.3, yoyProfitChange: 146.2, qoqRevenueChange: 4.2, qoqProfitChange: 35.8, yoyCategory: 1, qoqCategory: 1 },
-  "HIGHTEC": { code: "HIGHTEC", name: "Hightech Corp", sector: "Technology", latestQuarter: "Q3 2025", revenue: 7.5, profit: 1.1, yoyRevenueChange: 44.2, yoyProfitChange: 180.6, qoqRevenueChange: 15.2, qoqProfitChange: 45.3, yoyCategory: 1, qoqCategory: 1 },
-  "UWC": { code: "UWC", name: "UWC Berhad", sector: "Manufacturing", latestQuarter: "Q4 2025", revenue: 125.5, profit: 28.5, yoyRevenueChange: 43.0, yoyProfitChange: 685.7, qoqRevenueChange: 28.5, qoqProfitChange: 112.4, yoyCategory: 1, qoqCategory: 1 },
+// Convert COMPANY_DATA to CompanyInfo format
+function getCompanyInfo(code: string): CompanyInfo | null {
+  const company = getCompanyByCode(code)
+  if (!company) return null
+
+  return {
+    code: company.code,
+    name: company.name,
+    sector: company.sector,
+    latestQuarter: "Q4 2025", // Default quarter, can be enhanced with actual data
+    revenue: company.latestRevenue ?? 0,
+    profit: company.latestProfit ?? 0,
+    yoyRevenueChange: company.revenueYoY ?? 0,
+    yoyProfitChange: company.profitYoY ?? 0,
+    qoqRevenueChange: company.revenueQoQ ?? 0,
+    qoqProfitChange: company.profitQoQ ?? 0,
+    yoyCategory: company.yoyCategory ?? 0,
+    qoqCategory: company.qoqCategory ?? 0,
+  }
 }
 
 // Generate mock price history
@@ -366,21 +378,23 @@ export default function CompanyProfilePage() {
   const code = ((params.code as string) || "").toUpperCase()
   const [mounted, setMounted] = useState(false)
 
-  // Get company info
-  const company = MOCK_COMPANIES[code] || {
+  // Get company info from COMPANY_DATA
+  const companyData = getCompanyByCode(code)
+  const company = getCompanyInfo(code) || {
     code,
-    name: `${code} Berhad`,
-    sector: "General",
+    name: companyData?.name || `${code} Berhad`,
+    sector: companyData?.sector || "General",
     latestQuarter: "Q4 2025",
-    revenue: 100,
-    profit: 10,
-    yoyRevenueChange: 5.0,
-    yoyProfitChange: 8.0,
-    qoqRevenueChange: 2.5,
-    qoqProfitChange: 4.0,
-    yoyCategory: 1,
-    qoqCategory: 1,
+    revenue: 0,
+    profit: 0,
+    yoyRevenueChange: 0,
+    yoyProfitChange: 0,
+    qoqRevenueChange: 0,
+    qoqProfitChange: 0,
+    yoyCategory: 0,
+    qoqCategory: 0,
   }
+  const hasData = companyData ? hasFinancialData(companyData) : false
 
   // Fetch cached stock price from database
   const stockCode = getStockCode(code)

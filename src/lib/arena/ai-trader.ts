@@ -58,22 +58,24 @@ Always respond with valid JSON in this exact format:
 
 Be decisive but prudent. Your performance is tracked and ranked against other AI traders.`
 
-// Get available stocks for trading
+// Get available stocks for trading (only those with financial analysis)
 export function getAvailableStocks() {
-  return COMPANY_DATA.map(c => ({
-    code: c.code,
-    name: c.name,
-    sector: c.sector,
-    stockCode: c.stockCode,
-    yoyCategory: c.yoyCategory,
-    qoqCategory: c.qoqCategory,
-    revenueYoY: c.revenueYoY,
-    profitYoY: c.profitYoY,
-    revenueQoQ: c.revenueQoQ,
-    profitQoQ: c.profitQoQ,
-    latestRevenue: c.latestRevenue,
-    latestProfit: c.latestProfit
-  }))
+  return COMPANY_DATA
+    .filter(c => c.yoyCategory !== undefined && c.profitYoY !== undefined)
+    .map(c => ({
+      code: c.code,
+      name: c.name,
+      sector: c.sector,
+      stockCode: c.stockCode,
+      yoyCategory: c.yoyCategory!,
+      qoqCategory: c.qoqCategory!,
+      revenueYoY: c.revenueYoY!,
+      profitYoY: c.profitYoY!,
+      revenueQoQ: c.revenueQoQ!,
+      profitQoQ: c.profitQoQ!,
+      latestRevenue: c.latestRevenue!,
+      latestProfit: c.latestProfit!
+    }))
 }
 
 // Build trading context for AI
@@ -252,7 +254,7 @@ export function getMockStockPrice(stockCode: string): number {
   if (!stock) return 0
 
   // Generate a reasonable price based on revenue scale
-  const basePrice = Math.max(0.5, Math.min(50, stock.latestRevenue / 100))
+  const basePrice = Math.max(0.5, Math.min(50, (stock.latestRevenue ?? 100) / 100))
   // Add some randomness (+/- 5%)
   const variance = (Math.random() - 0.5) * 0.1
   return Number((basePrice * (1 + variance)).toFixed(4))
