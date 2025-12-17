@@ -445,23 +445,11 @@ export default function CompanyProfilePage() {
               />
             </Card>
 
-            {/* AI Insights */}
+            {/* AI Insights - Fetched from daily cached database */}
             <AIInsightsCard
               company={{
                 code: company.code,
                 name: company.name,
-                sector: company.sector,
-                price: stockData?.price ?? undefined,
-                changePercent: stockData?.changePercent ?? undefined,
-                volume: stockData?.volume ?? undefined,
-                revenue: company.revenue,
-                profit: company.profit,
-                revenueYoY: company.yoyRevenueChange,
-                profitYoY: company.yoyProfitChange,
-                revenueQoQ: company.qoqRevenueChange,
-                profitQoQ: company.qoqProfitChange,
-                yoyCategory: company.yoyCategory,
-                qoqCategory: company.qoqCategory,
               }}
             />
 

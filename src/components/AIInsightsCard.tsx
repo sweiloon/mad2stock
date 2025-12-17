@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Clock,
   ChevronRight,
+  Lock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,18 +25,6 @@ interface AIInsightsCardProps {
   company: {
     code: string
     name: string
-    sector: string
-    price?: number
-    changePercent?: number
-    volume?: number
-    revenue?: number
-    profit?: number
-    revenueYoY?: number
-    profitYoY?: number
-    revenueQoQ?: number
-    profitQoQ?: number
-    yoyCategory?: number
-    qoqCategory?: number
   }
   className?: string
 }
@@ -46,6 +35,7 @@ interface InsightsData {
   outlook: "Positive" | "Neutral" | "Cautious" | "Negative"
   keyMetric: string | null
   generatedAt: string
+  marketDate: string
 }
 
 const OUTLOOK_CONFIG = {
@@ -77,9 +67,11 @@ const OUTLOOK_CONFIG = {
 
 export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
   const [insights, setInsights] = useState<InsightsData | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [hasAttempted, setHasAttempted] = useState(false)
+
+  // Future: Check if user is a member
+  const isMember = true // TODO: Replace with actual auth check
 
   const fetchInsights = useCallback(async () => {
     if (!company.code) return
@@ -88,11 +80,8 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
     setError(null)
 
     try {
-      const response = await fetch('/api/insights/company', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(company),
-      })
+      // Fetch cached insights from database
+      const response = await fetch(`/api/insights/${company.code}`)
 
       if (!response.ok) {
         throw new Error('Failed to fetch insights')
@@ -102,42 +91,58 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
 
       if (data.success && data.data) {
         setInsights(data.data)
+      } else if (data.success && !data.data) {
+        // No insights available yet
+        setInsights(null)
       } else {
-        // Show more specific error message
-        const errorMsg = data.details || data.error || 'Unknown error'
-        throw new Error(errorMsg)
+        throw new Error(data.error || 'Unknown error')
       }
     } catch (err) {
       console.error('Error fetching insights:', err)
-      let errorMessage = err instanceof Error ? err.message : 'Unable to generate insights'
-
-      // Provide user-friendly messages for common errors
-      if (errorMessage.includes('401') || errorMessage.includes('API key')) {
-        errorMessage = 'AI service configuration error. Please contact support.'
-      } else if (errorMessage.includes('503') || errorMessage.includes('not configured')) {
-        errorMessage = 'AI service is temporarily unavailable.'
-      }
-
-      setError(errorMessage)
+      setError('Unable to load insights')
     } finally {
       setLoading(false)
-      setHasAttempted(true)
     }
-  }, [company])
+  }, [company.code])
 
-  // Auto-fetch on mount if company has financial data
+  // Fetch on mount
   useEffect(() => {
-    const hasData = company.revenue || company.profit || company.revenueYoY
-    if (hasData && !hasAttempted) {
-      fetchInsights()
-    }
-  }, [company.code, hasAttempted, fetchInsights, company.revenue, company.profit, company.revenueYoY])
+    fetchInsights()
+  }, [fetchInsights])
 
   const outlookConfig = insights?.outlook ? OUTLOOK_CONFIG[insights.outlook] : OUTLOOK_CONFIG.Neutral
   const OutlookIcon = outlookConfig.icon
 
-  // Check if we have enough data
-  const hasFinancialData = company.revenue || company.profit || company.revenueYoY
+  // If not a member (future feature)
+  if (!isMember) {
+    return (
+      <Card className={cn("overflow-hidden", className)}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-violet-500" />
+            </div>
+            <div>
+              <CardTitle className="text-sm font-medium">AI Insights</CardTitle>
+              <p className="text-xs text-muted-foreground">Premium Feature</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="text-center py-6">
+            <Lock className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+            <p className="text-sm font-medium">Member-Only Feature</p>
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
+              Subscribe to access AI-powered insights for all companies
+            </p>
+            <Button variant="outline" size="sm" disabled>
+              Coming Soon
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className={cn("overflow-hidden", className)}>
@@ -149,7 +154,7 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
             </div>
             <div>
               <CardTitle className="text-sm font-medium">AI Insights</CardTitle>
-              <p className="text-xs text-muted-foreground">Powered by GPT-4</p>
+              <p className="text-xs text-muted-foreground">Updated daily after market close</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -194,15 +199,15 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
               Try Again
             </Button>
           </div>
-        ) : !hasFinancialData && !insights ? (
+        ) : !insights ? (
           <div className="text-center py-4">
-            <Sparkles className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-            <p className="text-sm text-muted-foreground">Financial data not available for AI analysis</p>
+            <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+            <p className="text-sm text-muted-foreground">Insights not yet generated</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Insights will be generated once financial data is added
+              AI insights are generated daily after market close (5pm MYT)
             </p>
           </div>
-        ) : insights ? (
+        ) : (
           <div className="space-y-4">
             {/* Summary */}
             <p className="text-sm leading-relaxed">{insights.summary}</p>
@@ -240,15 +245,9 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
                   day: 'numeric',
                   month: 'short',
                 })}
+                {insights.marketDate && ` for ${insights.marketDate}`}
               </div>
             )}
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <Button variant="outline" size="sm" onClick={fetchInsights}>
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate AI Insights
-            </Button>
           </div>
         )}
 

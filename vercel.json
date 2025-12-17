@@ -7,6 +7,10 @@
     {
       "path": "/api/arena/analyze",
       "schedule": "0 17 * * 1-5"
+    },
+    {
+      "path": "/api/cron/generate-insights",
+      "schedule": "30 9 * * *"
     }
   ]
 }
