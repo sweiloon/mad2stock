@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client lazily to ensure env vars are available at runtime
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not configured')
+  }
+  return new OpenAI({ apiKey })
+}
 
 interface CompanyData {
   code: string
@@ -33,6 +38,18 @@ const CATEGORY_LABELS: Record<number, string> = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get OpenAI client (will throw if API key not configured)
+    let openai: OpenAI
+    try {
+      openai = getOpenAIClient()
+    } catch (error) {
+      console.error('OpenAI configuration error:', error)
+      return NextResponse.json(
+        { error: 'AI service not configured', details: 'OPENAI_API_KEY missing' },
+        { status: 503 }
+      )
+    }
+
     const body: CompanyData = await request.json()
 
     if (!body.code || !body.name) {
@@ -91,7 +108,7 @@ Performance Category:
 Respond with JSON only, no markdown formatting.`
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o-mini', // Using gpt-4o-mini for faster, cheaper responses
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -131,8 +148,9 @@ Respond with JSON only, no markdown formatting.`
     }
   } catch (error) {
     console.error('Error generating insights:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Failed to generate insights' },
+      { error: 'Failed to generate insights', details: errorMessage },
       { status: 500 }
     )
   }

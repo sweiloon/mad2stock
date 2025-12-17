@@ -103,11 +103,14 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
       if (data.success && data.data) {
         setInsights(data.data)
       } else {
-        throw new Error(data.error || 'Unknown error')
+        // Show more specific error message
+        const errorMsg = data.details || data.error || 'Unknown error'
+        throw new Error(errorMsg)
       }
     } catch (err) {
       console.error('Error fetching insights:', err)
-      setError('Unable to generate insights at this time')
+      const errorMessage = err instanceof Error ? err.message : 'Unable to generate insights'
+      setError(errorMessage)
     } finally {
       setLoading(false)
       setHasAttempted(true)

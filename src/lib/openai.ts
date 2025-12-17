@@ -1,8 +1,18 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy initialization to ensure env vars are available at runtime (Vercel)
+let openaiClient: OpenAI | null = null
+
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is not configured')
+    }
+    openaiClient = new OpenAI({ apiKey })
+  }
+  return openaiClient
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
@@ -13,6 +23,8 @@ export async function chat(
   messages: ChatMessage[],
   systemPrompt?: string
 ): Promise<string> {
+  const openai = getOpenAI()
+
   const systemMessage: ChatMessage = {
     role: 'system',
     content: systemPrompt || `You are a professional financial analyst assistant specializing in Malaysian KLSE stocks.
@@ -22,7 +34,7 @@ Be concise but thorough. Use professional financial terminology when appropriate
   }
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini', // Fast and cost-effective model
     messages: [systemMessage, ...messages],
     temperature: 0.7,
     max_tokens: 2000,
@@ -74,8 +86,10 @@ ${companyData.profitChange !== undefined ? `Profit Change: ${companyData.profitC
 ${companyData.highlights?.length ? `Key Highlights: ${companyData.highlights.join(', ')}` : ''}
 `
 
+  const openai = getOpenAI()
+
   const response = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
+    model: 'gpt-4o-mini', // Fast and cost-effective model
     messages: [
       {
         role: 'system',
@@ -110,4 +124,6 @@ Include appropriate disclaimers when necessary.`
   }
 }
 
-export default openai
+// Export getOpenAI for cases where direct client access is needed
+export { getOpenAI }
+export default getOpenAI
