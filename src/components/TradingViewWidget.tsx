@@ -13,8 +13,9 @@ interface TradingViewWidgetProps {
   allowSymbolChange?: boolean
 }
 
-// TradingView Advanced Real-Time Chart Widget
-// Docs: https://www.tradingview.com/widget/advanced-chart/
+// TradingView Symbol Overview Widget
+// Uses symbol-overview widget which has better support for Malaysian stocks
+// Docs: https://www.tradingview.com/widget/symbol-overview/
 function TradingViewWidgetComponent({
   symbol,
   stockCode,
@@ -28,10 +29,9 @@ function TradingViewWidgetComponent({
   const containerRef = useRef<HTMLDivElement>(null)
   const scriptRef = useRef<HTMLScriptElement | null>(null)
 
-  // Convert stock code to TradingView symbol format
-  // Malaysian stocks use MYX: prefix
-  // Format: MYX:1155 for stock code or MYX:MAYBANK for symbol
-  const tvSymbol = stockCode ? `MYX:${stockCode}` : `MYX:${symbol}`
+  // Convert to TradingView symbol format
+  // Malaysian stocks use MYX: prefix with ticker symbol
+  const tvSymbol = `MYX:${symbol}`
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -61,32 +61,46 @@ function TradingViewWidgetComponent({
 
     containerRef.current.appendChild(widgetContainer)
 
-    // Create and load widget script
+    // Create and load widget script - using symbol-overview for better Malaysian stock support
     const script = document.createElement("script")
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js"
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js"
     script.type = "text/javascript"
     script.async = true
     script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: tvSymbol,
-      interval: interval,
-      timezone: "Asia/Kuala_Lumpur",
-      theme: theme,
-      style: "1", // Candlestick
+      symbols: [[tvSymbol, tvSymbol]],
+      chartOnly: false,
+      width: "100%",
+      height: "100%",
       locale: "en",
-      enable_publishing: false,
-      allow_symbol_change: allowSymbolChange,
-      hide_top_toolbar: !showToolbar,
-      hide_legend: false,
-      save_image: true,
-      calendar: false,
-      hide_volume: false,
-      support_host: "https://www.tradingview.com",
-      backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0)" : "rgba(255, 255, 255, 0)",
-      gridColor: theme === "dark" ? "rgba(66, 66, 66, 0.3)" : "rgba(200, 200, 200, 0.3)",
-      studies: [
-        "Volume@tv-basicstudies",
+      colorTheme: theme,
+      autosize: true,
+      showVolume: true,
+      showMA: true,
+      hideDateRanges: false,
+      hideMarketStatus: false,
+      hideSymbolLogo: false,
+      scalePosition: "right",
+      scaleMode: "Normal",
+      fontFamily: "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+      fontSize: "10",
+      noTimeScale: false,
+      valuesTracking: "1",
+      changeMode: "price-and-percent",
+      chartType: "area",
+      maLineColor: "#2962FF",
+      maLineWidth: 1,
+      maLength: 9,
+      lineWidth: 2,
+      lineType: 0,
+      dateRanges: [
+        "1d|1",
+        "1m|30",
+        "3m|60",
+        "12m|1D",
+        "60m|1W",
+        "all|1M"
       ],
+      isTransparent: true,
     })
 
     widgetDiv.appendChild(script)
@@ -98,7 +112,7 @@ function TradingViewWidgetComponent({
         containerRef.current.innerHTML = ""
       }
     }
-  }, [tvSymbol, theme, interval, showToolbar, showDetails, allowSymbolChange])
+  }, [tvSymbol, theme, showDetails])
 
   return (
     <div
@@ -125,7 +139,8 @@ function MiniChartComponent({
 }: MiniChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const tvSymbol = stockCode ? `MYX:${stockCode}` : `MYX:${symbol}`
+  // Use ticker symbol, not numeric code
+  const tvSymbol = `MYX:${symbol}`
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -196,7 +211,8 @@ function SymbolInfoComponent({
 }: SymbolInfoProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const tvSymbol = stockCode ? `MYX:${stockCode}` : `MYX:${symbol}`
+  // Use ticker symbol, not numeric code
+  const tvSymbol = `MYX:${symbol}`
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -259,7 +275,8 @@ function TechnicalAnalysisComponent({
 }: TechnicalAnalysisProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const tvSymbol = stockCode ? `MYX:${stockCode}` : `MYX:${symbol}`
+  // Use ticker symbol, not numeric code
+  const tvSymbol = `MYX:${symbol}`
 
   useEffect(() => {
     if (!containerRef.current) return
