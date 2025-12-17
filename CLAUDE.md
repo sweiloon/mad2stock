@@ -226,10 +226,18 @@ risk of capital loss.
 ## Environment Variables
 
 ```env
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
+# AI
 OPENAI_API_KEY=
+
+# Stock Data (REQUIRED for real-time prices)
+EODHD_API_KEY=              # Get from https://eodhd.com/ (Free: 100K calls/day)
+
+# Cron
 CRON_SECRET=
 ```
 
