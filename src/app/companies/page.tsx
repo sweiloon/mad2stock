@@ -52,6 +52,7 @@ export default function CompaniesPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [sectorFilter, setSectorFilter] = useState<string>("all")
+  const [boardFilter, setBoardFilter] = useState<string>("all") // "all" | "Main" | "ACE" | "LEAP"
   const [dataFilter, setDataFilter] = useState<string>("all") // "all" | "analyzed" | "pending"
   const [analysisType, setAnalysisType] = useState<"yoy" | "qoq">("yoy")
   const [viewMode, setViewMode] = useState<ViewMode>("table")
@@ -82,7 +83,11 @@ export default function CompaniesPage() {
           (analysisType === "yoy" ? company.yoyCategory : company.qoqCategory) === parseInt(categoryFilter)
 
         const matchesSector = sectorFilter === "all" || company.sector === sectorFilter
-        return matchesSearch && matchesDataFilter && matchesCategory && matchesSector
+
+        // Board/Market filter (Main, ACE, LEAP)
+        const matchesBoard = boardFilter === "all" || company.market === boardFilter
+
+        return matchesSearch && matchesDataFilter && matchesCategory && matchesSector && matchesBoard
       })
       .sort((a, b) => {
         let aVal: number | string, bVal: number | string
@@ -108,7 +113,7 @@ export default function CompaniesPage() {
         }
         return aVal < bVal ? 1 : -1
       })
-  }, [searchQuery, categoryFilter, sectorFilter, dataFilter, analysisType, sortField, sortDirection])
+  }, [searchQuery, categoryFilter, sectorFilter, boardFilter, dataFilter, analysisType, sortField, sortDirection])
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -193,6 +198,18 @@ export default function CompaniesPage() {
                         {sector}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={boardFilter} onValueChange={setBoardFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Board" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Boards</SelectItem>
+                    <SelectItem value="Main">Main Market</SelectItem>
+                    <SelectItem value="ACE">ACE Market</SelectItem>
+                    <SelectItem value="LEAP">LEAP Market</SelectItem>
                   </SelectContent>
                 </Select>
 

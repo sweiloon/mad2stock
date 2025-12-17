@@ -29,7 +29,8 @@ import { getStockCode } from "@/lib/stock-codes"
 import { useCachedStockPrice, formatLastUpdated } from "@/hooks/use-cached-prices"
 import { LastUpdatedBadge, LastUpdatedDot } from "@/components/LastUpdatedBadge"
 import { COMPANY_DATA, getCompanyByCode, hasFinancialData } from "@/lib/company-data"
-import { TradingViewTechnicalAnalysis } from "@/components/TradingViewWidget"
+import { StockChart } from "@/components/StockChart"
+import { TechnicalAnalysis } from "@/components/TechnicalAnalysis"
 
 // ============================================================================
 // TYPES
@@ -407,8 +408,20 @@ export default function CompanyProfilePage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
+            {/* Price Chart - At the top for professional look */}
+            <Card className="overflow-hidden">
+              <StockChart
+                symbol={code}
+                stockCode={stockCode}
+                height={450}
+                showVolume={true}
+                defaultPeriod="3mo"
+                defaultChartType="area"
+              />
+            </Card>
+
+            {/* Performance Cards */}
             <div className="grid gap-4 lg:grid-cols-2">
-              {/* Performance Cards */}
               <PerformanceCard
                 title="Year-over-Year (YoY)"
                 category={company.yoyCategory}
@@ -423,61 +436,12 @@ export default function CompanyProfilePage() {
               />
             </div>
 
-            {/* TradingView Chart Link */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Price Chart
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center py-8 px-4 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <TrendingUp className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-lg">{code}</p>
-                      <p className="text-sm text-muted-foreground">MYX:{stockCode}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center mb-4 max-w-md">
-                    View full interactive price chart with advanced technical tools, multiple timeframes, and real-time data on TradingView.
-                  </p>
-                  <a
-                    href={`https://www.tradingview.com/chart/?symbol=MYX:${code}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Open on TradingView
-                  </a>
-                  <p className="text-xs text-muted-foreground mt-3">
-                    Free account • Real-time charts • Technical indicators
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Technical Analysis */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  Technical Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <TradingViewTechnicalAnalysis
-                  symbol={code}
-                  stockCode={stockCode}
-                  height={350}
-                  theme="dark"
-                  interval="1D"
-                />
-              </CardContent>
+            {/* Technical Analysis - Custom built widget */}
+            <Card className="overflow-hidden">
+              <TechnicalAnalysis
+                symbol={code}
+                stockCode={stockCode}
+              />
             </Card>
 
             {/* Company Info */}
