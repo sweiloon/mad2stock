@@ -13,15 +13,37 @@ import type { AIParticipant, Holding, TradeAction } from '@/lib/arena/types'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes for AI calls
 
+// Validate cron request (supports both GET query param and POST Bearer token)
+function validateCronRequest(request: Request): boolean {
+  // Check Vercel cron header
+  if (request.headers.get('x-vercel-cron') === '1') return true
+
+  // Check Bearer token in Authorization header
+  const authHeader = request.headers.get('authorization')
+  if (authHeader === `Bearer ${process.env.CRON_SECRET}`) return true
+
+  // Check secret in query param (for cron-job.org)
+  const url = new URL(request.url)
+  const secret = url.searchParams.get('secret')
+  if (secret === process.env.CRON_SECRET) return true
+
+  return false
+}
+
+// GET /api/arena/analyze - Support cron-job.org (uses GET with query param)
+export async function GET(request: Request) {
+  return handleAnalyze(request)
+}
+
 // POST /api/arena/analyze - Trigger AI analysis and trading (cron job)
 export async function POST(request: Request) {
-  try {
-    // Verify admin secret
-    const authHeader = request.headers.get('authorization')
-    const isVercel = request.headers.get('x-vercel-cron') === '1'
-    const expectedSecret = `Bearer ${process.env.CRON_SECRET}`
+  return handleAnalyze(request)
+}
 
-    if (!isVercel && authHeader !== expectedSecret) {
+async function handleAnalyze(request: Request) {
+  try {
+    // Verify cron secret
+    if (!validateCronRequest(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

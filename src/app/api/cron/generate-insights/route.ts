@@ -6,11 +6,11 @@ import OpenAI from 'openai'
 // CONFIGURATION
 // ============================================================================
 
-// Process 10 companies per cron invocation (OpenAI calls take ~1-2s each)
-// With batching, we can do ~10 in 10 seconds (Vercel timeout)
-// 800 stocks / 10 per call = 80 calls → Run cron every 15 mins = 20 hours to complete
-// Or run more frequently during off-market hours
-const COMPANIES_PER_RUN = 10
+// Process 3 companies per cron invocation (OpenAI calls take ~3-4s each)
+// 3 companies × ~4s = ~12s (safe for cron-job.org 30s timeout)
+// 800 stocks / 3 per call = 267 calls
+// Running every 1 min = ~4.5 hours to complete all companies
+const COMPANIES_PER_RUN = 3
 
 // Model selection - gpt-4o-mini is cheapest but still very capable
 // Cost: ~$0.15/1M input, $0.60/1M output
