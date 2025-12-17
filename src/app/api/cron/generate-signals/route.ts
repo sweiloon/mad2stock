@@ -519,10 +519,41 @@ export async function GET(request: NextRequest) {
     })
   }
 
+  // Debug mode - return diagnostic info
+  const debugMode = url.searchParams.get('debug') === 'true'
+
   // Batch mode - select and process candidates
   const candidates = await selectCandidates(supabase, STOCKS_PER_RUN)
 
   if (candidates.length === 0) {
+    // Get debug info if requested
+    if (debugMode) {
+      const { data: sampleStocks } = await supabase
+        .from('stock_prices')
+        .select('stock_code, price, change_percent')
+        .not('price', 'is', null)
+        .order('updated_at', { ascending: false })
+        .limit(10)
+
+      const numericCodes = sampleStocks?.map((s: any) => s.stock_code) || []
+      const { data: matchingCompanies } = await supabase
+        .from('companies')
+        .select('code, numeric_code')
+        .in('numeric_code', numericCodes)
+
+      return NextResponse.json({
+        success: true,
+        message: 'No suitable candidates found for signal generation',
+        processed: 0,
+        debug: {
+          sampleStocks: sampleStocks?.slice(0, 5),
+          numericCodes: numericCodes.slice(0, 5),
+          matchingCompanies: matchingCompanies?.slice(0, 5)
+        },
+        duration: Date.now() - startTime
+      })
+    }
+
     return NextResponse.json({
       success: true,
       message: 'No suitable candidates found for signal generation',
