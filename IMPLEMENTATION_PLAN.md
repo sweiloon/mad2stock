@@ -1,390 +1,771 @@
-# Interactive Charts Implementation Plan
+# Mad2Stock - Complete Implementation Plan
 
-## Executive Summary
-
-This plan outlines the implementation of professional, interactive TradingView-style charts across the Mad2Stock platform. The goal is to transform the platform into a professional-grade stock analysis tool with real-time data, technical indicators, and an intuitive user experience.
-
----
-
-## Phase 1: Foundation & Infrastructure (Priority: HIGH)
-
-### 1.1 TradingView Lightweight Charts Component
-
-**File:** `src/components/charts/TradingViewChart.tsx`
-
-**Features:**
-- Candlestick, Line, Area, Bar chart types
-- Dark/Light theme support (auto-detect from system)
-- Responsive sizing with ResizeObserver
-- Real-time data updates via WebSocket-ready architecture
-- Crosshair with tooltip displaying OHLCV data
-
-**Technical Indicators (Built-in):**
-- Moving Averages (SMA, EMA - 5, 10, 20, 50, 200 periods)
-- Volume histogram with color coding
-- MACD (12, 26, 9 default)
-- RSI (14 default)
-- Bollinger Bands (20, 2)
-
-### 1.2 Data Fetching Infrastructure
-
-**File:** `src/lib/stock-data.ts`
-
-**Data Sources (Priority Order):**
-1. **KLSE Screener** - Primary source for Malaysian stocks
-2. **Yahoo Finance API** - Fallback for historical data
-3. **Alpha Vantage** - Additional technical data (if API key available)
-
-**API Routes:**
-- `GET /api/stocks/history?symbol=GAMUDA&range=1Y` - Historical OHLCV data
-- `GET /api/stocks/intraday?symbol=GAMUDA` - Intraday data (5min intervals)
-- `GET /api/stocks/quote?symbol=GAMUDA` - Real-time quote
-
-**Caching Strategy:**
-- Historical data: 24-hour cache in Supabase
-- Intraday data: 5-minute cache
-- Real-time quotes: 1-minute cache during market hours
+*Last Updated: December 17, 2024*
+*Version: 3.0*
 
 ---
 
-## Phase 2: Company Profile Page Enhancement (Priority: HIGH)
+## Platform Vision
 
-### Current State:
-- Simple SVG chart with mock data
-- No interactivity
-- No technical indicators
+**Mad2Stock** is a Stock Market Data Analysis and Community Platform focused on the Malaysian market (KLSE). The platform provides:
 
-### Target State:
-- Full TradingView-style interactive chart
-- Timeline selector: 1D, 1W, 1M, 3M, 6M, 1Y, ALL
-- Chart type selector: Candlestick, Line, Area
-- Technical indicators panel
-- Volume subplot
+1. **Comprehensive Company Data** - All ~1,000 KLSE listed companies with real-time pricing, financials, and key metrics
+2. **AI-Powered Signals** - Professional trading signals based on real-time data and news analysis
+3. **Mad2Arena** - AI Trading Competition where different AI models compete (Launch: December 24, 2025)
+4. **AI Chat** - Company-specific Q&A with intelligent insights
+5. **Content Creator** - AI-generated content for social media (Phase 2)
 
-### Layout Structure:
+**Future Expansion**: Other stock markets, Forex, Crypto
+
+---
+
+## Current Status Assessment
+
+### What's Working
+| Component | Status |
+|-----------|--------|
+| Next.js 14 Infrastructure | ✅ |
+| Supabase Database (17 tables) | ✅ |
+| UI Components (shadcn) | ✅ |
+| Arena Page (Demo Mode) | ✅ |
+| 83 Company Reports/PDFs | ✅ |
+| Stock Code Mappings (~959) | ✅ |
+
+### Critical Blockers
+| Issue | Impact | Priority |
+|-------|--------|----------|
+| No real-time stock prices | Platform unusable | 🔴 CRITICAL |
+| Company data not in database | Users can't see companies | 🔴 CRITICAL |
+| Yahoo Finance API failing | No price updates | 🔴 CRITICAL |
+
+### Sections to Remove
+- **Add Companies Page** - Will be removed (backend manual entry only)
+
+---
+
+## Phase 0: Foundation - Real-Time Data Solution (PRIORITY)
+
+### The Core Problem
+We need real-time/near-real-time stock data for ~1,000 KLSE companies. This is the foundation for everything else.
+
+### Solution Options Analysis
+
+#### Option A: Yahoo Finance API (Current - NOT WORKING)
 ```
-┌─────────────────────────────────────────────────────────┐
-│ [Company Header: GAMUDA - Gamuda Berhad]    [KLSE Link] │
-├─────────────────────────────────────────────────────────┤
-│ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐        │
-│ │ Price   │ │ Change  │ │ Volume  │ │ Range   │        │
-│ │ RM 4.50 │ │ +0.12   │ │ 2.5M    │ │ 4.38-   │        │
-│ │         │ │ (+2.7%) │ │         │ │ 4.52    │        │
-│ └─────────┘ └─────────┘ └─────────┘ └─────────┘        │
-├─────────────────────────────────────────────────────────┤
-│ [1D] [1W] [1M] [3M] [6M] [1Y] [ALL]  │ [📊] [📈] [🔧] │
-├─────────────────────────────────────────────────────────┤
-│ ┌─────────────────────────────────────────────────────┐ │
-│ │                                                     │ │
-│ │              MAIN PRICE CHART (400px)               │ │
-│ │           Candlestick with Moving Averages          │ │
-│ │                                                     │ │
-│ ├─────────────────────────────────────────────────────┤ │
-│ │              VOLUME SUBPLOT (80px)                  │ │
-│ ├─────────────────────────────────────────────────────┤ │
-│ │              MACD SUBPLOT (80px) [Optional]         │ │
-│ ├─────────────────────────────────────────────────────┤ │
-│ │              RSI SUBPLOT (60px) [Optional]          │ │
-│ └─────────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────────┤
-│ [YoY Performance Card]    [QoQ Performance Card]        │
-├─────────────────────────────────────────────────────────┤
-│ [Company Info]            [Documents]                   │
-└─────────────────────────────────────────────────────────┘
+Endpoint: https://query1.finance.yahoo.com/v7/finance/quote?symbols={CODE}.KL
 ```
 
-### Implementation Files:
-1. `src/components/charts/TradingViewChart.tsx` - Main chart component
-2. `src/components/charts/ChartToolbar.tsx` - Timeline & type selectors
-3. `src/components/charts/IndicatorPanel.tsx` - Technical indicators toggle
-4. `src/hooks/use-stock-history.ts` - Data fetching hook
-5. `src/app/api/stocks/history/route.ts` - Historical data API
+**Pros:**
+- Free
+- Covers all KLSE stocks
+- 15-20 min delay (acceptable)
+
+**Cons:**
+- Currently failing (needs debugging)
+- Rate limits unclear
+- May block server IPs
+
+**Status:** 🔴 Needs investigation - why are prices NULL?
 
 ---
 
-## Phase 3: Arena Page Redesign (Priority: HIGH)
+#### Option B: KLSE Screener Scraping
+```
+URL: https://www.klsescreener.com/v2/stocks/view/{CODE}
+```
 
-### Current Issues:
-- Chart is not the focal point
-- Users can't see real-time trading action
-- Layout doesn't emphasize the competition aspect
+**Pros:**
+- Most accurate Malaysian data
+- Real-time during market hours
+- All company info available
 
-### Target State:
-- Large, prominent chart showing all 5 AI models' portfolio performance
-- Real-time trade markers on chart
-- Live P&L comparison
-- Stock-specific charts when AI makes trades
+**Cons:**
+- Cloudflare protection
+- May block automated requests
+- Scraping terms of service
 
-### Layout Structure (TradingView-inspired):
+**Implementation:**
+```typescript
+// Use puppeteer/playwright for Cloudflare bypass
+// Or use residential proxy service
+```
+
+---
+
+#### Option C: Bursa Malaysia Official API
+```
+Contact: https://www.bursamalaysia.com/market_information/market_data_solutions
+```
+
+**Pros:**
+- Official data source
+- Most reliable
+- Real-time available
+
+**Cons:**
+- Paid service (need quote)
+- Requires business registration
+
+**Action:** Contact for pricing
+
+---
+
+#### Option D: i3investor.com API/Scraping
+```
+URL: https://klse.i3investor.com/web/stock/overview/{CODE}
+```
+
+**Pros:**
+- Good Malaysian stock data
+- Community sentiment data
+- News integration
+
+**Cons:**
+- Scraping required
+- Rate limits
+
+---
+
+#### Option E: Investing.com Unofficial API
+```
+Endpoint: Through their widget/embed system
+```
+
+**Pros:**
+- Global coverage
+- Free tier available
+
+**Cons:**
+- Unofficial
+- May change without notice
+
+---
+
+#### Option F: TradingView Widget (Display Only)
+```html
+<!-- TradingView Widget BEGIN -->
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+new TradingView.widget({
+  "symbol": "MYX:GAMUDA",
+  "interval": "D",
+  ...
+});
+</script>
+```
+
+**Pros:**
+- Professional charts immediately
+- Real-time data displayed
+- No API needed for display
+
+**Cons:**
+- Cannot store data in our DB
+- Limited customization
+- External dependency
+
+---
+
+### Recommended Hybrid Approach
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Mad2Arena - AI Trading Competition                    [LIVE] 🔴 │
-├───────────────────────────────────┬─────────────────────────────┤
-│                                   │  LEADERBOARD               │
-│                                   │  ┌───────────────────────┐  │
-│    MAIN PERFORMANCE CHART         │  │ 1. 🤖 Claude    +5.2% │  │
-│    (Multi-line: 5 AI models)      │  │ 2. 🤖 DeepSeek +4.8% │  │
-│    Portfolio Value Over Time      │  │ 3. 🤖 ChatGPT  +3.1% │  │
-│    [500px height]                 │  │ 4. 🤖 Grok     +2.4% │  │
-│                                   │  │ 5. 🤖 Gemini   +1.9% │  │
-│    Trade markers: ▲ Buy ▼ Sell    │  └───────────────────────┘  │
-│                                   │                             │
-│                                   │  ACTIVE HOLDINGS            │
-│                                   │  [Selected AI's positions]  │
-├───────────────────────────────────┴─────────────────────────────┤
-│  [1H] [4H] [1D] [1W] [ALL]              [Portfolio] [P&L Chart] │
+│                    DATA ARCHITECTURE                             │
 ├─────────────────────────────────────────────────────────────────┤
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │                   TRADE HISTORY STREAM                      │ │
-│ │  🤖 Claude bought GAMUDA @ RM4.50 (1000 shares)   2min ago │ │
-│ │  🤖 DeepSeek sold ECOWLD @ RM1.25 (+8.2%)         5min ago │ │
-│ │  🤖 ChatGPT bought AEONCR @ RM15.20 (500 shares)  8min ago │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────────────────┤
-│  AI MODEL CARDS (Horizontal scroll or Grid)                     │
-│  [Claude] [DeepSeek] [ChatGPT] [Grok] [Gemini]                 │
-│  Click to see individual model's trades & holdings              │
+│                                                                  │
+│  DISPLAY LAYER (Immediate)                                       │
+│  └─ TradingView Widgets for charts (no backend needed)          │
+│                                                                  │
+│  DATA LAYER (Priority Order)                                    │
+│  └─ PRIMARY: Yahoo Finance API (fix current issue)              │
+│  └─ BACKUP 1: i3investor.com scraping                           │
+│  └─ BACKUP 2: Investing.com unofficial API                      │
+│  └─ BACKUP 3: KLSE Screener (last resort - has protection)      │
+│  └─ Store in Supabase: stock_prices table                       │
+│                                                                  │
+│  STATIC DATA (One-time import)                                  │
+│  └─ Company info: Name, Sector, Description                     │
+│  └─ Source: Manual import from all-klse-companies.txt           │
+│                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Features:
-1. **Multi-line Performance Chart** - All 5 AIs on one chart with different colors
-2. **Trade Markers** - Visual indicators when AI buys/sells
-3. **Real-time Updates** - WebSocket or polling for live data
-4. **AI Comparison** - Side-by-side performance metrics
-5. **Stock Mini-Charts** - Show the stock chart when an AI trades it
+### Phase 0 Tasks
+
+#### 0.1 Debug Yahoo Finance (Day 1-2)
+- [ ] Read and analyze `src/lib/yahoo-finance.ts`
+- [ ] Test API call manually with curl
+- [ ] Check if .KL suffix is correct
+- [ ] Verify response parsing
+- [ ] Fix and test with 5 stocks first
+- [ ] Scale to all stocks
+
+#### 0.2 Import Basic Company Data (Day 2-3)
+- [ ] Parse `data/analysis/all-klse-companies.txt`
+- [ ] Extract: Code, Name, Sector
+- [ ] Import to `companies` table
+- [ ] Verify all ~1000 companies imported
+
+#### 0.3 TradingView Integration (Day 3-4)
+- [ ] Create TradingViewWidget component
+- [ ] Integrate into Company Profile page
+- [ ] Add timeline controls (1D, 1W, 1M, 3M, 6M, 1Y)
+- [ ] Add indicator toggles (RSI, MACD, etc.)
+
+#### 0.4 Remove Add Companies Section (Day 4)
+- [ ] Delete `src/app/add-company/` folder
+- [ ] Remove navigation links
+- [ ] Clean up related API routes
+- [ ] Remove unused database tables (if any)
 
 ---
 
-## Phase 4: Dashboard Enhancement (Priority: MEDIUM)
+## Phase 1: Company Data & Profile
 
-### Current State:
-- No stock charts
-- Only performance metrics and tables
+### 1.1 Company Data Requirements
 
-### Target State:
-- Market overview chart (KLCI or top stocks composite)
-- Mini sparkline charts for top performers
-- Sector performance heatmap
+Based on your Ecoworld example, each company needs:
 
-### Layout Addition:
+| Data Point | Source | Priority |
+|------------|--------|----------|
+| Stock Code | all-klse-companies.txt | HIGH |
+| Company Name | all-klse-companies.txt | HIGH |
+| Current Price | Yahoo Finance / API | HIGH |
+| Price Change (%) | Yahoo Finance / API | HIGH |
+| Volume | Yahoo Finance / API | HIGH |
+| Market Cap | Yahoo Finance / API | HIGH |
+| P/E Ratio | Yahoo Finance / API | MEDIUM |
+| Dividend Yield | Yahoo Finance / API | MEDIUM |
+| 52-Week High/Low | Yahoo Finance / API | MEDIUM |
+| Sector | all-klse-companies.txt | HIGH |
+| Business Description | Manual / Scraped | LOW |
+| Revenue (Latest) | Report files | MEDIUM |
+| Profit (Latest) | Report files | MEDIUM |
+
+### 1.2 Company Listing Page (`/companies`)
+
+**Target UI:**
 ```
-┌─────────────────────────────────────────────────────────┐
-│ MARKET OVERVIEW                                         │
-│ ┌─────────────────────────────────────────────────────┐ │
-│ │    KLCI / Top Movers Composite Chart (200px)        │ │
-│ │    Simple line chart with 1W performance            │ │
-│ └─────────────────────────────────────────────────────┘ │
-├─────────────────────────────────────────────────────────┤
-│ TOP PERFORMERS                                          │
-│ [UWC  ▁▂▃▅▆ +8.2%] [GAMUDA ▃▄▅▆▇ +5.1%] [...]         │
-│ Mini sparkline charts for quick visual                  │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  All Companies                      [Search] [Filter by Sector] │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ CODE    NAME           PRICE    CHANGE   VOLUME    SECTOR   ││
+│  ├─────────────────────────────────────────────────────────────┤│
+│  │ GAMUDA  Gamuda Bhd     4.50     +2.3%    2.5M     Construct ││
+│  │ ECOWLD  Eco World      0.935    -0.5%    1.2M     Property  ││
+│  │ MAYBANK Malayan Bank   9.85     +0.8%    5.1M     Finance   ││
+│  │ ...                                                          ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                         [1] [2] [3] ... [50]                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+### 1.3 Company Profile Page (`/companies/[code]`)
+
+**Target UI:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ECOWLD - Eco World Development Group Bhd           [★ Watch]   │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │ RM 0.935 │ │ -0.53%   │ │ 1.2M Vol │ │ P/E 12.5 │           │
+│  │ Price    │ │ Change   │ │ Volume   │ │ Ratio    │           │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                                                              ││
+│  │           TRADINGVIEW CHART (Full Interactive)              ││
+│  │           [1D] [1W] [1M] [3M] [6M] [1Y] [ALL]               ││
+│  │           Indicators: [RSI] [MACD] [MA] [BB]                ││
+│  │                                                              ││
+│  │                        (400px height)                        ││
+│  │                                                              ││
+│  └─────────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────┤
+│  KEY METRICS                                                    │
+│  ┌─────────────┬─────────────┬─────────────┬─────────────┐     │
+│  │ Market Cap  │ 52W High    │ 52W Low     │ Div Yield   │     │
+│  │ RM 2.5B     │ RM 1.25     │ RM 0.85     │ 2.5%        │     │
+│  └─────────────┴─────────────┴─────────────┴─────────────┘     │
+├─────────────────────────────────────────────────────────────────┤
+│  AI INSIGHTS                                    [Ask AI ▶]      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Based on recent data analysis:                               ││
+│  │ • Revenue grew 15% YoY in latest quarter                    ││
+│  │ • Property sector showing recovery signals                   ││
+│  │ • Technical: RSI at 45 (neutral), MACD bullish crossover    ││
+│  │                                                              ││
+│  │ ⚠️ Disclaimer: This is AI analysis, not investment advice   ││
+│  └─────────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────┤
+│  ABOUT COMPANY                                                  │
+│  Eco World Development Group Berhad is a property developer... │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 1.4 Tasks
+- [ ] Update companies table schema for all required fields
+- [ ] Create data import script for ~1000 companies
+- [ ] Implement company listing with pagination
+- [ ] Integrate TradingView widget in profile
+- [ ] Add key metrics display
+- [ ] Create AI Insights component with disclaimer
 
 ---
 
-## Phase 5: Technical Indicators Implementation
+## Phase 2: AI Signal Section
 
-### Indicators to Implement:
+### 2.1 Signal Architecture
 
-| Indicator | Priority | Description |
-|-----------|----------|-------------|
-| SMA | HIGH | Simple Moving Average (10, 20, 50, 200) |
-| EMA | HIGH | Exponential Moving Average |
-| Volume | HIGH | Volume bars with color coding |
-| MACD | HIGH | Moving Average Convergence Divergence |
-| RSI | HIGH | Relative Strength Index (14) |
-| Bollinger Bands | MEDIUM | Volatility bands |
-| VWAP | MEDIUM | Volume Weighted Average Price |
-| Stochastic | LOW | Momentum oscillator |
-| ATR | LOW | Average True Range |
-
-### Indicator Panel UI:
 ```
-┌─────────────────────────────────────┐
-│ Technical Indicators           [X]  │
-├─────────────────────────────────────┤
-│ OVERLAYS                            │
-│ ☑ SMA (20)  ☐ SMA (50)  ☐ SMA (200)│
-│ ☐ EMA (12)  ☐ EMA (26)             │
-│ ☐ Bollinger Bands                   │
-├─────────────────────────────────────┤
-│ SUBPLOTS                            │
-│ ☑ Volume                            │
-│ ☐ MACD (12, 26, 9)                  │
-│ ☐ RSI (14)                          │
-│ ☐ Stochastic                        │
-└─────────────────────────────────────┘
-```
-
----
-
-## Phase 6: Data Sources & API Integration
-
-### 6.1 Historical Data API
-
-**Endpoint:** `GET /api/stocks/history`
-
-**Query Parameters:**
-- `symbol` - Stock code (e.g., "GAMUDA", "5398")
-- `range` - Time range: "1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "ALL"
-- `interval` - Data interval: "1m", "5m", "15m", "1h", "1d", "1w"
-
-**Response:**
-```json
-{
-  "symbol": "GAMUDA",
-  "data": [
-    {
-      "time": 1702339200,
-      "open": 4.45,
-      "high": 4.52,
-      "low": 4.42,
-      "close": 4.50,
-      "volume": 2500000
-    }
-  ],
-  "meta": {
-    "currency": "MYR",
-    "exchange": "KLSE",
-    "lastUpdated": "2024-12-14T10:30:00Z"
-  }
-}
+┌─────────────────────────────────────────────────────────────────┐
+│                      SIGNAL GENERATION FLOW                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  DATA INPUTS                                                     │
+│  ├─ Real-time stock prices                                      │
+│  ├─ Historical price data (technical analysis)                  │
+│  ├─ Company financials (revenue, profit, margins)               │
+│  ├─ News feeds (RSS, scraped headlines)                         │
+│  └─ Market sentiment indicators                                  │
+│                                                                  │
+│         ▼                                                        │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │              EXPERT TRADER AI (OpenAI GPT-4)                ││
+│  │                                                              ││
+│  │  System Prompt: Professional Trader Persona                  ││
+│  │  + Technical Analysis Rules                                  ││
+│  │  + Risk Management Framework                                 ││
+│  │  + Malaysian Market Context                                  ││
+│  │                                                              ││
+│  └─────────────────────────────────────────────────────────────┘│
+│         ▼                                                        │
+│  SIGNAL OUTPUT                                                   │
+│  ├─ Signal Type: BUY / SELL / HOLD                              │
+│  ├─ Confidence: Strong / Moderate / Weak                        │
+│  ├─ Target Price                                                │
+│  ├─ Stop Loss                                                   │
+│  ├─ Time Horizon: Short / Medium / Long                         │
+│  ├─ Analysis Summary                                            │
+│  ├─ Data Sources Used                                           │
+│  └─ Risk Warnings                                               │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### 6.2 Data Source Integration
+### 2.2 Signal Display Requirements
 
-**Primary: KLSE Screener Scraping**
+Each signal must show:
+1. **Signal Details** - BUY/SELL/HOLD, target, stop loss
+2. **Analysis Basis** - Why this signal was generated
+3. **Data Sources** - What data/news triggered it
+4. **Technical Indicators** - RSI, MACD, MA status
+5. **Fundamental Data** - Revenue trends, P/E comparison
+6. **News Impact** - Related news articles
+7. **Risk Assessment** - Potential downside
+8. **Disclaimer** - Not investment advice
+
+### 2.3 Expert Trader Prompt (Secret Sauce)
+
+**Location:** `src/lib/prompts/expert-trader.ts`
+
 ```typescript
-// Scrape from: https://www.klsescreener.com/v2/stocks/chart/GAMUDA
-// Extract: OHLCV data from embedded JSON
+export const EXPERT_TRADER_PROMPT = `
+You are an Expert Malaysian Stock Market Analyst with 20+ years of experience trading on Bursa Malaysia (KLSE). You combine technical analysis, fundamental analysis, and market sentiment to generate professional trading signals.
+
+## YOUR EXPERTISE
+- Certified Technical Analyst (CMT)
+- Deep understanding of Malaysian market dynamics
+- Experience with KLSE sectors: Banking, Property, Technology, Plantation, Construction
+- Risk management specialist
+
+## ANALYSIS FRAMEWORK
+
+### Technical Analysis (40% weight)
+1. **Trend Analysis**
+   - Identify primary trend (bullish/bearish/sideways)
+   - Support and resistance levels
+   - Moving averages (20, 50, 200 EMA)
+
+2. **Momentum Indicators**
+   - RSI: Overbought (>70), Oversold (<30)
+   - MACD: Signal line crossovers, histogram divergence
+   - Stochastic: %K and %D crossovers
+
+3. **Volume Analysis**
+   - Volume confirmation of price moves
+   - Unusual volume spikes
+   - Volume trend
+
+4. **Chart Patterns**
+   - Head & shoulders, double tops/bottoms
+   - Triangles, flags, wedges
+   - Breakout/breakdown signals
+
+### Fundamental Analysis (35% weight)
+1. **Financial Health**
+   - Revenue growth (YoY, QoQ)
+   - Profit margins
+   - Debt-to-equity ratio
+   - Cash flow status
+
+2. **Valuation**
+   - P/E ratio vs sector average
+   - P/B ratio
+   - Dividend yield
+
+3. **Business Quality**
+   - Market position
+   - Competitive advantages
+   - Management quality
+
+### Market Sentiment (25% weight)
+1. **News Impact**
+   - Company announcements
+   - Sector news
+   - Economic indicators
+
+2. **Market Context**
+   - KLCI trend
+   - Foreign fund flows
+   - Ringgit movement
+
+## SIGNAL GENERATION RULES
+
+### BUY SIGNAL (Strong)
+- Technical: Bullish breakout + RSI < 70 + MACD bullish crossover
+- Fundamental: Revenue/Profit growth > 10% + P/E below sector average
+- Sentiment: Positive news + sector tailwinds
+
+### BUY SIGNAL (Moderate)
+- Technical: Above 50 EMA + RSI 40-60 + Volume increasing
+- Fundamental: Stable financials + reasonable valuation
+- Sentiment: Neutral to slightly positive
+
+### SELL SIGNAL (Strong)
+- Technical: Breakdown below support + RSI > 70 + MACD bearish
+- Fundamental: Declining revenue + deteriorating margins
+- Sentiment: Negative news + sector headwinds
+
+### HOLD SIGNAL
+- Mixed technical signals
+- Waiting for confirmation
+- Sideways price action
+
+## OUTPUT FORMAT
+
+For each analysis, provide:
+1. **SIGNAL**: [BUY/SELL/HOLD] - [STRONG/MODERATE/WEAK]
+2. **ENTRY PRICE**: Current optimal entry
+3. **TARGET PRICE**: Based on resistance/support
+4. **STOP LOSS**: Risk management level
+5. **TIME HORIZON**: [1-2 weeks / 1-3 months / 6+ months]
+
+**ANALYSIS BREAKDOWN**:
+- Technical Score: X/10
+- Fundamental Score: X/10
+- Sentiment Score: X/10
+- Overall Confidence: X%
+
+**KEY FACTORS**:
+1. [Primary reason for signal]
+2. [Secondary supporting factor]
+3. [Third factor]
+
+**RISKS TO CONSIDER**:
+1. [Main risk]
+2. [Secondary risk]
+
+**DATA SOURCES USED**:
+- Price data as of [date]
+- Financial data from [quarter]
+- News: [headline if relevant]
+
+## IMPORTANT DISCLAIMERS
+- This analysis is for educational purposes only
+- Not a recommendation to buy or sell securities
+- Past performance does not guarantee future results
+- Always do your own research
+- Consult a licensed financial advisor
+- Trading involves risk of capital loss
+`;
 ```
 
-**Fallback: Yahoo Finance**
+### 2.4 Signal Page Tasks
+- [ ] Create Expert Trader prompt file
+- [ ] Design signal card component with all required fields
+- [ ] Implement signal generation API endpoint
+- [ ] Add news feed integration (RSS/scraping)
+- [ ] Create notification system for new signals
+- [ ] Add disclaimer prominently on all signal displays
+- [ ] Implement signal history/archive
+
+---
+
+## Phase 3: AI Chat Enhancement
+
+### 3.1 Chat Requirements
+
+**Current Issues:**
+- Not company-specific
+- Generic responses
+- No context awareness
+
+**Target State:**
+- User selects a company first
+- Chat has full context of that company
+- Provides specific insights and data
+- Answers any company-related question
+
+### 3.2 Chat Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  AI CHAT - Company Analysis                                     │
+├─────────────────────────────────────────────────────────────────┤
+│  Select Company: [ECOWLD - Eco World ▼]                        │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ 🤖 Welcome! I'm your AI analyst for Eco World (ECOWLD).    ││
+│  │    I have access to:                                        ││
+│  │    • Real-time stock data                                   ││
+│  │    • Historical financials                                  ││
+│  │    • Recent news and announcements                          ││
+│  │    • Technical indicators                                   ││
+│  │                                                              ││
+│  │    What would you like to know?                             ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  [User]: What's the current financial health of this company?   │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ 🤖 Based on the latest Q3 2024 financial report:           ││
+│  │                                                              ││
+│  │ **Revenue**: RM 2.3B (+15% YoY)                             ││
+│  │ **Net Profit**: RM 180M (+8% YoY)                           ││
+│  │ **Net Margin**: 7.8% (stable)                               ││
+│  │ **Debt/Equity**: 0.65 (healthy)                             ││
+│  │                                                              ││
+│  │ The company shows solid financial health with improving     ││
+│  │ revenue and stable margins. The debt level is manageable... ││
+│  │                                                              ││
+│  │ 📊 Source: Q3 2024 Financial Report                         ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  [Type your question...]                            [Send ▶]    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 3.3 Chat System Prompt
+
 ```typescript
-// Use: yahoo-finance2 npm package
-// Endpoint: chart endpoint with Malaysian stock suffix (.KL)
-// Example: "5398.KL" for GAMUDA
+export const COMPANY_CHAT_PROMPT = (companyData: CompanyData) => `
+You are an AI Financial Analyst assistant for Mad2Stock platform, specialized in Malaysian stock market analysis.
+
+## CURRENT CONTEXT
+You are analyzing: ${companyData.name} (${companyData.code})
+Sector: ${companyData.sector}
+
+## AVAILABLE DATA
+- Current Price: RM ${companyData.price}
+- Price Change: ${companyData.changePercent}%
+- Market Cap: RM ${companyData.marketCap}
+- P/E Ratio: ${companyData.peRatio}
+- 52W High: RM ${companyData.high52w}
+- 52W Low: RM ${companyData.low52w}
+- Latest Revenue: RM ${companyData.revenue}
+- Latest Profit: RM ${companyData.profit}
+
+## YOUR ROLE
+1. Answer questions specifically about this company
+2. Provide data-backed insights
+3. Explain financial metrics in simple terms
+4. Offer technical analysis when asked
+5. Reference specific data sources
+
+## GUIDELINES
+- Always cite the data you're using
+- Be objective and balanced
+- Highlight both opportunities and risks
+- Use Malaysian Ringgit (RM) for all currency
+- Include disclaimers for investment-related answers
+
+## DISCLAIMER (Include when giving analysis)
+"This information is for educational purposes only and should not be considered as investment advice. Please consult a licensed financial advisor before making investment decisions."
+`;
 ```
 
-**Caching Strategy:**
-- Store historical data in Supabase `stock_history` table
-- Refresh daily after market close (5:30pm MYT)
-- Intraday data refreshed every 5 minutes during market hours
+### 3.4 Chat Tasks
+- [ ] Add company selector to chat page
+- [ ] Implement company context injection
+- [ ] Create company-specific system prompts
+- [ ] Add data visualization in chat responses
+- [ ] Implement suggested questions
+- [ ] Add chat history per company
+
+---
+
+## Phase 4: Mad2Arena Production
+
+### 4.1 Current Status
+- Demo mode with dummy data
+- 5 AI participants configured
+- Basic UI complete
+
+### 4.2 Production Requirements
+
+**Competition Start Date: December 24, 2025**
+
+**Pre-Launch Checklist:**
+- [ ] Real stock prices flowing (Phase 0)
+- [ ] AI trading logic implemented
+- [ ] Portfolio tracking working
+- [ ] Leaderboard calculations accurate
+- [ ] Trade history recording
+- [ ] Performance charts with real data
+
+### 4.3 AI Trading Implementation
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AI TRADING FLOW (Per Model)                   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  DAILY ROUTINE (9:00 AM MYT)                                    │
+│  ├─ 1. Fetch market data (all tracked stocks)                   │
+│  ├─ 2. Analyze portfolio performance                            │
+│  ├─ 3. Generate trading decisions via AI API                    │
+│  ├─ 4. Execute trades (simulated)                               │
+│  ├─ 5. Update holdings and P&L                                  │
+│  └─ 6. Log decision reasoning                                   │
+│                                                                  │
+│  TRADING RULES                                                   │
+│  ├─ Initial Capital: RM 10,000                                  │
+│  ├─ Max Position Size: 30% of portfolio                         │
+│  ├─ Trading Fee: 0.15% per trade                                │
+│  ├─ Min Trade Value: RM 100                                     │
+│  └─ Universe: All KLSE stocks                                   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 4.4 Arena Tasks
+- [ ] Create daily trading cron job
+- [ ] Implement AI decision API for each model
+- [ ] Build trade execution system
+- [ ] Create real-time leaderboard updates
+- [ ] Add trade notification stream
+- [ ] Implement portfolio snapshots
+
+---
+
+## Phase 5: Content Creator (LOW PRIORITY)
+
+### 5.1 Basic Plan
+- AI generates social media content based on:
+  - Company signals
+  - News events
+  - Market data
+- User can customize tone and platform
+- Export for Facebook, Twitter, YouTube, etc.
+
+### 5.2 Future Implementation
+- Will be developed after Phases 0-4 are complete
+- Basic UI skeleton exists
+- Full implementation TBD
+
+---
+
+## Sections to Remove
+
+### Add Companies Page Removal
+
+**Files to Delete:**
+- `src/app/add-company/page.tsx`
+- `src/app/add-company/` (entire folder)
+
+**Links to Remove:**
+- Sidebar navigation link
+- Any internal references
+
+**Database Changes:**
+- No tables to remove (companies table stays)
+- Data will be added manually via scripts
 
 ---
 
 ## Implementation Timeline
 
-### Week 1: Foundation
-- [ ] Create TradingViewChart component with basic candlestick
-- [ ] Implement historical data API with Yahoo Finance fallback
-- [ ] Add volume subplot
-- [ ] Create timeline selector component
-
-### Week 2: Company Profile
-- [ ] Replace SVG chart with TradingView component
-- [ ] Add technical indicators (SMA, EMA)
-- [ ] Implement MACD subplot
-- [ ] Add RSI subplot
-
-### Week 3: Arena Redesign
-- [ ] Create multi-line performance chart
-- [ ] Add trade markers on chart
-- [ ] Redesign layout for chart prominence
-- [ ] Implement real-time updates
-
-### Week 4: Polish & Dashboard
-- [ ] Add sparkline charts to dashboard
-- [ ] Market overview widget
-- [ ] Performance optimization
-- [ ] Mobile responsiveness
-
----
-
-## File Structure
-
 ```
-src/
-├── components/
-│   └── charts/
-│       ├── TradingViewChart.tsx      # Main chart component
-│       ├── ChartToolbar.tsx          # Timeline & type selectors
-│       ├── IndicatorPanel.tsx        # Technical indicators UI
-│       ├── VolumeChart.tsx           # Volume subplot
-│       ├── MACDChart.tsx             # MACD subplot
-│       ├── RSIChart.tsx              # RSI subplot
-│       ├── Sparkline.tsx             # Mini inline charts
-│       └── index.ts                  # Exports
-├── hooks/
-│   ├── use-stock-history.ts          # Fetch historical data
-│   ├── use-realtime-quote.ts         # WebSocket/polling quotes
-│   └── use-technical-indicators.ts   # Calculate indicators
-├── lib/
-│   ├── stock-data.ts                 # Data fetching utilities
-│   ├── indicators.ts                 # Technical indicator calculations
-│   └── chart-utils.ts                # Chart helper functions
-└── app/
-    └── api/
-        └── stocks/
-            ├── history/route.ts      # Historical OHLCV data
-            ├── intraday/route.ts     # Intraday data
-            └── indicators/route.ts   # Pre-calculated indicators
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 0: Real-Time Data (Week 1-2)                 🔴 CRITICAL │
+│  ├─ Day 1-2: Debug Yahoo Finance API                            │
+│  ├─ Day 3: Import all company data to database                  │
+│  ├─ Day 4: TradingView widget integration                       │
+│  └─ Day 5: Remove Add Companies section                         │
+├─────────────────────────────────────────────────────────────────┤
+│  PHASE 1: Company Data & Profile (Week 2-3)                     │
+│  ├─ Company listing page with real data                         │
+│  ├─ Company profile with TradingView charts                     │
+│  └─ Key metrics and AI insights display                         │
+├─────────────────────────────────────────────────────────────────┤
+│  PHASE 2: AI Signals (Week 3-4)                                 │
+│  ├─ Expert Trader prompt implementation                         │
+│  ├─ Signal generation system                                    │
+│  └─ Professional signal display with sources                    │
+├─────────────────────────────────────────────────────────────────┤
+│  PHASE 3: AI Chat Enhancement (Week 4-5)                        │
+│  ├─ Company-specific chat context                               │
+│  └─ Enhanced responses with data                                │
+├─────────────────────────────────────────────────────────────────┤
+│  PHASE 4: Arena Production (Before Dec 24, 2025)                │
+│  ├─ AI trading logic                                            │
+│  ├─ Real data integration                                       │
+│  └─ Competition launch                                          │
+├─────────────────────────────────────────────────────────────────┤
+│  PHASE 5: Content Creator (After core complete)                 │
+│  └─ Basic implementation                                        │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Technical Requirements
+## Success Criteria
 
-### Dependencies (Already Installed):
-- `lightweight-charts` - TradingView chart library
-- `recharts` - For simpler charts (Arena performance)
-
-### May Need to Add:
-- `yahoo-finance2` - Yahoo Finance API wrapper
-- `technicalindicators` - Technical indicator calculations
-- `date-fns` - Date manipulation
-
-### Performance Considerations:
-1. Use `useMemo` for indicator calculations
-2. Implement data windowing for large datasets
-3. Lazy load chart components
-4. Use WebWorkers for heavy calculations
-
----
-
-## Success Metrics
-
-1. **Chart Load Time:** < 500ms for initial render
-2. **Data Freshness:** Real-time quotes within 1 minute
-3. **User Engagement:** Increased time on company profile pages
-4. **Mobile Experience:** Fully responsive on tablets and phones
-5. **Indicator Accuracy:** Match TradingView calculations within 0.01%
+| Metric | Target | Current |
+|--------|--------|---------|
+| Companies in database | 1,000+ | 1 |
+| Companies with real-time prices | 1,000+ | 0 |
+| TradingView charts working | Yes | No |
+| Signal generation active | Yes | No |
+| AI Chat company-aware | Yes | No |
+| Arena ready for production | Yes | No (demo) |
 
 ---
 
 ## Risk Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| KLSE Screener blocking | High | Yahoo Finance fallback ready |
-| Rate limiting | Medium | Aggressive caching, request queuing |
-| Large data volume | Medium | Data windowing, pagination |
-| Mobile performance | Medium | Lazy loading, reduced indicators |
+| Risk | Mitigation Strategy |
+|------|---------------------|
+| Yahoo Finance continues failing | Implement KLSE Screener scraping as backup |
+| Rate limiting | Tiered update system (already designed) |
+| Data accuracy | Cross-verify with multiple sources |
+| AI hallucinations | Strict prompts + data grounding |
+| Server costs | Efficient caching + batch operations |
 
 ---
 
-## Approval Checklist
+## Next Immediate Actions
 
-- [ ] Technical feasibility confirmed
-- [ ] Data sources validated
-- [ ] Performance requirements achievable
-- [ ] Timeline realistic
-- [ ] Resources available
+1. **TODAY**: Debug Yahoo Finance API - find why prices are NULL
+2. **TODAY**: If Yahoo fails, implement alternative (KLSE Screener)
+3. **TOMORROW**: Import all ~1000 companies to database
+4. **DAY 3**: Integrate TradingView widget
+5. **DAY 4**: Remove Add Companies section
 
 ---
 
-*Plan Version: 1.0*
+*Plan Version: 3.0*
 *Created: December 14, 2024*
-*Author: Claude Code*
+*Major Update: December 17, 2024*

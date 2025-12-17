@@ -18,13 +18,10 @@ type StockPriceInsert = Database['public']['Tables']['stock_prices']['Insert']
 type PriceUpdateLogInsert = Database['public']['Tables']['price_update_logs']['Insert']
 type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['Update']
 
-// Configuration - Ultra-conservative limits for 30s cron timeout
-const BATCH_SIZE = 20 // Yahoo Finance batch size
-const MAX_STOCKS_PER_TIER = {
-  1: 40, // Core stocks - 2 batches (~6s) - fits in 30s timeout
-  2: 30, // Mid cap - 2 batches (~6s)
-  3: 40, // Small cap - 2 batches (~6s)
-}
+// Configuration - Ultra-conservative limits for 30s cron timeout with rate limiting
+// With sequential processing @ 1.5s/stock, 10 stocks = ~20s (leaves margin for Vercel timeout)
+const MAX_STOCKS_PER_RUN = 10 // Only process 10 stocks per cron invocation
+const TOTAL_TIER_1_STOCKS = 80 // Total Tier 1 stocks to cycle through (8 cron runs to cover all)
 
 interface TierUpdateResult {
   tier: number
@@ -57,8 +54,8 @@ function validateRequest(request: NextRequest): boolean {
   return false
 }
 
-// Get stocks for a specific tier
-async function getStocksForTier(tier: 1 | 2 | 3): Promise<string[]> {
+// Get stocks for a specific tier with rotation support
+async function getStocksForTier(tier: 1 | 2 | 3, offset: number = 0): Promise<string[]> {
   const allCodes = getAllStockCodes()
   const tieredStocks: string[] = []
 
@@ -73,17 +70,32 @@ async function getStocksForTier(tier: 1 | 2 | 3): Promise<string[]> {
     }
   }
 
-  // Limit stocks per tier for API efficiency
-  return tieredStocks.slice(0, MAX_STOCKS_PER_TIER[tier])
+  // Use rotation: slice from offset, wrap around if needed
+  const totalStocks = tieredStocks.length
+  if (totalStocks === 0) return []
+
+  const startIdx = offset % totalStocks
+  const endIdx = startIdx + MAX_STOCKS_PER_RUN
+
+  if (endIdx <= totalStocks) {
+    return tieredStocks.slice(startIdx, endIdx)
+  } else {
+    // Wrap around
+    return [
+      ...tieredStocks.slice(startIdx),
+      ...tieredStocks.slice(0, endIdx - totalStocks)
+    ].slice(0, MAX_STOCKS_PER_RUN)
+  }
 }
 
 // Update prices for a tier using Yahoo Finance batch API
 async function updateTierPrices(
   tier: 1 | 2 | 3,
-  supabase: ReturnType<typeof createAdminClient>
+  supabase: ReturnType<typeof createAdminClient>,
+  offset: number = 0
 ): Promise<TierUpdateResult> {
   const startTime = Date.now()
-  const stocks = await getStocksForTier(tier)
+  const stocks = await getStocksForTier(tier, offset)
 
   if (stocks.length === 0) {
     return {
@@ -222,10 +234,7 @@ export async function GET(request: NextRequest) {
     const logData: PriceUpdateLogInsert = {
       job_id: jobId,
       started_at: now.toISOString(),
-      total_companies: tiersToUpdate.reduce(
-        (sum, tier) => sum + MAX_STOCKS_PER_TIER[tier],
-        0
-      ),
+      total_companies: tiersToUpdate.length * MAX_STOCKS_PER_RUN,
       status: 'running',
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -237,9 +246,17 @@ export async function GET(request: NextRequest) {
   try {
     const results: TierUpdateResult[] = []
 
+    // Calculate offset based on current time (minute of hour)
+    // This ensures different stocks are fetched on each 5-minute cron run
+    // Offset cycles through 0, 10, 20, 30, 40, 50, 60, 70 over 40 minutes
+    const currentMinute = now.getMinutes()
+    const offset = Math.floor(currentMinute / 5) * MAX_STOCKS_PER_RUN
+
+    console.log(`[Cron] Using offset ${offset} for rotation (minute ${currentMinute})`)
+
     // Update each tier
     for (const tier of tiersToUpdate) {
-      const result = await updateTierPrices(tier, supabase)
+      const result = await updateTierPrices(tier, supabase, offset)
       results.push(result)
     }
 
