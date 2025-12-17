@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { STOCK_CODE_MAP, getAllStockCodes, isCore80Stock } from '@/lib/stock-codes'
-import { fetchBatchQuotes, toYahooSymbol, YahooQuoteResult } from '@/lib/yahoo-finance'
+import { getAllStockCodes, isCore80Stock } from '@/lib/stock-codes'
+import { fetchAllKLSEQuotes, checkEODHDStatus } from '@/lib/eodhd-api'
 import {
   TIER_1,
-  TIER_2,
   TIER_3,
   getTiersToUpdate,
-  calculateTier,
   calculateNextUpdate,
-  getTierInterval,
   isMarketHours,
 } from '@/lib/stock-tiers'
 import type { Database } from '@/types/database'
@@ -18,16 +15,16 @@ type StockPriceInsert = Database['public']['Tables']['stock_prices']['Insert']
 type PriceUpdateLogInsert = Database['public']['Tables']['price_update_logs']['Insert']
 type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['Update']
 
-// Configuration - Ultra-conservative limits for 30s cron timeout with rate limiting
-// With sequential processing @ 1.5s/stock, 10 stocks = ~20s (leaves margin for Vercel timeout)
-const MAX_STOCKS_PER_RUN = 10 // Only process 10 stocks per cron invocation
-const TOTAL_TIER_1_STOCKS = 80 // Total Tier 1 stocks to cycle through (8 cron runs to cover all)
+// Configuration for EODHD batch processing
+// EODHD allows 50 symbols per request, but we use 20 for safety
+const BATCH_SIZE = 20
+const BATCH_DELAY_MS = 300 // 300ms between batches
 
-interface TierUpdateResult {
-  tier: number
+interface UpdateResult {
   stocksUpdated: number
   stocksFailed: number
   duration: number
+  failedCodes: string[]
 }
 
 // Security validation
@@ -54,15 +51,13 @@ function validateRequest(request: NextRequest): boolean {
   return false
 }
 
-// Get stocks for a specific tier with rotation support
-async function getStocksForTier(tier: 1 | 2 | 3, offset: number = 0): Promise<string[]> {
+// Get stocks for a specific tier
+function getStocksForTier(tier: 1 | 2 | 3): string[] {
   const allCodes = getAllStockCodes()
   const tieredStocks: string[] = []
 
   for (const code of allCodes) {
     const isCore = isCore80Stock(code)
-    // For simplicity, we use the core 80 status to determine tier
-    // In production, you'd also check market cap from the database
     const stockTier = isCore ? TIER_1 : TIER_3
 
     if (stockTier === tier) {
@@ -70,68 +65,50 @@ async function getStocksForTier(tier: 1 | 2 | 3, offset: number = 0): Promise<st
     }
   }
 
-  // Use rotation: slice from offset, wrap around if needed
-  const totalStocks = tieredStocks.length
-  if (totalStocks === 0) return []
-
-  const startIdx = offset % totalStocks
-  const endIdx = startIdx + MAX_STOCKS_PER_RUN
-
-  if (endIdx <= totalStocks) {
-    return tieredStocks.slice(startIdx, endIdx)
-  } else {
-    // Wrap around
-    return [
-      ...tieredStocks.slice(startIdx),
-      ...tieredStocks.slice(0, endIdx - totalStocks)
-    ].slice(0, MAX_STOCKS_PER_RUN)
-  }
+  return tieredStocks
 }
 
-// Update prices for a tier using Yahoo Finance batch API
-async function updateTierPrices(
+// Update prices using EODHD API
+async function updatePricesWithEODHD(
+  stockCodes: string[],
   tier: 1 | 2 | 3,
-  supabase: ReturnType<typeof createAdminClient>,
-  offset: number = 0
-): Promise<TierUpdateResult> {
+  supabase: ReturnType<typeof createAdminClient>
+): Promise<UpdateResult> {
   const startTime = Date.now()
-  const stocks = await getStocksForTier(tier, offset)
+  const failedCodes: string[] = []
+  let successCount = 0
 
-  if (stocks.length === 0) {
+  if (stockCodes.length === 0) {
     return {
-      tier,
       stocksUpdated: 0,
       stocksFailed: 0,
-      duration: Date.now() - startTime,
+      duration: 0,
+      failedCodes: [],
     }
   }
 
-  console.log(`[Tier ${tier}] Updating ${stocks.length} stocks...`)
+  console.log(`[EODHD Cron] Fetching ${stockCodes.length} stocks (tier ${tier})...`)
 
-  // Fetch prices using Yahoo Finance batch API
-  const result = await fetchBatchQuotes(stocks)
+  // Fetch all quotes using EODHD batch API
+  const quotes = await fetchAllKLSEQuotes(stockCodes, BATCH_SIZE, BATCH_DELAY_MS)
 
   const now = new Date()
   const nextUpdateTime = calculateNextUpdate(tier, now)
-  let successCount = 0
-  let failCount = 0
 
-  // Update successful prices
-  for (const [stockCode, quote] of result.success) {
+  // Update successful quotes in database
+  for (const [stockCode, quote] of quotes) {
     try {
       const priceData: StockPriceInsert = {
         stock_code: stockCode,
-        price: quote.regularMarketPrice,
-        change: quote.regularMarketChange,
-        change_percent: quote.regularMarketChangePercent,
-        previous_close: quote.regularMarketPreviousClose,
-        day_open: quote.regularMarketOpen,
-        day_high: quote.regularMarketDayHigh,
-        day_low: quote.regularMarketDayLow,
-        volume: quote.regularMarketVolume,
-        market_cap: quote.marketCap,
-        pe_ratio: quote.trailingPE,
-        data_source: 'yahoo',
+        price: quote.price,
+        change: quote.change,
+        change_percent: quote.changePercent,
+        previous_close: quote.previousClose,
+        day_open: quote.open,
+        day_high: quote.high,
+        day_low: quote.low,
+        volume: quote.volume,
+        data_source: 'eodhd',
         tier,
         next_update_at: nextUpdateTime.toISOString(),
         scrape_status: 'success',
@@ -143,39 +120,41 @@ async function updateTierPrices(
       successCount++
     } catch (error) {
       console.error(`Failed to update ${stockCode}:`, error)
-      failCount++
+      failedCodes.push(stockCode)
     }
   }
 
-  // Mark failed stocks
-  for (const stockCode of result.failed) {
-    try {
-      const failedData: StockPriceInsert = {
-        stock_code: stockCode,
-        tier,
-        next_update_at: nextUpdateTime.toISOString(),
-        scrape_status: 'failed',
-        error_message: 'Yahoo Finance fetch failed',
-        updated_at: now.toISOString(),
+  // Mark stocks that weren't in the response as failed
+  for (const code of stockCodes) {
+    if (!quotes.has(code) && !failedCodes.includes(code)) {
+      failedCodes.push(code)
+      try {
+        const failedData: StockPriceInsert = {
+          stock_code: code,
+          tier,
+          next_update_at: nextUpdateTime.toISOString(),
+          scrape_status: 'failed',
+          error_message: 'EODHD fetch returned no data',
+          updated_at: now.toISOString(),
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('stock_prices') as any).upsert(failedData, { onConflict: 'stock_code' })
+      } catch {
+        // Ignore
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('stock_prices') as any).upsert(failedData, { onConflict: 'stock_code' })
-      failCount++
-    } catch (error) {
-      console.error(`Failed to mark ${stockCode} as failed:`, error)
     }
   }
 
   const duration = Date.now() - startTime
   console.log(
-    `[Tier ${tier}] Complete: ${successCount} updated, ${failCount} failed in ${duration}ms`
+    `[EODHD Cron] Tier ${tier}: ${successCount} updated, ${failedCodes.length} failed in ${duration}ms`
   )
 
   return {
-    tier,
     stocksUpdated: successCount,
-    stocksFailed: failCount,
+    stocksFailed: failedCodes.length,
     duration,
+    failedCodes,
   }
 }
 
@@ -187,6 +166,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Check EODHD API status first
+  const apiStatus = await checkEODHDStatus()
+  if (!apiStatus.success) {
+    console.error(`[EODHD Cron] API check failed: ${apiStatus.message}`)
+    return NextResponse.json(
+      {
+        success: false,
+        error: `EODHD API error: ${apiStatus.message}`,
+      },
+      { status: 500 }
+    )
+  }
+
   const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(7)}`
   const supabase = createAdminClient()
   const now = new Date()
@@ -194,10 +186,11 @@ export async function GET(request: NextRequest) {
   // Check if we're in market hours (optional - can be disabled for testing)
   const url = new URL(request.url)
   const forceUpdate = url.searchParams.get('force') === 'true'
+  const updateAll = url.searchParams.get('all') === 'true'
   const specificTier = url.searchParams.get('tier')
 
   if (!forceUpdate && !isMarketHours(now)) {
-    console.log('[Cron] Outside market hours, skipping update')
+    console.log('[EODHD Cron] Outside market hours, skipping update')
     return NextResponse.json({
       success: true,
       message: 'Outside market hours',
@@ -208,7 +201,10 @@ export async function GET(request: NextRequest) {
   // Determine which tiers to update
   let tiersToUpdate: (1 | 2 | 3)[]
 
-  if (specificTier) {
+  if (updateAll) {
+    // Update all tiers
+    tiersToUpdate = [1, 2, 3]
+  } else if (specificTier) {
     // Manual trigger for specific tier
     const tier = parseInt(specificTier) as 1 | 2 | 3
     if (tier >= 1 && tier <= 3) {
@@ -221,20 +217,28 @@ export async function GET(request: NextRequest) {
     tiersToUpdate = getTiersToUpdate(now)
   }
 
-  // If no tiers to update (shouldn't happen at 5-minute intervals)
+  // If no tiers to update, default to Tier 1 (core stocks)
   if (tiersToUpdate.length === 0) {
-    // Default to Tier 1 (core stocks)
     tiersToUpdate = [TIER_1]
   }
 
-  console.log(`[Cron] Job ${jobId} starting for tiers: ${tiersToUpdate.join(', ')}`)
+  // Get all stocks for the tiers
+  const allStocksToUpdate: string[] = []
+  for (const tier of tiersToUpdate) {
+    const tierStocks = getStocksForTier(tier)
+    allStocksToUpdate.push(...tierStocks)
+  }
+
+  console.log(
+    `[EODHD Cron] Job ${jobId} starting: ${allStocksToUpdate.length} stocks (tiers: ${tiersToUpdate.join(', ')})`
+  )
 
   // Log job start
   try {
     const logData: PriceUpdateLogInsert = {
       job_id: jobId,
       started_at: now.toISOString(),
-      total_companies: tiersToUpdate.length * MAX_STOCKS_PER_RUN,
+      total_companies: allStocksToUpdate.length,
       status: 'running',
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -244,25 +248,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const results: TierUpdateResult[] = []
-
-    // Calculate offset based on current time (minute of hour)
-    // This ensures different stocks are fetched on each 5-minute cron run
-    // Offset cycles through 0, 10, 20, 30, 40, 50, 60, 70 over 40 minutes
-    const currentMinute = now.getMinutes()
-    const offset = Math.floor(currentMinute / 5) * MAX_STOCKS_PER_RUN
-
-    console.log(`[Cron] Using offset ${offset} for rotation (minute ${currentMinute})`)
+    const results: UpdateResult[] = []
 
     // Update each tier
     for (const tier of tiersToUpdate) {
-      const result = await updateTierPrices(tier, supabase, offset)
-      results.push(result)
+      const tierStocks = getStocksForTier(tier)
+      if (tierStocks.length > 0) {
+        const result = await updatePricesWithEODHD(tierStocks, tier, supabase)
+        results.push(result)
+      }
     }
 
     const executionTime = Date.now() - startTime
     const totalUpdated = results.reduce((sum, r) => sum + r.stocksUpdated, 0)
     const totalFailed = results.reduce((sum, r) => sum + r.stocksFailed, 0)
+    const allFailedCodes = results.flatMap((r) => r.failedCodes)
 
     // Update job log
     try {
@@ -271,6 +271,7 @@ export async function GET(request: NextRequest) {
         execution_time_ms: executionTime,
         successful_updates: totalUpdated,
         failed_updates: totalFailed,
+        failed_codes: allFailedCodes.slice(0, 50), // Limit to first 50
         status: 'completed',
         error_summary:
           totalFailed > 0
@@ -286,19 +287,21 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[Cron] Job ${jobId} completed: ${totalUpdated} updated, ${totalFailed} failed in ${executionTime}ms`
+      `[EODHD Cron] Job ${jobId} completed: ${totalUpdated} updated, ${totalFailed} failed in ${executionTime}ms`
     )
 
     return NextResponse.json({
       success: true,
       jobId,
       marketHours: true,
+      dataSource: 'eodhd',
       tiersUpdated: tiersToUpdate,
       summary: {
+        totalStocks: allStocksToUpdate.length,
         totalUpdated,
         totalFailed,
         executionTimeMs: executionTime,
-        tierResults: results,
+        failedCodes: allFailedCodes.slice(0, 20), // Return first 20 failed codes
       },
     })
   } catch (error) {
@@ -320,7 +323,7 @@ export async function GET(request: NextRequest) {
       console.error('Failed to update job log:', logError)
     }
 
-    console.error(`[Cron] Job ${jobId} failed:`, error)
+    console.error(`[EODHD Cron] Job ${jobId} failed:`, error)
 
     return NextResponse.json(
       {

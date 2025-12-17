@@ -3,16 +3,19 @@
  *
  * Data Provider Priority:
  * 1. Supabase cache (primary) - Persistent database cache
- * 2. KLSE Screener - Web scraping for accurate Malaysian data
- * 3. Yahoo Finance (fallback) - May be rate limited
+ * 2. EODHD API (paid) - Reliable historical data
+ * 3. KLSE Screener - Web scraping for accurate Malaysian data
+ * 4. Yahoo Finance (fallback) - May be rate limited
  *
  * Malaysian stocks use format:
  * - KLSE Screener: numeric code (e.g., 5398 for GAMUDA)
+ * - EODHD: {code}.KLSE (e.g., 5398.KLSE for GAMUDA)
  * - Yahoo Finance: {code}.KL (e.g., 5398.KL for GAMUDA)
  */
 
 import { getStockCode, getCompanyName } from './stock-codes'
 import { createClient } from '@supabase/supabase-js'
+import { fetchEODHDHistory, fetchEODHDQuote } from './eodhd-api'
 
 // Supabase client for server-side operations
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -40,7 +43,7 @@ export interface StockQuote {
   currency: string
   exchange: string
   lastUpdated: string
-  dataSource?: 'klsescreener' | 'yahoo' | 'mock'
+  dataSource?: 'klsescreener' | 'yahoo' | 'eodhd' | 'mock'
 }
 
 export interface StockHistoricalData {
@@ -627,11 +630,42 @@ async function getStaleSupabaseCachedHistory(
 export async function fetchStockQuote(codeOrName: string): Promise<StockQuote | null> {
   console.log(`[Stock API] Fetching quote for: ${codeOrName}`)
 
-  // Try KLSE Screener first (most reliable for Malaysian stocks)
+  // Try KLSE Screener first (most reliable for Malaysian stocks, free, real-time)
   const klseQuote = await fetchKLSEScreenerQuote(codeOrName)
   if (klseQuote) {
     console.log(`[Stock API] ✓ KLSE Screener: ${codeOrName} = RM${klseQuote.price}`)
     return klseQuote
+  }
+
+  // Try EODHD if available (paid, reliable)
+  if (process.env.EODHD_API_KEY) {
+    const eodhQuote = await fetchEODHDQuote(codeOrName)
+    if (eodhQuote) {
+      console.log(`[Stock API] ✓ EODHD: ${codeOrName} = RM${eodhQuote.price}`)
+      return {
+        symbol: eodhQuote.stockCode,
+        name: getCompanyName(eodhQuote.stockCode) || codeOrName.toUpperCase(),
+        price: eodhQuote.price,
+        change: eodhQuote.change,
+        changePercent: eodhQuote.changePercent,
+        previousClose: eodhQuote.previousClose,
+        open: eodhQuote.open,
+        dayHigh: eodhQuote.high,
+        dayLow: eodhQuote.low,
+        volume: eodhQuote.volume,
+        avgVolume: 0,
+        marketCap: 0,
+        pe: null,
+        eps: null,
+        week52High: eodhQuote.high,
+        week52Low: eodhQuote.low,
+        dividendYield: null,
+        currency: 'MYR',
+        exchange: 'KLSE',
+        lastUpdated: eodhQuote.timestamp,
+        dataSource: 'eodhd',
+      }
+    }
   }
 
   // Fallback to Yahoo Finance
@@ -683,7 +717,29 @@ export async function fetchHistoricalData(
 ): Promise<StockHistoricalData[]> {
   console.log(`[Stock API] Fetching history for: ${codeOrName}, period: ${period}`)
 
-  // Use Yahoo Finance for historical data
+  const stockCode = toKLSECode(codeOrName)
+
+  // 1. Check Supabase cache first
+  const cachedData = await getSupabaseCachedHistory(stockCode, period)
+  if (cachedData && cachedData.length > 0) {
+    return cachedData
+  }
+
+  // 2. Try EODHD API (paid, reliable)
+  if (process.env.EODHD_API_KEY) {
+    console.log(`[Stock API] Using EODHD for ${codeOrName}`)
+    const eodhData = await fetchEODHDHistory(stockCode, period)
+    if (eodhData && eodhData.length > 0) {
+      // Cache in Supabase
+      setSupabaseCachedHistory(stockCode, eodhData).catch(err => {
+        console.error(`[Stock API] Failed to cache EODHD data:`, err)
+      })
+      return eodhData
+    }
+  }
+
+  // 3. Fall back to Yahoo Finance (may be rate limited)
+  console.log(`[Stock API] Falling back to Yahoo Finance for ${codeOrName}`)
   return await fetchYahooHistory(codeOrName, period, interval)
 }
 
