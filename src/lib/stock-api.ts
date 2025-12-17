@@ -2,8 +2,9 @@
  * Stock API Service for KLSE (Bursa Malaysia)
  *
  * Data Provider Priority:
- * 1. KLSE Screener (primary) - Web scraping for accurate Malaysian data
- * 2. Yahoo Finance (fallback) - May be rate limited
+ * 1. Supabase cache (primary) - Persistent database cache
+ * 2. KLSE Screener - Web scraping for accurate Malaysian data
+ * 3. Yahoo Finance (fallback) - May be rate limited
  *
  * Malaysian stocks use format:
  * - KLSE Screener: numeric code (e.g., 5398 for GAMUDA)
@@ -11,6 +12,12 @@
  */
 
 import { getStockCode, getCompanyName } from './stock-codes'
+import { createClient } from '@supabase/supabase-js'
+
+// Supabase client for server-side operations
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export interface StockQuote {
   symbol: string
@@ -84,40 +91,129 @@ const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
 
 // ============================================================================
-// IN-MEMORY CACHE FOR HISTORICAL DATA
+// SUPABASE DATABASE CACHE FOR HISTORICAL DATA
 // ============================================================================
-interface CacheEntry {
-  data: StockHistoricalData[]
-  timestamp: number
-}
-
-const historyCache = new Map<string, CacheEntry>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes cache
 
 // Request queue to prevent rate limiting
 const pendingRequests = new Map<string, Promise<StockHistoricalData[]>>()
 let lastYahooRequest = 0
 const MIN_REQUEST_INTERVAL = 1000 // 1 second between requests
 
-function getCacheKey(symbol: string, period: string): string {
-  return `${symbol}-${period}`
+// Period to days mapping for cache staleness check
+const PERIOD_TO_DAYS: Record<string, number> = {
+  '1d': 1,
+  '5d': 5,
+  '1mo': 30,
+  '3mo': 90,
+  '6mo': 180,
+  '1y': 365,
+  '5y': 1825,
 }
 
-function getCachedHistory(symbol: string, period: string): StockHistoricalData[] | null {
-  const key = getCacheKey(symbol, period)
-  const entry = historyCache.get(key)
+/**
+ * Get cached historical data from Supabase
+ */
+async function getSupabaseCachedHistory(
+  stockCode: string,
+  period: string
+): Promise<StockHistoricalData[] | null> {
+  try {
+    const days = PERIOD_TO_DAYS[period] || 30
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
 
-  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
-    console.log(`[Stock API] Cache hit for ${symbol} ${period}`)
-    return entry.data
+    const { data, error } = await supabase
+      .from('stock_history_cache')
+      .select('date, open, high, low, close, volume')
+      .eq('stock_code', stockCode.toUpperCase())
+      .gte('date', startDate.toISOString().split('T')[0])
+      .order('date', { ascending: true })
+
+    if (error) {
+      console.error(`[Stock API] Supabase cache read error:`, error)
+      return null
+    }
+
+    if (!data || data.length === 0) {
+      console.log(`[Stock API] No cached data for ${stockCode} ${period}`)
+      return null
+    }
+
+    // Check if data is stale (more than 1 day old for the most recent entry)
+    const mostRecentDate = new Date(data[data.length - 1].date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // For periods > 1 day, allow up to 1 day staleness
+    const maxStaleDays = period === '1d' ? 0 : 1
+    const daysDiff = Math.floor((today.getTime() - mostRecentDate.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (daysDiff > maxStaleDays) {
+      console.log(`[Stock API] Cached data for ${stockCode} is ${daysDiff} days old, refreshing...`)
+      return null // Will trigger a refresh
+    }
+
+    console.log(`[Stock API] Supabase cache hit for ${stockCode}: ${data.length} records`)
+
+    return data.map(row => ({
+      date: new Date(row.date).toISOString(),
+      open: Number(row.open) || 0,
+      high: Number(row.high) || 0,
+      low: Number(row.low) || 0,
+      close: Number(row.close),
+      volume: Number(row.volume) || 0,
+    }))
+  } catch (error) {
+    console.error(`[Stock API] Supabase cache error:`, error)
+    return null
   }
-
-  return null
 }
 
-function setCachedHistory(symbol: string, period: string, data: StockHistoricalData[]): void {
-  const key = getCacheKey(symbol, period)
-  historyCache.set(key, { data, timestamp: Date.now() })
+/**
+ * Store historical data in Supabase cache
+ */
+async function setSupabaseCachedHistory(
+  stockCode: string,
+  data: StockHistoricalData[]
+): Promise<void> {
+  if (!data || data.length === 0) return
+
+  try {
+    const cleanCode = stockCode.replace('.KL', '').toUpperCase()
+
+    // Prepare records for upsert
+    const records = data.map(item => ({
+      stock_code: cleanCode,
+      date: new Date(item.date).toISOString().split('T')[0],
+      open: item.open,
+      high: item.high,
+      low: item.low,
+      close: item.close,
+      volume: item.volume,
+      updated_at: new Date().toISOString(),
+    }))
+
+    // Upsert in batches to avoid payload limits
+    const batchSize = 100
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize)
+
+      const { error } = await supabase
+        .from('stock_history_cache')
+        .upsert(batch, {
+          onConflict: 'stock_code,date',
+          ignoreDuplicates: false,
+        })
+
+      if (error) {
+        console.error(`[Stock API] Supabase cache write error:`, error)
+      }
+    }
+
+    console.log(`[Stock API] Cached ${records.length} records for ${cleanCode}`)
+  } catch (error) {
+    console.error(`[Stock API] Supabase cache write error:`, error)
+  }
 }
 
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<Response> {
@@ -361,7 +457,8 @@ async function fetchYahooChartQuote(codeOrName: string): Promise<StockQuote | nu
 }
 
 /**
- * Fetch historical data from Yahoo Finance
+ * Fetch historical data from Yahoo Finance with Supabase caching
+ * Flow: Supabase cache → Yahoo Finance → Store in Supabase
  */
 async function fetchYahooHistory(
   codeOrName: string,
@@ -369,12 +466,13 @@ async function fetchYahooHistory(
   interval: string = '1d'
 ): Promise<StockHistoricalData[]> {
   const symbol = toYahooSymbol(codeOrName)
-  const cacheKey = getCacheKey(symbol, period)
+  const stockCode = toKLSECode(codeOrName)
+  const cacheKey = `${stockCode}-${period}`
 
-  // Check cache first
-  const cached = getCachedHistory(symbol, period)
-  if (cached) {
-    return cached
+  // Check Supabase cache first (persistent storage)
+  const cachedData = await getSupabaseCachedHistory(stockCode, period)
+  if (cachedData && cachedData.length > 0) {
+    return cachedData
   }
 
   // Check if there's already a pending request for this data
@@ -403,55 +501,66 @@ async function fetchYahooHistory(
 
       console.log(`[Stock API] Fetching Yahoo history: ${symbol}, period: ${period}`)
 
-    const response = await fetchWithRetry(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Origin': 'https://finance.yahoo.com',
-        'Referer': 'https://finance.yahoo.com/',
-      },
-      cache: 'no-store', // Disable caching for real-time data
-    })
+      const response = await fetchWithRetry(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
+          'Origin': 'https://finance.yahoo.com',
+          'Referer': 'https://finance.yahoo.com/',
+        },
+        cache: 'no-store',
+      })
 
-    if (!response.ok) {
-      console.error(`[Stock API] Yahoo history response not ok: ${response.status}`)
-      return []
-    }
-
-    const data = await response.json()
-    if (data?.chart?.error) {
-      console.error(`[Stock API] Yahoo chart error:`, data.chart.error)
-      return []
-    }
-
-    const result: YahooChartResult = data?.chart?.result?.[0]
-    if (!result?.timestamp || !result?.indicators?.quote?.[0]) {
-      console.error(`[Stock API] Yahoo missing data: timestamp=${!!result?.timestamp}, quotes=${!!result?.indicators?.quote?.[0]}`)
-      return []
-    }
-
-    const { timestamp } = result
-    const quote = result.indicators.quote[0]
-
-    const history: StockHistoricalData[] = []
-    for (let i = 0; i < timestamp.length; i++) {
-      if (quote.close?.[i] != null) {
-        history.push({
-          date: new Date(timestamp[i] * 1000).toISOString(),
-          open: quote.open?.[i] || 0,
-          high: quote.high?.[i] || 0,
-          low: quote.low?.[i] || 0,
-          close: quote.close[i],
-          volume: quote.volume?.[i] || 0,
-        })
+      if (!response.ok) {
+        console.error(`[Stock API] Yahoo history response not ok: ${response.status}`)
+        // If rate limited, try to return stale cache data as fallback
+        if (response.status === 429) {
+          console.log(`[Stock API] Rate limited, attempting to use any available cached data`)
+          const staleData = await getStaleSupabaseCachedHistory(stockCode, period)
+          if (staleData && staleData.length > 0) {
+            console.log(`[Stock API] Using stale cached data as fallback`)
+            return staleData
+          }
+        }
+        return []
       }
-    }
 
-    console.log(`[Stock API] Yahoo: Retrieved ${history.length} data points`)
+      const data = await response.json()
+      if (data?.chart?.error) {
+        console.error(`[Stock API] Yahoo chart error:`, data.chart.error)
+        return []
+      }
 
-      // Cache the results
+      const result: YahooChartResult = data?.chart?.result?.[0]
+      if (!result?.timestamp || !result?.indicators?.quote?.[0]) {
+        console.error(`[Stock API] Yahoo missing data: timestamp=${!!result?.timestamp}, quotes=${!!result?.indicators?.quote?.[0]}`)
+        return []
+      }
+
+      const { timestamp } = result
+      const quote = result.indicators.quote[0]
+
+      const history: StockHistoricalData[] = []
+      for (let i = 0; i < timestamp.length; i++) {
+        if (quote.close?.[i] != null) {
+          history.push({
+            date: new Date(timestamp[i] * 1000).toISOString(),
+            open: quote.open?.[i] || 0,
+            high: quote.high?.[i] || 0,
+            low: quote.low?.[i] || 0,
+            close: quote.close[i],
+            volume: quote.volume?.[i] || 0,
+          })
+        }
+      }
+
+      console.log(`[Stock API] Yahoo: Retrieved ${history.length} data points`)
+
+      // Store in Supabase cache (async, don't wait)
       if (history.length > 0) {
-        setCachedHistory(symbol, period, history)
+        setSupabaseCachedHistory(stockCode, history).catch(err => {
+          console.error(`[Stock API] Background cache write failed:`, err)
+        })
       }
 
       return history
@@ -468,6 +577,43 @@ async function fetchYahooHistory(
   pendingRequests.set(cacheKey, requestPromise)
 
   return requestPromise
+}
+
+/**
+ * Get stale cached data (fallback when rate limited)
+ * Returns data regardless of age
+ */
+async function getStaleSupabaseCachedHistory(
+  stockCode: string,
+  period: string
+): Promise<StockHistoricalData[] | null> {
+  try {
+    const days = PERIOD_TO_DAYS[period] || 30
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days - 30) // Look back extra 30 days
+
+    const { data, error } = await supabase
+      .from('stock_history_cache')
+      .select('date, open, high, low, close, volume')
+      .eq('stock_code', stockCode.toUpperCase())
+      .gte('date', startDate.toISOString().split('T')[0])
+      .order('date', { ascending: true })
+
+    if (error || !data || data.length === 0) {
+      return null
+    }
+
+    return data.map(row => ({
+      date: new Date(row.date).toISOString(),
+      open: Number(row.open) || 0,
+      high: Number(row.high) || 0,
+      low: Number(row.low) || 0,
+      close: Number(row.close),
+      volume: Number(row.volume) || 0,
+    }))
+  } catch {
+    return null
+  }
 }
 
 // ============================================================================
