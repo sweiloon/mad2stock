@@ -211,7 +211,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "ARBB": "7181",
   "ARKA": "7218",
   "ARMADA": "5210",
-  "ARTRONIQ": "0189",
+  "ARTRONIQ": "0038",
   "ASDION": "0068",
   "ASB": "1481",
   "ASIABRN": "7203",
@@ -851,6 +851,121 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   // Z
   "ZETRIX": "0138",
   "ZHULIAN": "5131",
+
+  // ============================================================================
+  // ACE MARKET ADDITIONS (December 2024)
+  // ============================================================================
+
+  // A - ACE
+  "AUMAS2": "0098",
+
+  // B - ACE
+  "BTECH": "0011",
+
+  // D - ACE
+  "DFX": "0131",
+  "DGB2": "0152",
+
+  // E - ACE
+  "EDUSPEC": "0107",
+  "EFRAME": "0227",
+  "ERDASAN": "0072",
+
+  // F - ACE
+  "FAST": "0084",
+  "FOCUS": "0116",
+
+  // G - ACE
+  "GLXT": "0284",
+  "GOCEAN": "0074",
+
+  // H - ACE
+  "HEXCAP": "0035",
+  "HHHCORP": "0160",
+
+  // I - ACE
+  "INNITY": "0147",
+
+  // K - ACE
+  "K1": "0111",
+  "KGROUP": "0036",
+  "KHJB": "0210",
+
+  // L - ACE
+  "LAMBO": "0018",
+  "LYC": "0075",
+
+  // M - ACE
+  "MGRC": "0155",
+  "MLAB": "0085",
+  "MMAG": "0034",
+  "MNC": "0103",
+  "MPAY": "0156",
+  "MQTECH": "0070",
+  "MTEC2": "0295",
+  "MTOUCHE": "0092",
+
+  // N - ACE
+  "N2N": "0108",
+  "NETX": "0020",
+  "NOVATECH": "0017",
+
+  // O - ACE
+  "OPPSTAR": "0275",
+  "OSKVI": "0053",
+
+  // P - ACE
+  "PARLO": "0022",
+  "PASUKGB": "0177",
+  "PINEAPP": "0006",
+  "PLABS": "0171",
+  "PMW": "0379",
+  "PRIVA": "0123",
+  "PUC": "0007",
+
+  // R - ACE
+  "RAMSSOL2": "0236",
+
+  // S - ACE
+  "SALIRAN": "0346",
+  "SBH": "0300",
+  "SCC": "0158",
+  "SCOPE": "0028",
+  "SEDANIA": "0178",
+  "SERSOL": "0055",
+  "SMETRIC": "0203",
+  "SOLUTN": "0093",
+  "SRIDGE": "0129",
+  "STRAITS": "0080",
+  "SUNVIEW": "0262",
+  "SUNZEN": "0148",
+  "SYSTECH": "0050",
+
+  // T - ACE
+  "TAGHILL": "0241",
+  "TCS": "0221",
+  "TDEX": "0132",
+
+  // U - ACE
+  "UCREST": "0005",
+
+  // V - ACE
+  "VINVEST": "0069",
+  "VSOLAR": "0066",
+
+  // W - ACE
+  "WESTRVR": "0353",
+
+  // X - ACE
+  "XOXNET": "0140",
+
+  // Y - ACE
+  "YBS": "0025",
+  "YEWLEE": "0248",
+  "YGL": "0086",
+
+  // Z - ACE
+  "ZENTECH": "0094",
 }
 
 // Core 80 company codes for Tier 1 identification

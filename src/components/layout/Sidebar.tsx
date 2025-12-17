@@ -10,7 +10,6 @@ import {
   Building2,
   TrendingUp,
   MessageSquare,
-  Plus,
   Megaphone,
   Settings,
   Activity,
@@ -48,7 +47,6 @@ const navigation = [
   { name: "Companies", href: "/companies", icon: Building2, description: "All listings" },
   { name: "Signals", href: "/signals", icon: TrendingUp, description: "Live alerts" },
   { name: "AI Chat", href: "/chat", icon: MessageSquare, description: "Analysis assistant" },
-  { name: "Add Company", href: "/add-company", icon: Plus, description: "New listing" },
   { name: "Content", href: "/content", icon: Megaphone, description: "Creator studio" },
 ]
 

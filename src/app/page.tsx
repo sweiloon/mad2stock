@@ -43,6 +43,7 @@ import {
   getAllSectors,
   getSectorStats
 } from "@/lib/company-data"
+import { TradingViewMarketOverview } from "@/components/TradingViewWidget"
 
 // Performance Categories
 const PERFORMANCE_CATEGORIES = [
@@ -622,6 +623,24 @@ export default function DashboardPage() {
           </Card>
         </div>
 
+        {/* Market Overview Chart */}
+        <Card className="trading-card">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-base">KLSE Market Overview</CardTitle>
+                <p className="text-xs text-muted-foreground">Top Malaysian stocks live chart</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 p-0">
+            <TradingViewMarketOverview theme="dark" height={400} />
+          </CardContent>
+        </Card>
+
         {/* Quick Actions */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
           <Link
@@ -647,19 +666,6 @@ export default function DashboardPage() {
             <div>
               <p className="text-sm font-medium">AI Analysis</p>
               <p className="text-xs text-muted-foreground">Smart insights</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/add-company"
-            className="group flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:border-[#42a5f5]/50 transition-all"
-          >
-            <div className="h-10 w-10 rounded-lg bg-[#42a5f5]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Target className="h-5 w-5 text-[#42a5f5]" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Add Company</p>
-              <p className="text-xs text-muted-foreground">New listing</p>
             </div>
           </Link>
 

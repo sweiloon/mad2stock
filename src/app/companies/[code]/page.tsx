@@ -29,6 +29,7 @@ import { getStockCode } from "@/lib/stock-codes"
 import { useCachedStockPrice, formatLastUpdated } from "@/hooks/use-cached-prices"
 import { LastUpdatedBadge, LastUpdatedDot } from "@/components/LastUpdatedBadge"
 import { COMPANY_DATA, getCompanyByCode, hasFinancialData } from "@/lib/company-data"
+import { TradingViewWidget, TradingViewTechnicalAnalysis } from "@/components/TradingViewWidget"
 
 // ============================================================================
 // TYPES
@@ -49,10 +50,6 @@ interface CompanyInfo {
   qoqCategory: number
 }
 
-interface PricePoint {
-  date: string
-  price: number
-}
 
 // ============================================================================
 // CONSTANTS
@@ -88,19 +85,6 @@ function getCompanyInfo(code: string): CompanyInfo | null {
   }
 }
 
-// Generate mock price history
-function generateMockPriceHistory(basePrice: number): PricePoint[] {
-  const points: PricePoint[] = []
-  const months = ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-  let price = basePrice * 0.85
-
-  for (const month of months) {
-    price = price * (1 + (Math.random() * 0.1 - 0.02))
-    points.push({ date: month, price: Math.round(price * 100) / 100 })
-  }
-
-  return points
-}
 
 // ============================================================================
 // COMPONENTS
@@ -265,58 +249,6 @@ function PerformanceCard({ title, category, revenueChange, profitChange }: {
   )
 }
 
-function PriceChart({ data, isPositive }: { data: PricePoint[]; isPositive: boolean }) {
-  if (data.length === 0) {
-    return (
-      <div className="h-48 flex items-center justify-center text-muted-foreground">
-        No chart data available
-      </div>
-    )
-  }
-
-  const prices = data.map((d) => d.price)
-  const min = Math.min(...prices) * 0.98
-  const max = Math.max(...prices) * 1.02
-  const range = max - min || 1
-
-  const points = data.map((d, i) => {
-    const x = (i / (data.length - 1)) * 100
-    const y = 100 - ((d.price - min) / range) * 80
-    return `${x},${y}`
-  }).join(" L")
-
-  const areaPoints = `0,100 L${points} L100,100 Z`
-  const color = isPositive ? "#10b981" : "#ef4444"
-
-  return (
-    <div className="h-48 relative">
-      <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={color} stopOpacity="0.05" />
-          </linearGradient>
-        </defs>
-        {/* Grid */}
-        {[20, 40, 60, 80].map((y) => (
-          <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="currentColor" strokeOpacity="0.1" className="text-border" />
-        ))}
-        {/* Area */}
-        <path d={`M${areaPoints}`} fill="url(#chartGradient)" />
-        {/* Line */}
-        <path d={`M${points}`} fill="none" stroke={color} strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-        {/* End dot */}
-        <circle cx="100" cy={100 - ((prices[prices.length - 1] - min) / range) * 80} r="1" fill={color} />
-      </svg>
-      {/* Labels */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-muted-foreground pt-2 border-t">
-        {data.filter((_, i) => i === 0 || i === Math.floor(data.length / 2) || i === data.length - 1).map((d, i) => (
-          <span key={i}>{d.date}</span>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 function DocumentsSection({ code }: { code: string }) {
   const { documents, loading } = useCompanyDocuments(code)
@@ -414,10 +346,6 @@ export default function CompanyProfilePage() {
     dataSource: cachedPrice.dataSource,
   } : null
 
-  // Generate mock price history
-  const priceHistory = generateMockPriceHistory(stockData?.price || 2.5)
-  const priceIsPositive = (stockData?.change ?? 0) >= 0 || priceHistory[priceHistory.length - 1].price >= priceHistory[0].price
-
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -495,21 +423,43 @@ export default function CompanyProfilePage() {
               />
             </div>
 
-            {/* Price Chart */}
+            {/* TradingView Chart */}
             <Card>
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    Price History (6 Months)
-                  </CardTitle>
-                  <div className={cn("text-lg font-bold", priceIsPositive ? "text-emerald-500" : "text-red-500")}>
-                    {priceIsPositive ? "+" : ""}{((priceHistory[priceHistory.length - 1].price - priceHistory[0].price) / priceHistory[0].price * 100).toFixed(2)}%
-                  </div>
-                </div>
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  Price Chart
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <PriceChart data={priceHistory} isPositive={priceIsPositive} />
+              <CardContent className="p-0">
+                <TradingViewWidget
+                  symbol={code}
+                  stockCode={stockCode}
+                  height={450}
+                  theme="dark"
+                  interval="D"
+                  showToolbar={true}
+                  showDetails={false}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Technical Analysis */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Technical Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <TradingViewTechnicalAnalysis
+                  symbol={code}
+                  stockCode={stockCode}
+                  height={350}
+                  theme="dark"
+                  interval="1D"
+                />
               </CardContent>
             </Card>
 
