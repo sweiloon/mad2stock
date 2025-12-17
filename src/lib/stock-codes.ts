@@ -95,7 +95,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "NTPM": "5066",
 
   // P - Core
-  "PMCK": "3344",
+  "PMCK": "0363",
   "POHKONG": "5080",
   "POHUAT": "7088",
   "PRKCORP": "8346",
@@ -311,7 +311,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "CPETECH": "5317",
   "CREABIZ": "0283",
   "CSCSTEL": "5094",
-  "CTOS": "5765",
+  "CTOS": "5301",
   "CVIEW": "5049",
 
   // D
@@ -690,7 +690,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "PHARMA": "7081",
   "PIE": "7095",
   "PJBUMI": "0366",
-  "PKFACB": "0363",
   "PLENITU": "5075",
   "PLINTAS": "5320",
   "PMBTECH": "7172",

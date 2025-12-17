@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getAllStockCodes, isCore80Stock } from '@/lib/stock-codes'
-import { fetchEODHDBatchQuotes, checkEODHDStatus } from '@/lib/eodhd-api'
+import { fetchHybridBatchQuotes } from '@/lib/hybrid-stock-api'
+import { checkEODHDStatus } from '@/lib/eodhd-api'
 import {
   TIER_1,
   TIER_3,
@@ -38,6 +39,8 @@ interface UpdateResult {
     totalBatches: number
     parallelGroups: number
     avgBatchTime: number
+    eodhd?: number
+    yahoo?: number
   }
 }
 
@@ -103,20 +106,20 @@ function getStocksForRotation(offset: number, limit: number): { code: string; ti
 }
 
 // ============================================================================
-// EODHD EOD PRICE UPDATE
+// HYBRID PRICE UPDATE (EODHD + Yahoo Finance Fallback)
 // ============================================================================
 
 /**
- * Update prices using EODHD EOD API
- * EODHD provides end-of-day data for Malaysian stocks (not real-time)
- * Parallelization is handled internally by fetchEODHDBatchQuotes
+ * Update prices using Hybrid approach
+ * Primary: EODHD EOD API (~707 stocks)
+ * Fallback: Yahoo Finance v8 Chart API (~88 additional stocks)
+ * This achieves ~99% coverage of KLSE stocks
  */
-async function updatePricesEOD(
+async function updatePricesHybrid(
   stocks: { code: string; tier: 1 | 3 }[],
   supabase: ReturnType<typeof createAdminClient>
 ): Promise<UpdateResult> {
   const startTime = Date.now()
-  const failedCodes: string[] = []
   let successCount = 0
 
   if (stocks.length === 0) {
@@ -130,56 +133,51 @@ async function updatePricesEOD(
   }
 
   const stockCodes = stocks.map(s => s.code)
-  const stockMap = new Map(stocks.map(s => [s.code, s]))
+  const stockMap = new Map(stocks.map(s => [s.code.toUpperCase(), s]))
 
-  console.log(`[EODHD] Fetching EOD prices for ${stockCodes.length} stocks`)
+  console.log(`[Hybrid] Fetching prices for ${stockCodes.length} stocks`)
 
-  // Fetch all quotes - parallelization handled in eodhd-api.ts
+  // Fetch all quotes using hybrid approach (EODHD + Yahoo fallback)
   const fetchStartTime = Date.now()
-  const allQuotes = await fetchEODHDBatchQuotes(stockCodes)
+  const hybridResult = await fetchHybridBatchQuotes(stockCodes)
   const fetchDuration = Date.now() - fetchStartTime
 
-  console.log(`[EODHD] Fetched ${allQuotes.size}/${stockCodes.length} quotes in ${fetchDuration}ms`)
-
-  // Track failed codes - stocks without quotes
-  for (const code of stockCodes) {
-    if (!allQuotes.has(code.toUpperCase())) {
-      failedCodes.push(code)
-    }
-  }
+  console.log(`[Hybrid] Fetched ${hybridResult.quotes.size}/${stockCodes.length} quotes in ${fetchDuration}ms`)
+  console.log(`[Hybrid] Sources: EODHD=${hybridResult.stats.eodhd}, Yahoo=${hybridResult.stats.yahoo}, Failed=${hybridResult.stats.failed}`)
 
   // Prepare database records
   const now = new Date()
   const dbRecords: StockPriceInsert[] = []
 
-  for (const stock of stocks) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const quote = allQuotes.get(stock.code.toUpperCase()) as any
+  for (const [code, quote] of hybridResult.quotes) {
+    const stock = stockMap.get(code)
+    if (!stock) continue
+
     const nextUpdateTime = calculateNextUpdate(stock.tier, now)
 
-    if (quote) {
-      dbRecords.push({
-        stock_code: stock.code,
-        price: quote.price,
-        change: quote.change,
-        change_percent: quote.changePercent,
-        previous_close: quote.previousClose,
-        day_open: quote.open,
-        day_high: quote.high,
-        day_low: quote.low,
-        volume: quote.volume,
-        data_source: 'eodhd',
-        tier: stock.tier,
-        next_update_at: nextUpdateTime.toISOString(),
-        scrape_status: 'success',
-        error_message: null,
-        updated_at: now.toISOString(),
-      })
-    }
+    dbRecords.push({
+      stock_code: stock.code,
+      price: quote.price,
+      change: quote.change,
+      change_percent: quote.changePercent,
+      previous_close: quote.previousClose,
+      day_open: quote.open,
+      day_high: quote.high,
+      day_low: quote.low,
+      volume: quote.volume,
+      data_source: quote.dataSource, // Now correctly tracks 'eodhd' or 'yahoo'
+      tier: stock.tier,
+      next_update_at: nextUpdateTime.toISOString(),
+      scrape_status: 'success',
+      error_message: null,
+      updated_at: now.toISOString(),
+    })
   }
 
   // Batch upsert to database
   const dbStartTime = Date.now()
+  const dbFailedCodes: string[] = []
+
   for (let i = 0; i < dbRecords.length; i += DB_BATCH_SIZE) {
     const batch = dbRecords.slice(i, i + DB_BATCH_SIZE)
     try {
@@ -188,32 +186,37 @@ async function updatePricesEOD(
         .upsert(batch, { onConflict: 'stock_code' })
 
       if (error) {
-        console.error(`[EODHD] DB batch ${Math.floor(i / DB_BATCH_SIZE) + 1} error:`, error)
-        batch.forEach(r => failedCodes.push(r.stock_code))
+        console.error(`[Hybrid] DB batch ${Math.floor(i / DB_BATCH_SIZE) + 1} error:`, error)
+        batch.forEach(r => dbFailedCodes.push(r.stock_code))
       } else {
         successCount += batch.length
       }
     } catch (error) {
-      console.error(`[EODHD] DB batch error:`, error)
-      batch.forEach(r => failedCodes.push(r.stock_code))
+      console.error(`[Hybrid] DB batch error:`, error)
+      batch.forEach(r => dbFailedCodes.push(r.stock_code))
     }
   }
 
   const dbDuration = Date.now() - dbStartTime
   const totalDuration = Date.now() - startTime
 
-  console.log(`[EODHD] DB writes: ${successCount} records in ${dbDuration}ms`)
-  console.log(`[EODHD] Total: ${successCount} updated, ${failedCodes.length} failed in ${totalDuration}ms`)
+  // Combine API failures and DB failures
+  const allFailedCodes = [...hybridResult.stats.failedCodes, ...dbFailedCodes]
+
+  console.log(`[Hybrid] DB writes: ${successCount} records in ${dbDuration}ms`)
+  console.log(`[Hybrid] Total: ${successCount} updated, ${allFailedCodes.length} failed in ${totalDuration}ms`)
 
   return {
     stocksUpdated: successCount,
-    stocksFailed: failedCodes.length,
+    stocksFailed: allFailedCodes.length,
     duration: totalDuration,
-    failedCodes,
+    failedCodes: allFailedCodes,
     batchStats: {
       totalBatches: 1,
       parallelGroups: 1,
-      avgBatchTime: fetchDuration
+      avgBatchTime: fetchDuration,
+      eodhd: hybridResult.stats.eodhd,
+      yahoo: hybridResult.stats.yahoo,
     }
   }
 }
@@ -240,7 +243,7 @@ export async function GET(request: NextRequest) {
 
   // Check if we're in market hours (skip if force=true or test=true)
   if (!forceUpdate && !testMode && !isMarketHours(now)) {
-    console.log('[EODHD Cron] Outside market hours, skipping update')
+    console.log('[Hybrid Cron] Outside market hours, skipping update')
     return NextResponse.json({
       success: true,
       message: 'Outside market hours (9am-5pm MYT, Mon-Fri)',
@@ -250,14 +253,12 @@ export async function GET(request: NextRequest) {
   }
 
   // Check EODHD API status first (skip in test mode)
+  // Note: Yahoo Finance fallback will still work if EODHD is down
   if (!testMode) {
     const apiStatus = await checkEODHDStatus()
     if (!apiStatus.success) {
-      console.error(`[EODHD Cron] API check failed: ${apiStatus.message}`)
-      return NextResponse.json(
-        { success: false, error: `EODHD API error: ${apiStatus.message}` },
-        { status: 500 }
-      )
+      console.warn(`[Hybrid Cron] EODHD API check failed: ${apiStatus.message}, will rely more on Yahoo fallback`)
+      // Don't fail here - Yahoo fallback can still provide data
     }
   }
 
@@ -282,10 +283,10 @@ export async function GET(request: NextRequest) {
 
   const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(7)}`
   console.log(
-    `[EODHD Cron] Job ${jobId}: Updating ${stocksToUpdate.length} stocks (offset: ${offset}/${totalStocks})`
+    `[Hybrid Cron] Job ${jobId}: Updating ${stocksToUpdate.length} stocks (offset: ${offset}/${totalStocks})`
   )
   console.log(
-    `[EODHD Cron] Parallel config: ${STOCKS_PER_RUN} stocks, ${BATCH_SIZE}/batch, ${PARALLEL_BATCHES} parallel`
+    `[Hybrid Cron] Using EODHD (primary) + Yahoo Finance (fallback) for ~99% coverage`
   )
 
   // Log job start
@@ -303,8 +304,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Update stocks using parallel processing
-    const result = await updatePricesEOD(stocksToUpdate, supabase)
+    // Update stocks using hybrid approach (EODHD + Yahoo fallback)
+    const result = await updatePricesHybrid(stocksToUpdate, supabase)
 
     const executionTime = Date.now() - startTime
 
@@ -326,14 +327,19 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      `[EODHD Cron] Job ${jobId} completed: ${result.stocksUpdated} updated in ${executionTime}ms`
+      `[Hybrid Cron] Job ${jobId} completed: ${result.stocksUpdated} updated in ${executionTime}ms`
     )
 
     return NextResponse.json({
       success: true,
       jobId,
       marketHours: true,
-      dataSource: 'eodhd',
+      dataSource: 'hybrid',
+      dataSources: {
+        eodhd: result.batchStats.eodhd || 0,
+        yahoo: result.batchStats.yahoo || 0,
+        failed: result.stocksFailed,
+      },
       parallelProcessing: {
         enabled: true,
         stocksPerRun: STOCKS_PER_RUN,
@@ -372,7 +378,7 @@ export async function GET(request: NextRequest) {
       console.error('Failed to update job log:', logError)
     }
 
-    console.error(`[EODHD Cron] Job ${jobId} failed:`, error)
+    console.error(`[Hybrid Cron] Job ${jobId} failed:`, error)
 
     return NextResponse.json(
       { success: false, jobId, error: error instanceof Error ? error.message : 'Unknown error' },
