@@ -189,7 +189,65 @@ export async function fetchEODHDBatchQuotes(stockCodes: string[]): Promise<Map<s
 }
 
 /**
+ * Calculate date range for historical data with buffer for weekends/holidays
+ * Returns dates in YYYY-MM-DD format
+ */
+function calculateDateRange(period: string): { fromDate: string; toDate: string } {
+  const endDate = new Date()
+  const startDate = new Date()
+
+  // Add buffer days to account for weekends, holidays, and ensure we get enough data
+  switch (period) {
+    case '1d':
+      // For 1 day view, get last 5 trading days (covers weekends)
+      startDate.setDate(startDate.getDate() - 5)
+      break
+    case '5d':
+      // For 5 day view, get last 10 calendar days
+      startDate.setDate(startDate.getDate() - 10)
+      break
+    case '1mo':
+      // For 1 month, add 5 day buffer
+      startDate.setMonth(startDate.getMonth() - 1)
+      startDate.setDate(startDate.getDate() - 5)
+      break
+    case '3mo':
+      // For 3 months, add 7 day buffer
+      startDate.setMonth(startDate.getMonth() - 3)
+      startDate.setDate(startDate.getDate() - 7)
+      break
+    case '6mo':
+      // For 6 months, add 10 day buffer
+      startDate.setMonth(startDate.getMonth() - 6)
+      startDate.setDate(startDate.getDate() - 10)
+      break
+    case '1y':
+      // For 1 year, add 2 weeks buffer
+      startDate.setFullYear(startDate.getFullYear() - 1)
+      startDate.setDate(startDate.getDate() - 14)
+      break
+    case '5y':
+      // For 5 years, add 1 month buffer
+      startDate.setFullYear(startDate.getFullYear() - 5)
+      startDate.setMonth(startDate.getMonth() - 1)
+      break
+    case 'max':
+      // For max, go back 20 years (EODHD typically has 20+ years of data)
+      startDate.setFullYear(startDate.getFullYear() - 20)
+      break
+    default:
+      startDate.setMonth(startDate.getMonth() - 1)
+  }
+
+  return {
+    fromDate: startDate.toISOString().split('T')[0],
+    toDate: endDate.toISOString().split('T')[0],
+  }
+}
+
+/**
  * Fetch historical OHLCV data for charts
+ * Supports periods: 1d, 5d, 1mo, 3mo, 6mo, 1y, 5y, max
  */
 export async function fetchEODHDHistory(
   stockCode: string,
@@ -202,43 +260,11 @@ export async function fetchEODHDHistory(
 
   try {
     const symbol = toEODHDSymbol(stockCode)
-
-    // Calculate date range based on period
-    const endDate = new Date()
-    const startDate = new Date()
-
-    switch (period) {
-      case '1d':
-        startDate.setDate(startDate.getDate() - 1)
-        break
-      case '5d':
-        startDate.setDate(startDate.getDate() - 7) // Extra days for weekends
-        break
-      case '1mo':
-        startDate.setMonth(startDate.getMonth() - 1)
-        break
-      case '3mo':
-        startDate.setMonth(startDate.getMonth() - 3)
-        break
-      case '6mo':
-        startDate.setMonth(startDate.getMonth() - 6)
-        break
-      case '1y':
-        startDate.setFullYear(startDate.getFullYear() - 1)
-        break
-      case '5y':
-        startDate.setFullYear(startDate.getFullYear() - 5)
-        break
-      default:
-        startDate.setMonth(startDate.getMonth() - 1)
-    }
-
-    const fromDate = startDate.toISOString().split('T')[0]
-    const toDate = endDate.toISOString().split('T')[0]
+    const { fromDate, toDate } = calculateDateRange(period)
 
     const url = `${EODHD_BASE_URL}/eod/${symbol}?api_token=${EODHD_API_KEY}&fmt=json&from=${fromDate}&to=${toDate}`
 
-    console.log(`[EODHD] Fetching history for ${symbol}: ${fromDate} to ${toDate}`)
+    console.log(`[EODHD] Fetching history for ${symbol}: ${fromDate} to ${toDate} (period: ${period})`)
 
     const response = await fetch(url, {
       headers: {
@@ -248,27 +274,39 @@ export async function fetchEODHDHistory(
     })
 
     if (!response.ok) {
-      console.error(`[EODHD] History error: ${response.status}`)
+      const errorText = await response.text().catch(() => 'Unknown error')
+      console.error(`[EODHD] History error: ${response.status} - ${errorText}`)
       return []
     }
 
     const data: EODHDHistoricalData[] = await response.json()
 
     if (!Array.isArray(data)) {
-      console.error(`[EODHD] Invalid history data for ${symbol}`)
+      console.error(`[EODHD] Invalid history data for ${symbol}:`, typeof data)
       return []
     }
 
-    const history: StockHistoryData[] = data.map(item => ({
-      date: new Date(item.date).toISOString(),
-      open: item.open,
-      high: item.high,
-      low: item.low,
-      close: item.close,
-      volume: item.volume,
-    }))
+    if (data.length === 0) {
+      console.warn(`[EODHD] No historical data returned for ${symbol} from ${fromDate} to ${toDate}`)
+      return []
+    }
 
-    console.log(`[EODHD] Retrieved ${history.length} data points for ${symbol}`)
+    // Sort data by date ascending and filter out invalid entries
+    const history: StockHistoryData[] = data
+      .filter(item => item.close != null && item.close > 0)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map(item => ({
+        date: new Date(item.date).toISOString(),
+        open: item.open || item.close,
+        high: item.high || item.close,
+        low: item.low || item.close,
+        close: item.close,
+        volume: item.volume || 0,
+      }))
+
+    console.log(`[EODHD] Retrieved ${history.length} data points for ${symbol} (${period})`)
+    console.log(`[EODHD] Date range: ${history[0]?.date.split('T')[0]} to ${history[history.length - 1]?.date.split('T')[0]}`)
+
     return history
   } catch (error) {
     console.error(`[EODHD] History error for ${stockCode}:`, error)

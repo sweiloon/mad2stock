@@ -36,7 +36,7 @@ interface StockChartProps {
   height?: number
   className?: string
   showVolume?: boolean
-  defaultPeriod?: "1d" | "5d" | "1mo" | "3mo" | "6mo" | "1y" | "5y"
+  defaultPeriod?: "1d" | "5d" | "1mo" | "3mo" | "6mo" | "1y" | "5y" | "max"
   defaultChartType?: "area" | "candlestick"
 }
 
@@ -63,6 +63,7 @@ const PERIODS = [
   { label: "6M", value: "6mo" },
   { label: "1Y", value: "1y" },
   { label: "5Y", value: "5y" },
+  { label: "MAX", value: "max" },
 ] as const
 
 const CHART_COLORS = {
@@ -411,7 +412,7 @@ export function StockChart({
 
           {/* Period selector */}
           <div className="flex items-center border rounded-md">
-            {PERIODS.map((p) => (
+            {PERIODS.map((p, index) => (
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
@@ -420,8 +421,8 @@ export function StockChart({
                   period === p.value
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted",
-                  p.value === "1d" && "rounded-l-md",
-                  p.value === "5y" && "rounded-r-md"
+                  index === 0 && "rounded-l-md",
+                  index === PERIODS.length - 1 && "rounded-r-md"
                 )}
               >
                 {p.label}
@@ -456,7 +457,14 @@ export function StockChart({
 
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-2 border-t border-border text-xs text-muted-foreground">
-        <span>Data from Yahoo Finance • {data.length} data points</span>
+        <span>
+          Data from EODHD • {data.length} data points
+          {data.length > 0 && (
+            <span className="ml-2">
+              ({new Date(data[0].date).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })} - {new Date(data[data.length - 1].date).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: '2-digit' })})
+            </span>
+          )}
+        </span>
         <span>{legendData?.time}</span>
       </div>
     </div>

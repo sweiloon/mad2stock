@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchHistoricalData } from '@/lib/stock-api'
 
-type Period = '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '5y'
+type Period = '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '5y' | 'max'
 type Interval = '1m' | '5m' | '15m' | '1h' | '1d' | '1wk' | '1mo'
 
-const validPeriods = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y']
+const validPeriods = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y', 'max']
 const validIntervals = ['1m', '5m', '15m', '1h', '1d', '1wk', '1mo']
 
 export async function GET(request: NextRequest) {

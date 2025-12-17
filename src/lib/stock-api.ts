@@ -103,18 +103,33 @@ let lastYahooRequest = 0
 const MIN_REQUEST_INTERVAL = 1000 // 1 second between requests
 
 // Period to days mapping for cache staleness check
+// Includes buffer for weekends/holidays
 const PERIOD_TO_DAYS: Record<string, number> = {
-  '1d': 1,
-  '5d': 5,
-  '1mo': 30,
-  '3mo': 90,
-  '6mo': 180,
-  '1y': 365,
-  '5y': 1825,
+  '1d': 5,      // Get 5 days to ensure we have at least 1 trading day
+  '5d': 10,     // Get 10 days to cover weekends
+  '1mo': 35,    // 30 days + buffer
+  '3mo': 100,   // ~3 months + buffer
+  '6mo': 195,   // ~6 months + buffer
+  '1y': 380,    // ~1 year + buffer
+  '5y': 1860,   // ~5 years + buffer
+  'max': 7300,  // ~20 years
+}
+
+// Maximum allowed staleness per period (in days)
+const MAX_STALE_DAYS: Record<string, number> = {
+  '1d': 0,    // Must be fresh
+  '5d': 1,    // 1 day stale allowed
+  '1mo': 1,   // 1 day stale allowed
+  '3mo': 2,   // 2 days stale allowed
+  '6mo': 3,   // 3 days stale allowed
+  '1y': 5,    // 5 days stale allowed
+  '5y': 7,    // 1 week stale allowed
+  'max': 7,   // 1 week stale allowed
 }
 
 /**
  * Get cached historical data from Supabase
+ * For longer periods (1Y, 5Y), we fetch more data and allow more staleness
  */
 async function getSupabaseCachedHistory(
   stockCode: string,
@@ -124,6 +139,8 @@ async function getSupabaseCachedHistory(
     const days = PERIOD_TO_DAYS[period] || 30
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
+
+    console.log(`[Stock API] Checking Supabase cache for ${stockCode} ${period} (${days} days from ${startDate.toISOString().split('T')[0]})`)
 
     const { data, error } = await supabase
       .from('stock_history_cache')
@@ -142,21 +159,33 @@ async function getSupabaseCachedHistory(
       return null
     }
 
-    // Check if data is stale (more than 1 day old for the most recent entry)
+    // Check if data is stale based on period-specific staleness allowance
     const mostRecentDate = new Date(data[data.length - 1].date)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    // For periods > 1 day, allow up to 1 day staleness
-    const maxStaleDays = period === '1d' ? 0 : 1
+    const maxStaleDays = MAX_STALE_DAYS[period] ?? 1
     const daysDiff = Math.floor((today.getTime() - mostRecentDate.getTime()) / (1000 * 60 * 60 * 24))
 
-    if (daysDiff > maxStaleDays) {
-      console.log(`[Stock API] Cached data for ${stockCode} is ${daysDiff} days old, refreshing...`)
+    // For weekends, allow extra staleness (Saturday/Sunday shouldn't invalidate cache)
+    const dayOfWeek = today.getDay()
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+    const adjustedMaxStale = isWeekend ? maxStaleDays + 2 : maxStaleDays
+
+    if (daysDiff > adjustedMaxStale) {
+      console.log(`[Stock API] Cached data for ${stockCode} is ${daysDiff} days old (max: ${adjustedMaxStale}), refreshing...`)
       return null // Will trigger a refresh
     }
 
-    console.log(`[Stock API] Supabase cache hit for ${stockCode}: ${data.length} records`)
+    // Verify we have enough data points for the requested period
+    const minDataPoints = getMinDataPointsForPeriod(period)
+    if (data.length < minDataPoints) {
+      console.log(`[Stock API] Cached data has only ${data.length} points (need ${minDataPoints} for ${period}), refreshing...`)
+      return null
+    }
+
+    console.log(`[Stock API] Supabase cache hit for ${stockCode} ${period}: ${data.length} records`)
+    console.log(`[Stock API] Cache date range: ${data[0].date} to ${data[data.length - 1].date}`)
 
     return data.map(row => ({
       date: new Date(row.date).toISOString(),
@@ -169,6 +198,23 @@ async function getSupabaseCachedHistory(
   } catch (error) {
     console.error(`[Stock API] Supabase cache error:`, error)
     return null
+  }
+}
+
+/**
+ * Get minimum data points required for each period
+ */
+function getMinDataPointsForPeriod(period: string): number {
+  switch (period) {
+    case '1d': return 1
+    case '5d': return 3      // At least 3 trading days
+    case '1mo': return 15    // At least 15 trading days
+    case '3mo': return 45    // At least 45 trading days
+    case '6mo': return 90    // At least 90 trading days
+    case '1y': return 200    // At least 200 trading days
+    case '5y': return 900    // At least 900 trading days
+    case 'max': return 1000  // At least 1000 trading days
+    default: return 10
   }
 }
 
@@ -497,10 +543,19 @@ async function fetchYahooHistory(
       lastYahooRequest = Date.now()
 
       let adjustedInterval = interval
-      if (period === '1d') adjustedInterval = '5m'
-      else if (period === '5d') adjustedInterval = '15m'
+      let adjustedPeriod = period
 
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${adjustedInterval}`
+      // Yahoo Finance doesn't support 'max', use longest available range
+      if (period === 'max') {
+        adjustedPeriod = '10y'  // Yahoo supports up to 10y for most stocks
+        adjustedInterval = '1d'
+      } else if (period === '1d') {
+        adjustedInterval = '5m'
+      } else if (period === '5d') {
+        adjustedInterval = '15m'
+      }
+
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${adjustedPeriod}&interval=${adjustedInterval}`
 
       console.log(`[Stock API] Fetching Yahoo history: ${symbol}, period: ${period}`)
 
@@ -708,11 +763,12 @@ export async function fetchMultipleQuotes(codesOrNames: string[]): Promise<Map<s
 
 /**
  * Fetch historical data for charts
- * Uses Yahoo Finance for historical data (KLSE Screener doesn't provide historical API)
+ * Priority: Supabase cache → EODHD API → Yahoo Finance
+ * Supports periods: 1d, 5d, 1mo, 3mo, 6mo, 1y, 5y, max
  */
 export async function fetchHistoricalData(
   codeOrName: string,
-  period: '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '5y' = '1mo',
+  period: '1d' | '5d' | '1mo' | '3mo' | '6mo' | '1y' | '5y' | 'max' = '1mo',
   interval: '1m' | '5m' | '15m' | '1h' | '1d' | '1wk' | '1mo' = '1d'
 ): Promise<StockHistoricalData[]> {
   console.log(`[Stock API] Fetching history for: ${codeOrName}, period: ${period}`)
@@ -722,25 +778,36 @@ export async function fetchHistoricalData(
   // 1. Check Supabase cache first
   const cachedData = await getSupabaseCachedHistory(stockCode, period)
   if (cachedData && cachedData.length > 0) {
+    console.log(`[Stock API] Using cached data: ${cachedData.length} points`)
     return cachedData
   }
 
-  // 2. Try EODHD API (paid, reliable)
+  // 2. Try EODHD API (paid, reliable) - preferred for all periods
   if (process.env.EODHD_API_KEY) {
-    console.log(`[Stock API] Using EODHD for ${codeOrName}`)
+    console.log(`[Stock API] Using EODHD for ${codeOrName} (${period})`)
     const eodhData = await fetchEODHDHistory(stockCode, period)
     if (eodhData && eodhData.length > 0) {
-      // Cache in Supabase
+      console.log(`[Stock API] EODHD returned ${eodhData.length} data points`)
+      // Cache in Supabase (async, don't wait)
       setSupabaseCachedHistory(stockCode, eodhData).catch(err => {
         console.error(`[Stock API] Failed to cache EODHD data:`, err)
       })
       return eodhData
     }
+    console.warn(`[Stock API] EODHD returned no data for ${codeOrName} (${period})`)
   }
 
   // 3. Fall back to Yahoo Finance (may be rate limited)
   console.log(`[Stock API] Falling back to Yahoo Finance for ${codeOrName}`)
-  return await fetchYahooHistory(codeOrName, period, interval)
+  const yahooData = await fetchYahooHistory(codeOrName, period, interval)
+
+  if (yahooData && yahooData.length > 0) {
+    console.log(`[Stock API] Yahoo returned ${yahooData.length} data points`)
+  } else {
+    console.warn(`[Stock API] All sources failed for ${codeOrName} (${period})`)
+  }
+
+  return yahooData
 }
 
 /**
