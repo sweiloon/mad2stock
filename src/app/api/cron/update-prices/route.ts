@@ -15,16 +15,18 @@ type PriceUpdateLogInsert = Database['public']['Tables']['price_update_logs']['I
 type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['Update']
 
 // ============================================================================
-// CONFIGURATION - Optimized for Parallel Processing
+// CONFIGURATION - Optimized for EODHD EOD Endpoint
 // ============================================================================
 
 // Vercel Hobby has 10-second timeout
-// With parallel processing, we can update 400 stocks per cron call
-// 800 stocks / 400 per call = 2 calls → All stocks updated within 30 minutes
+// EODHD only provides EOD (end-of-day) data for Malaysian stocks
+// Each stock requires individual API call, processed 10 at a time
+// 80 stocks × ~100ms = ~8 seconds (safe margin for 10s timeout)
+// 802 stocks / 80 per call = 11 calls → All stocks updated within ~15 cron cycles
 
-const STOCKS_PER_RUN = 400       // Process 400 stocks per cron invocation (8 parallel batches)
-const BATCH_SIZE = 50           // EODHD max: 50 symbols per batch request
-const PARALLEL_BATCHES = 8      // Run 8 batches in parallel
+const STOCKS_PER_RUN = 80       // Process 80 stocks per cron invocation (EOD endpoint is per-stock)
+const BATCH_SIZE = 50           // DB batch size for upserting
+const PARALLEL_BATCHES = 10     // Concurrent EODHD requests (handled in eodhd-api.ts)
 const DB_BATCH_SIZE = 50        // Upsert 50 records at a time
 
 interface UpdateResult {
@@ -101,35 +103,15 @@ function getStocksForRotation(offset: number, limit: number): { code: string; ti
 }
 
 // ============================================================================
-// PARALLEL BATCH PROCESSING
+// EODHD EOD PRICE UPDATE
 // ============================================================================
 
 /**
- * Fetch quotes for a single batch (50 stocks max)
- * Returns a Map of stockCode -> quote data
+ * Update prices using EODHD EOD API
+ * EODHD provides end-of-day data for Malaysian stocks (not real-time)
+ * Parallelization is handled internally by fetchEODHDBatchQuotes
  */
-async function fetchBatch(
-  batchNum: number,
-  stockCodes: string[]
-): Promise<{ batchNum: number; quotes: Map<string, unknown>; duration: number }> {
-  const startTime = Date.now()
-
-  try {
-    const quotes = await fetchEODHDBatchQuotes(stockCodes)
-    const duration = Date.now() - startTime
-    console.log(`[Parallel] Batch ${batchNum}: ${quotes.size}/${stockCodes.length} quotes in ${duration}ms`)
-    return { batchNum, quotes, duration }
-  } catch (error) {
-    console.error(`[Parallel] Batch ${batchNum} failed:`, error)
-    return { batchNum, quotes: new Map(), duration: Date.now() - startTime }
-  }
-}
-
-/**
- * Update prices using EODHD API with PARALLEL batch processing
- * Processes multiple batches simultaneously using Promise.all()
- */
-async function updatePricesParallel(
+async function updatePricesEOD(
   stocks: { code: string; tier: 1 | 3 }[],
   supabase: ReturnType<typeof createAdminClient>
 ): Promise<UpdateResult> {
@@ -150,44 +132,21 @@ async function updatePricesParallel(
   const stockCodes = stocks.map(s => s.code)
   const stockMap = new Map(stocks.map(s => [s.code, s]))
 
-  // Split into batches of BATCH_SIZE (50)
-  const batches: string[][] = []
-  for (let i = 0; i < stockCodes.length; i += BATCH_SIZE) {
-    batches.push(stockCodes.slice(i, i + BATCH_SIZE))
-  }
+  console.log(`[EODHD] Fetching EOD prices for ${stockCodes.length} stocks`)
 
-  console.log(`[Parallel] Processing ${stockCodes.length} stocks in ${batches.length} batches (${PARALLEL_BATCHES} parallel)`)
+  // Fetch all quotes - parallelization handled in eodhd-api.ts
+  const fetchStartTime = Date.now()
+  const allQuotes = await fetchEODHDBatchQuotes(stockCodes)
+  const fetchDuration = Date.now() - fetchStartTime
 
-  // Process batches in parallel groups
-  const allQuotes = new Map()
-  const batchTimes: number[] = []
-  let parallelGroups = 0
+  console.log(`[EODHD] Fetched ${allQuotes.size}/${stockCodes.length} quotes in ${fetchDuration}ms`)
 
-  for (let i = 0; i < batches.length; i += PARALLEL_BATCHES) {
-    parallelGroups++
-    const parallelBatches = batches.slice(i, i + PARALLEL_BATCHES)
-
-    console.log(`[Parallel] Starting parallel group ${parallelGroups}: batches ${i + 1}-${i + parallelBatches.length}`)
-
-    // Run batches in parallel using Promise.all
-    const results = await Promise.all(
-      parallelBatches.map((batch, idx) => fetchBatch(i + idx + 1, batch))
-    )
-
-    // Collect results
-    for (const result of results) {
-      result.quotes.forEach((v, k) => allQuotes.set(k, v))
-      batchTimes.push(result.duration)
-    }
-
-    // Small delay between parallel groups to avoid rate limiting
-    if (i + PARALLEL_BATCHES < batches.length) {
-      await new Promise(resolve => setTimeout(resolve, 100))
+  // Track failed codes - stocks without quotes
+  for (const code of stockCodes) {
+    if (!allQuotes.has(code.toUpperCase())) {
+      failedCodes.push(code)
     }
   }
-
-  const fetchDuration = Date.now() - startTime
-  console.log(`[Parallel] All batches complete: ${allQuotes.size} quotes fetched in ${fetchDuration}ms`)
 
   // Prepare database records
   const now = new Date()
@@ -195,7 +154,7 @@ async function updatePricesParallel(
 
   for (const stock of stocks) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const quote = allQuotes.get(stock.code) as any
+    const quote = allQuotes.get(stock.code.toUpperCase()) as any
     const nextUpdateTime = calculateNextUpdate(stock.tier, now)
 
     if (quote) {
@@ -216,12 +175,10 @@ async function updatePricesParallel(
         error_message: null,
         updated_at: now.toISOString(),
       })
-    } else {
-      failedCodes.push(stock.code)
     }
   }
 
-  // Batch upsert to database (more efficient than individual upserts)
+  // Batch upsert to database
   const dbStartTime = Date.now()
   for (let i = 0; i < dbRecords.length; i += DB_BATCH_SIZE) {
     const batch = dbRecords.slice(i, i + DB_BATCH_SIZE)
@@ -231,26 +188,22 @@ async function updatePricesParallel(
         .upsert(batch, { onConflict: 'stock_code' })
 
       if (error) {
-        console.error(`[Parallel] DB batch ${Math.floor(i / DB_BATCH_SIZE) + 1} error:`, error)
-        // Mark these as failed
+        console.error(`[EODHD] DB batch ${Math.floor(i / DB_BATCH_SIZE) + 1} error:`, error)
         batch.forEach(r => failedCodes.push(r.stock_code))
       } else {
         successCount += batch.length
       }
     } catch (error) {
-      console.error(`[Parallel] DB batch error:`, error)
+      console.error(`[EODHD] DB batch error:`, error)
       batch.forEach(r => failedCodes.push(r.stock_code))
     }
   }
 
   const dbDuration = Date.now() - dbStartTime
   const totalDuration = Date.now() - startTime
-  const avgBatchTime = batchTimes.length > 0
-    ? Math.round(batchTimes.reduce((a, b) => a + b, 0) / batchTimes.length)
-    : 0
 
-  console.log(`[Parallel] DB writes complete: ${successCount} records in ${dbDuration}ms`)
-  console.log(`[Parallel] Total: ${successCount} updated, ${failedCodes.length} failed in ${totalDuration}ms`)
+  console.log(`[EODHD] DB writes: ${successCount} records in ${dbDuration}ms`)
+  console.log(`[EODHD] Total: ${successCount} updated, ${failedCodes.length} failed in ${totalDuration}ms`)
 
   return {
     stocksUpdated: successCount,
@@ -258,9 +211,9 @@ async function updatePricesParallel(
     duration: totalDuration,
     failedCodes,
     batchStats: {
-      totalBatches: batches.length,
-      parallelGroups,
-      avgBatchTime
+      totalBatches: 1,
+      parallelGroups: 1,
+      avgBatchTime: fetchDuration
     }
   }
 }
@@ -351,7 +304,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Update stocks using parallel processing
-    const result = await updatePricesParallel(stocksToUpdate, supabase)
+    const result = await updatePricesEOD(stocksToUpdate, supabase)
 
     const executionTime = Date.now() - startTime
 

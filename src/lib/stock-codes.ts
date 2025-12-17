@@ -170,8 +170,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "AEON": "6599",
   "AFFIN": "5185",
   "AFUJIYA": "5198",
-  "AGES": "7145",
-  "AGESON": "7145",
+  "AGES": "7145",  // Company renamed to TXCD in Dec 2024
   "AGMO": "0258",
   "AGX": "0299",
   "AHEALTH": "7090",
@@ -401,7 +400,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "GENM": "4715",
   "GENP": "2291",
   "GENTING": "3182",
-  "GESHEN": "0180",
+  "GESHEN": "7197",
   "GFM": "0215",
   "GHLSYS": "0021",
   "GIGASUNS": "0308",
@@ -485,7 +484,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "JBC": "0250",
   "JCY": "5161",
   "JDIPC": "0317",
-  "JERASIA": "0273",
+  "JERASIA": "8931",
   "JFTECH": "0167",
   "JHM": "0164",
   "JIANKUN": "0199",
@@ -827,7 +826,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "VARIA": "5006",
   "VELESTO": "5243",
   "VITROX": "0097",
-  "VLB": "0173",
+  "VLB": "0273",
   "VSTECS": "5162",
 
   // W

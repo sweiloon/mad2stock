@@ -124,8 +124,59 @@ export async function fetchEODHDQuote(stockCode: string): Promise<StockQuoteData
 }
 
 /**
- * Fetch real-time quotes for multiple stocks (batch)
- * Max 50 symbols per request
+ * Fetch EOD (End-of-Day) quote for a single stock
+ * EODHD does NOT support real-time quotes for Malaysian stocks
+ * This uses the EOD endpoint to get the latest closing price
+ */
+async function fetchSingleEODQuote(stockCode: string): Promise<StockQuoteData | null> {
+  try {
+    const symbol = toEODHDSymbol(stockCode)
+    // Get last 5 trading days to ensure we get data even with holidays
+    const today = new Date()
+    const fromDate = new Date(today)
+    fromDate.setDate(fromDate.getDate() - 7)
+
+    const url = `${EODHD_BASE_URL}/eod/${symbol}?api_token=${EODHD_API_KEY}&fmt=json&from=${fromDate.toISOString().split('T')[0]}&order=d`
+
+    const response = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store',
+    })
+
+    if (!response.ok) return null
+
+    const data: EODHDHistoricalData[] = await response.json()
+
+    if (!Array.isArray(data) || data.length === 0) return null
+
+    // Get the most recent trading day's data
+    const latest = data[0]
+    const previous = data[1] || latest
+
+    const change = latest.close - previous.close
+    const changePercent = previous.close > 0 ? (change / previous.close) * 100 : 0
+
+    return {
+      stockCode: stockCode.toUpperCase(),
+      price: latest.close,
+      change: Math.round(change * 1000) / 1000,
+      changePercent: Math.round(changePercent * 100) / 100,
+      previousClose: previous.close,
+      open: latest.open,
+      high: latest.high,
+      low: latest.low,
+      volume: latest.volume,
+      timestamp: new Date(latest.date).toISOString(),
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Fetch EOD quotes for multiple stocks using parallel requests
+ * EODHD does NOT support real-time for Malaysian stocks, so we use EOD endpoint
+ * Processes stocks in parallel batches for efficiency
  */
 export async function fetchEODHDBatchQuotes(stockCodes: string[]): Promise<Map<string, StockQuoteData>> {
   const results = new Map<string, StockQuoteData>()
@@ -135,57 +186,32 @@ export async function fetchEODHDBatchQuotes(stockCodes: string[]): Promise<Map<s
     return results
   }
 
-  // EODHD batch endpoint expects comma-separated symbols
-  const symbols = stockCodes.map(code => toEODHDSymbol(code)).join(',')
+  console.log(`[EODHD] Fetching EOD quotes for ${stockCodes.length} stocks (parallel)`)
 
-  try {
-    const url = `${EODHD_BASE_URL}/real-time/${symbols}?api_token=${EODHD_API_KEY}&fmt=json`
+  // Process in parallel with concurrency limit
+  const CONCURRENT_LIMIT = 10
 
-    console.log(`[EODHD] Fetching batch quotes for ${stockCodes.length} stocks`)
+  for (let i = 0; i < stockCodes.length; i += CONCURRENT_LIMIT) {
+    const batch = stockCodes.slice(i, i + CONCURRENT_LIMIT)
 
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-      },
-      cache: 'no-store',
-    })
+    const promises = batch.map(code => fetchSingleEODQuote(code))
+    const batchResults = await Promise.all(promises)
 
-    if (!response.ok) {
-      console.error(`[EODHD] Batch quote error: ${response.status}`)
-      return results
-    }
-
-    const data = await response.json()
-
-    // Handle single stock response (object) vs multiple (array)
-    const quotes: EODHDQuote[] = Array.isArray(data) ? data : [data]
-
-    for (const quote of quotes) {
-      if (quote && quote.code && quote.close) {
-        // Extract stock code from EODHD format (e.g., "5398.KLSE" -> "5398")
-        const stockCode = quote.code.replace('.KLSE', '').toUpperCase()
-
-        results.set(stockCode, {
-          stockCode,
-          price: quote.close,
-          change: quote.change || 0,
-          changePercent: quote.change_p || 0,
-          previousClose: quote.previousClose || quote.close,
-          open: quote.open || quote.close,
-          high: quote.high || quote.close,
-          low: quote.low || quote.close,
-          volume: quote.volume || 0,
-          timestamp: new Date(quote.timestamp * 1000).toISOString(),
-        })
+    for (let j = 0; j < batch.length; j++) {
+      const quote = batchResults[j]
+      if (quote) {
+        results.set(batch[j].toUpperCase(), quote)
       }
     }
 
-    console.log(`[EODHD] Successfully fetched ${results.size}/${stockCodes.length} quotes`)
-    return results
-  } catch (error) {
-    console.error(`[EODHD] Batch quote error:`, error)
-    return results
+    // Small delay between batches to avoid rate limiting
+    if (i + CONCURRENT_LIMIT < stockCodes.length) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
   }
+
+  console.log(`[EODHD] Successfully fetched ${results.size}/${stockCodes.length} EOD quotes`)
+  return results
 }
 
 /**
