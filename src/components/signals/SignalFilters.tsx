@@ -46,7 +46,7 @@ export const DEFAULT_FILTERS: SignalFiltersState = {
   sector: "all",
   strength: "all",
   timeHorizon: "all",
-  minConfidence: "",
+  minConfidence: "any",
   search: "",
 }
 
@@ -66,7 +66,8 @@ export function SignalFilters({
     ([key, value]) =>
       value !== DEFAULT_FILTERS[key as keyof SignalFiltersState] &&
       value !== "" &&
-      value !== "all"
+      value !== "all" &&
+      value !== "any"
   ).length
 
   return (
@@ -138,7 +139,7 @@ export function SignalFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sectors</SelectItem>
-            {sectors.map((sector) => (
+            {sectors.filter(s => s && s.trim() !== "").map((sector) => (
               <SelectItem key={sector} value={sector}>
                 {sector}
               </SelectItem>
@@ -188,7 +189,7 @@ export function SignalFilters({
             <SelectValue placeholder="Min Confidence" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Any Confidence</SelectItem>
+            <SelectItem value="any">Any Confidence</SelectItem>
             <SelectItem value="80">80%+ (High)</SelectItem>
             <SelectItem value="60">60%+ (Medium)</SelectItem>
             <SelectItem value="40">40%+ (Low)</SelectItem>
@@ -237,7 +238,8 @@ export function SignalFilterSummary({
       ([key, value]) =>
         value !== DEFAULT_FILTERS[key as keyof SignalFiltersState] &&
         value !== "" &&
-        value !== "all"
+        value !== "all" &&
+        value !== "any"
     )
     .map(([key, value]) => ({ key, value }))
 

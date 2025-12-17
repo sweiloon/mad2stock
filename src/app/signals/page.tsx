@@ -111,7 +111,7 @@ export default function SignalsPage() {
       if (filters.sector !== "all") params.set("sector", filters.sector)
       if (filters.strength !== "all") params.set("strength", filters.strength)
       if (filters.timeHorizon !== "all") params.set("horizon", filters.timeHorizon)
-      if (filters.minConfidence) params.set("minConfidence", filters.minConfidence)
+      if (filters.minConfidence && filters.minConfidence !== "any") params.set("minConfidence", filters.minConfidence)
       if (filters.search) params.set("stock", filters.search.toUpperCase())
       params.set("limit", String(pagination.limit))
       params.set("offset", String(pagination.offset))
