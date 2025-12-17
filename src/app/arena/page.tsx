@@ -32,7 +32,7 @@ import { ArenaChart } from "@/components/charts"
 import { AI_MODELS, Trade, AIParticipant } from "@/lib/arena/types"
 
 // Malaysian stocks for demo trades
-const KLSE_STOCKS = [
+const MALAYSIAN_STOCKS = [
   { code: 'GAMUDA', name: 'Gamuda Berhad' },
   { code: 'MAYBANK', name: 'Malayan Banking Berhad' },
   { code: 'TENAGA', name: 'Tenaga Nasional Berhad' },
@@ -182,7 +182,7 @@ function generateDemoTrades(): Trade[] {
     const numTrades = participant.total_trades
 
     for (let i = 0; i < numTrades; i++) {
-      const stock = KLSE_STOCKS[Math.floor(Math.random() * KLSE_STOCKS.length)]
+      const stock = MALAYSIAN_STOCKS[Math.floor(Math.random() * MALAYSIAN_STOCKS.length)]
       const isBuy = Math.random() > 0.4 // More buys than sells
       const price = 1.5 + Math.random() * 8 // RM 1.50 to RM 9.50
       const quantity = Math.floor(100 + Math.random() * 900) // 100 to 1000 shares
@@ -467,7 +467,7 @@ export default function ArenaPage() {
               <div className="text-sm text-muted-foreground">
                 <strong>Competition Rules:</strong> Starting capital RM 10,000 |
                 Trading fee 0.15% | Max 30% single position |
-                Malaysian stocks only (KLSE/Bursa Malaysia)
+                Malaysian stocks only
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>Trading Hours: 9am - 5pm MYT (Mon-Fri)</span>

@@ -1,18 +1,19 @@
 /**
  * Stock Tier Management System
+ * Mad2Stock Platform - Malaysian Stock Analysis
  *
- * Manages the tiered update strategy for ~1000 KLSE stocks.
- * Tier assignment is based on market cap and priority (core 80 companies).
+ * Manages the tiered update strategy for ~800 Malaysian stocks.
+ * Tier assignment is based on analysis status and market cap.
  *
  * Tier Structure:
- * - Tier 1: 80 core stocks (original platform stocks) - Every 5 minutes
- * - Tier 2: 100 mid-cap stocks (>1B market cap) - Every 15 minutes
- * - Tier 3: Remaining ~820 small-cap stocks - Every 30 minutes
+ * - Tier 1: ~82 stocks with financial analysis (hasAnalysis: true) - Every 5 minutes
+ * - Tier 2: Large-cap stocks (>10B) or mid-cap (>1B) - Every 15 minutes
+ * - Tier 3: Remaining ~700+ small-cap stocks - Every 30 minutes
  *
  * Total Daily API Calls: ~450 (well under 2000/hour limit)
  */
 
-import { COMPANY_DATA } from './company-data'
+import { COMPANY_DATA, hasAnalysisData, getAnalyzedStockCodes } from './company-data'
 
 // Tier constants
 export const TIER_1 = 1
@@ -34,29 +35,36 @@ export interface StockTier {
   tier: 1 | 2 | 3
   companyName?: string
   marketCap?: number
-  isCore: boolean
+  hasAnalysis: boolean // Renamed from isCore to reflect actual meaning
   lastUpdated?: Date
   nextUpdate?: Date
 }
 
-// Get all core 80 company stock codes (original platform stocks)
+/**
+ * @deprecated Use getAnalyzedStockCodes() from company-data.ts instead
+ * Get stock codes with financial analysis data
+ */
 export function getCoreStockCodes(): string[] {
-  return COMPANY_DATA.map(company => company.stockCode)
-}
-
-// Check if a stock code is in the core 80
-export function isCore80(stockCode: string): boolean {
-  const cleanCode = stockCode.replace(/\.(KL|KLS|KLSE)$/i, '').toUpperCase()
-  return getCoreStockCodes().includes(cleanCode)
+  // Returns only stocks with hasAnalysis: true (replaces old behavior)
+  return getAnalyzedStockCodes()
 }
 
 /**
- * Calculate tier for a stock based on market cap and core status
+ * Check if a stock code has financial analysis data
+ * Replaces the old "isCore80" concept
+ */
+export function isCore80(stockCode: string): boolean {
+  const cleanCode = stockCode.replace(/\.(KL|KLS|KLSE)$/i, '').toUpperCase()
+  return hasAnalysisData(cleanCode)
+}
+
+/**
+ * Calculate tier for a stock based on analysis status and market cap
  */
 export function calculateTier(stockCode: string, marketCap?: number): 1 | 2 | 3 {
   const cleanCode = stockCode.replace(/\.(KL|KLS|KLSE)$/i, '').toUpperCase()
 
-  // Core 80 companies are always Tier 1
+  // Stocks with financial analysis are always Tier 1 (high priority)
   if (isCore80(cleanCode)) {
     return TIER_1
   }
@@ -280,7 +288,7 @@ export function logTierUpdate(
   failedCount: number,
   duration: number
 ): void {
-  const tierName = tier === 1 ? 'Tier 1 (Core)' : tier === 2 ? 'Tier 2 (Mid-cap)' : 'Tier 3 (Small-cap)'
+  const tierName = tier === 1 ? 'Tier 1 (Analyzed)' : tier === 2 ? 'Tier 2 (Mid-cap)' : 'Tier 3 (Small-cap)'
 
   console.log(`[Stock Tiers] ${tierName} Update:
     - Stocks: ${stockCount}

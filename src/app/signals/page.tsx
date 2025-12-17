@@ -118,7 +118,7 @@ The exceptional profit growth demonstrates UWC's operational leverage and succes
 
 **Outlook:**
 Positive momentum expected to continue in FY2026 with sustained demand from the electronics manufacturing sector.`,
-    source: "Bursa Malaysia",
+    source: "Market Data",
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
     isNew: true,
   },
@@ -218,7 +218,7 @@ Trading at 12x FY26 P/E, below historical average of 15x.`,
 - Subscriber decline continues (-1.1M since 2019)
 - ARPU pressure (RM96.30 vs RM99.80)
 - Structural industry headwinds`,
-    source: "Bursa Malaysia",
+    source: "Market Data",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
   },
   {
@@ -290,7 +290,7 @@ Expected to add RM200M to annual revenue post-completion.`,
 
 **Outlook:**
 Management guides for continued strong performance in coming quarters.`,
-    source: "Bursa Malaysia",
+    source: "Market Data",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 14),
   },
 ]

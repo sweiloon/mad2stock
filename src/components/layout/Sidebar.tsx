@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { getTotalCompanyCount, getAnalyzedCompanyCount } from "@/lib/company-data"
 import {
   LayoutDashboard,
   Building2,
@@ -78,7 +79,7 @@ export function Sidebar() {
           </div>
           <div className="flex flex-col">
             <span className="text-base font-bold text-sidebar-foreground tracking-tight">Mad2Stock</span>
-            <span className="text-xs text-muted-foreground">KLSE Analysis Platform</span>
+            <span className="text-xs text-muted-foreground">Malaysian Stock Analysis</span>
           </div>
         </Link>
       </div>
@@ -228,12 +229,12 @@ export function Sidebar() {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="text-center p-2 rounded bg-sidebar/50">
-            <p className="text-lg font-bold text-profit tabular-nums">80</p>
-            <p className="text-[10px] text-muted-foreground">Companies</p>
+            <p className="text-lg font-bold text-profit tabular-nums">{getTotalCompanyCount()}</p>
+            <p className="text-[10px] text-muted-foreground">Total Stocks</p>
           </div>
           <div className="text-center p-2 rounded bg-sidebar/50">
-            <p className="text-lg font-bold text-primary tabular-nums">12</p>
-            <p className="text-[10px] text-muted-foreground">Signals</p>
+            <p className="text-lg font-bold text-primary tabular-nums">{getAnalyzedCompanyCount()}</p>
+            <p className="text-[10px] text-muted-foreground">Analyzed</p>
           </div>
         </div>
       </div>

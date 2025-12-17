@@ -631,7 +631,7 @@ export default function DashboardPage() {
                 <TrendingUp className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-base">KLSE Market Overview</CardTitle>
+                <CardTitle className="text-base">Market Overview</CardTitle>
                 <p className="text-xs text-muted-foreground">Top Malaysian stocks live chart</p>
               </div>
             </div>

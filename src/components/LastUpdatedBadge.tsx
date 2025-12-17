@@ -53,7 +53,7 @@ export function LastUpdatedBadge({
   }
 
   const sourceLabels: Record<string, string> = {
-    klsescreener: 'KLSE',
+    klsescreener: 'Screener',
     yahoo: 'Yahoo',
     live: 'Live',
   }

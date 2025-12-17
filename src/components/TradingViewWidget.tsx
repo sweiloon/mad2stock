@@ -385,7 +385,7 @@ function MarketOverviewComponent({
       symbolActiveColor: "rgba(16, 185, 129, 0.12)",
       tabs: [
         {
-          title: "KLSE Top Stocks",
+          title: "Top Malaysian Stocks",
           symbols: [
             { s: "MYX:1155", d: "Maybank" },
             { s: "MYX:1295", d: "Public Bank" },
@@ -396,7 +396,7 @@ function MarketOverviewComponent({
             { s: "MYX:3182", d: "Genting Malaysia" },
             { s: "MYX:5183", d: "Petronas Chemicals" },
           ],
-          originalTitle: "KLSE Top Stocks",
+          originalTitle: "Top Malaysian Stocks",
         },
       ],
     })

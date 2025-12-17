@@ -170,7 +170,7 @@ function PriceCard({ stock, loading, error }: {
               {formatLastUpdated(stock.updatedAt)}
               {stock.dataSource && (
                 <Badge variant="outline" className="text-[10px] h-4 px-1">
-                  {stock.dataSource === 'klsescreener' ? 'KLSE' : stock.dataSource === 'yahoo' ? 'Yahoo' : 'Live'}
+                  {stock.dataSource === 'klsescreener' ? 'Screener' : stock.dataSource === 'yahoo' ? 'Yahoo' : 'Live'}
                 </Badge>
               )}
             </div>
@@ -384,7 +384,7 @@ export default function CompanyProfilePage() {
             <Button variant="outline" size="sm" asChild>
               <a href={`https://www.klsescreener.com/v2/stocks/view/${getStockCode(code)}`} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-4 w-4 mr-2" />
-                KLSE Screener
+                Stock Screener
               </a>
             </Button>
           </div>
@@ -468,7 +468,7 @@ export default function CompanyProfilePage() {
                   </div>
                   <div className="p-3 rounded-lg bg-muted/50">
                     <p className="text-xs text-muted-foreground">Exchange</p>
-                    <p className="font-medium">Bursa Malaysia</p>
+                    <p className="font-medium">MYX</p>
                   </div>
                 </div>
               </CardContent>

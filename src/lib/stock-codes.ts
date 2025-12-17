@@ -1,12 +1,12 @@
 /**
- * KLSE Stock Code Mapping
- * Maps company short names to their numeric Bursa Malaysia stock codes
+ * Stock Code Mapping - Mad2Stock Platform
+ * Maps company short names to their numeric stock codes
  *
  * Format: { "COMPANY_NAME": "NUMERIC_CODE" }
  * Yahoo Finance format: {CODE}.KL (e.g., "5139.KL" for AEONCR)
  *
- * Total companies: ~1,000 (Core 80 + All KLSE listed)
- * Last updated: December 2024
+ * Total companies: 802
+ * Last updated: December 2025
  */
 
 export const STOCK_CODE_MAP: Record<string, string> = {
@@ -966,31 +966,10 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "ZENTECH": "0094",
 }
 
-// Core 80 company codes for Tier 1 identification
-export const CORE_80_CODES = new Set([
-  "5139", "7083", "6432", "7214", "7162", "6399", // A
-  "5248", "7668", "7195", // B
-  "0371", "0238", "03024", "0261", "6718", "7157", "5184", // C
-  "8338", // D
-  "0154", "0267", "8206", "5283", // E
-  "5398", "7192", "5020", // G
-  "0237", "5072", "7033", "0359", // H
-  "0358", // I
-  "7152", "6769", "3441", "0369", // J
-  "7199", "0307", "9334", "5027", "7153", "0176", "8362", // K
-  "9326", // L
-  "5078", "7087", "7004", "0285", "0043", "03064", "5275", // M
-  "0096", "0026", "5066", // N
-  "0363", "5080", "7088", "8346", "0260", // P
-  "7544", // Q
-  "7811", "4596", "0109", "4731", "8125", "5157", "0259", "5242", "0287", "0345", "7235", // S
-  "7439", "8966", "0145", "0118", // T
-  "0256", "2593", "5292", // U
-  "5218", "0120", "6963", // V
-  "7050", // W
-  "7121", "0370", // X
-  "7293", // Y
-])
+// NOTE: CORE_80_CODES was removed in December 2025
+// The "Core 80" concept is deprecated. Instead, use hasAnalysis field from company-data.ts
+// to identify companies with full financial analysis data.
+// See: getAnalyzedCompanies(), getAnalyzedCompanyCount() in company-data.ts
 
 // Reverse mapping: numeric code to company name
 export const CODE_TO_NAME_MAP: Record<string, string> = Object.fromEntries(
@@ -1034,11 +1013,13 @@ export function isKnownStock(nameOrCode: string): boolean {
 }
 
 /**
- * Check if a stock code is in the core 80
+ * @deprecated Use getAnalyzedCompanies() from company-data.ts instead
+ * This function is kept for backward compatibility but always returns false
  */
 export function isCore80Stock(codeOrName: string): boolean {
-  const code = getStockCode(codeOrName)
-  return CORE_80_CODES.has(code)
+  // DEPRECATED: Core 80 concept removed. Use hasAnalysis field from company-data.ts
+  console.warn('isCore80Stock is deprecated. Use hasAnalysis field from company-data.ts')
+  return false
 }
 
 /**
@@ -1056,12 +1037,13 @@ export function getAllStockCodes(): string[] {
 }
 
 /**
- * Get core 80 company names
+ * @deprecated Use getAnalyzedCompanies() from company-data.ts instead
+ * This function is kept for backward compatibility but returns empty array
  */
 export function getCore80CompanyNames(): string[] {
-  return Object.entries(STOCK_CODE_MAP)
-    .filter(([_, code]) => CORE_80_CODES.has(code))
-    .map(([name]) => name)
+  // DEPRECATED: Core 80 concept removed. Use getAnalyzedCompanies() from company-data.ts
+  console.warn('getCore80CompanyNames is deprecated. Use getAnalyzedCompanies() from company-data.ts')
+  return []
 }
 
 /**

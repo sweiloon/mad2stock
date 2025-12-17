@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { COMPANY_DATA } from '@/lib/company-data'
-import { isCore80Stock } from '@/lib/stock-codes'
+import { COMPANY_DATA, hasAnalysisData } from '@/lib/company-data'
 
 // Security: Only allow in development or with admin secret
 function validateRequest(request: NextRequest): boolean {
@@ -71,14 +70,15 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. Upsert stock tier
-        const isCore = isCore80Stock(company.stockCode)
-        const tier = isCore ? 1 : 3
+        // Use hasAnalysisData to determine tier (replaces old isCore80Stock)
+        const hasAnalysis = hasAnalysisData(company.stockCode)
+        const tier = hasAnalysis ? 1 : 3
 
         const tierData = {
           stock_code: company.stockCode,
           company_name: company.name,
           tier: tier,
-          is_core: isCore,
+          is_core: hasAnalysis, // Now represents "has analysis data" instead of "core 80"
           market_cap: company.marketCap ? company.marketCap * 1000000 : null,
           updated_at: new Date().toISOString(),
         }

@@ -1,11 +1,11 @@
 /**
  * Company Performance Data
- * Parsed from report-summary.txt - December 11, 2025
- * All data verified against KLSE Screener
+ * Mad2Stock Platform - Malaysian Stock Analysis
  *
- * Updated December 14, 2025: Expanded to include ~1000 KLSE companies
- * - Core 80 companies have full financial data
- * - Additional companies have basic info (code, name, stockCode, sector)
+ * Last Updated: December 17, 2025
+ * - 723 unique companies tracked
+ * - ~82 companies have full financial analysis (hasAnalysis: true)
+ * - Additional companies have basic info for price tracking
  */
 
 export interface CompanyData {
@@ -30,9 +30,11 @@ export interface CompanyData {
   priceChangePercent?: number
   volume?: number
   lastUpdated?: string
+  // Whether this company has full financial analysis data
+  hasAnalysis?: boolean
 }
 
-// Sector mappings - All KLSE/Bursa Malaysia sectors
+// Sector mappings - Malaysian stock market sectors
 export const SECTORS = [
   "Finance",          // Banking, Financial Services, Insurance
   "Construction",     // Construction, Building Materials
@@ -59,98 +61,98 @@ export const SECTORS = [
 // All 80 companies with real data from report-summary.txt
 export const COMPANY_DATA: CompanyData[] = [
   // Category 1 YoY: Revenue UP, Profit UP (22 companies)
-  { code: "AEONCR", name: "AEON Credit Service", stockCode: "5139", sector: "Finance", yoyCategory: 1, qoqCategory: 1, revenueYoY: 14.1, profitYoY: 1.4, revenueQoQ: 5.2, profitQoQ: 8.3, latestRevenue: 617.9, latestProfit: 72.2, market: "Main" },
-  { code: "BNASTRA", name: "Bina Nusantara", stockCode: "7195", sector: "Education", yoyCategory: 1, qoqCategory: 1, revenueYoY: 71.9, profitYoY: 24.0, revenueQoQ: 15.2, profitQoQ: 12.5, latestRevenue: 396.8, latestProfit: 28.4, market: "Main" },
-  { code: "CETECH", name: "Cetech Group", stockCode: "03024", sector: "Technology", yoyCategory: 1, qoqCategory: 1, revenueYoY: 23.2, profitYoY: 4.3, revenueQoQ: 8.5, profitQoQ: 5.2, latestRevenue: 54.2, latestProfit: 4.8, market: "Main" },
-  { code: "ECOWLD", name: "Eco World Development", stockCode: "8206", sector: "Property", yoyCategory: 1, qoqCategory: 1, revenueYoY: 17.6, profitYoY: 51.9, revenueQoQ: 52.4, profitQoQ: 235.2, latestRevenue: 750.8, latestProfit: 126.7, market: "Main" },
-  { code: "HAILY", name: "Haily Group Berhad", stockCode: "0237", sector: "Construction", yoyCategory: 1, qoqCategory: 1, revenueYoY: 36.6, profitYoY: 52.4, revenueQoQ: 15.8, profitQoQ: 89.3, latestRevenue: 115.8, latestProfit: 3.2, market: "Main" },
-  { code: "HIGHTEC", name: "Hightec Global", stockCode: "7033", sector: "Technology", yoyCategory: 1, qoqCategory: 1, revenueYoY: 44.2, profitYoY: 180.6, revenueQoQ: 22.1, profitQoQ: 45.8, latestRevenue: 7.5, latestProfit: 1.1, market: "Main" },
-  { code: "KENERGY", name: "Kenergy Holdings", stockCode: "0307", sector: "Energy", yoyCategory: 1, qoqCategory: 1, revenueYoY: 10.4, profitYoY: 41.5, revenueQoQ: 5.2, profitQoQ: 18.3, latestRevenue: 35.1, latestProfit: 7.5, market: "Main" },
-  { code: "KMLOONG", name: "Kim Loong Resources", stockCode: "5027", sector: "Plantation", yoyCategory: 1, qoqCategory: 1, revenueYoY: 7.5, profitYoY: 19.7, revenueQoQ: 3.2, profitQoQ: 8.5, latestRevenue: 436.2, latestProfit: 47.3, market: "Main" },
-  { code: "M&G", name: "M&G Berhad", stockCode: "5078", sector: "Industrial", yoyCategory: 1, qoqCategory: 1, revenueYoY: 9.0, profitYoY: 27.7, revenueQoQ: 4.5, profitQoQ: 12.3, latestRevenue: 99.4, latestProfit: 16.6, market: "Main" },
-  { code: "MYNEWS", name: "Mynews Holdings", stockCode: "5275", sector: "Retail", yoyCategory: 1, qoqCategory: 4, revenueYoY: 11.3, profitYoY: 146.2, revenueQoQ: -5.8, profitQoQ: -22.4, latestRevenue: 230.9, latestProfit: 6.4, market: "Main" },
-  { code: "POHKONG", name: "Poh Kong Holdings", stockCode: "5080", sector: "Retail", yoyCategory: 1, qoqCategory: 1, revenueYoY: 6.7, profitYoY: 3.2, revenueQoQ: 2.5, profitQoQ: 1.8, latestRevenue: 365.5, latestProfit: 22.7, market: "Main" },
-  { code: "PRKCORP", name: "Perak Corporation", stockCode: "8346", sector: "Construction", yoyCategory: 1, qoqCategory: 1, revenueYoY: 19.6, profitYoY: 352.7, revenueQoQ: 12.5, profitQoQ: 85.2, latestRevenue: 43.9, latestProfit: 0.412, market: "Main" },
-  { code: "SUPERLN", name: "Superlon Holdings", stockCode: "7235", sector: "Manufacturing", yoyCategory: 1, qoqCategory: 1, revenueYoY: 3.3, profitYoY: 18.8, revenueQoQ: 1.5, profitQoQ: 5.2, latestRevenue: 34.5, latestProfit: 3.8, market: "Main" },
-  { code: "UMCCA", name: "UMCCA Berhad", stockCode: "2593", sector: "Plantation", yoyCategory: 1, qoqCategory: 3, revenueYoY: 16.9, profitYoY: 184.2, revenueQoQ: 8.2, profitQoQ: -15.3, latestRevenue: 191.6, latestProfit: 37.8, market: "Main" },
-  { code: "UWC", name: "UWC Berhad", stockCode: "5292", sector: "Manufacturing", yoyCategory: 1, qoqCategory: 1, revenueYoY: 43.0, profitYoY: 685.7, revenueQoQ: 28.5, profitQoQ: 112.4, latestRevenue: 108.8, latestProfit: 16.5, market: "Main" },
-  { code: "UMC", name: "United Malayan Land", stockCode: "0256", sector: "Property", yoyCategory: 1, qoqCategory: 1, revenueYoY: 8.4, profitYoY: 0, revenueQoQ: 3.2, profitQoQ: 2.5, latestRevenue: 14.2, latestProfit: 1.8, market: "Main" },
-  { code: "CRESNDO", name: "Crescendo Corporation", stockCode: "6718", sector: "Property", yoyCategory: 1, qoqCategory: 1, revenueYoY: 19.3, profitYoY: 129.6, revenueQoQ: 19.3, profitQoQ: 129.6, latestRevenue: 79.1, latestProfit: 16.3, market: "Main" },
-  { code: "KEINHIN", name: "Kelington Holdings", stockCode: "7199", sector: "Industrial", yoyCategory: 1, qoqCategory: 1, revenueYoY: -0.7, profitYoY: 85.7, revenueQoQ: 5.2, profitQoQ: 25.3, latestRevenue: 82.5, latestProfit: 3.9, market: "Main" },
-  { code: "SOLID", name: "Solid Automotive", stockCode: "5242", sector: "Automotive", yoyCategory: 1, qoqCategory: 1, revenueYoY: -7.4, profitYoY: 35.3, revenueQoQ: 2.5, profitQoQ: 12.5, latestRevenue: 85.1, latestProfit: 2.3, market: "Main" },
-  { code: "SCIENTX", name: "Scientex Berhad", stockCode: "4731", sector: "Industrial", yoyCategory: 1, qoqCategory: 1, revenueYoY: 0, profitYoY: 13.5, revenueQoQ: 12.3, profitQoQ: 22.1, latestRevenue: 1200, latestProfit: 154.3, market: "Main" },
-  { code: "VS", name: "VS Industry", stockCode: "6963", sector: "Manufacturing", yoyCategory: 1, qoqCategory: 1, revenueYoY: 0, profitYoY: 0, revenueQoQ: 2.5, profitQoQ: 3.2, latestRevenue: 1100, latestProfit: 30.6, market: "Main" },
-  { code: "GLOMAC", name: "Glomac Berhad", stockCode: "5020", sector: "Property", yoyCategory: 1, qoqCategory: 1, revenueYoY: -1.1, profitYoY: 5.0, revenueQoQ: 3.5, profitQoQ: 8.2, latestRevenue: 55.8, latestProfit: 4.2, market: "Main" },
+  { code: "AEONCR", name: "AEON Credit Service", stockCode: "5139", sector: "Finance", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 14.1, profitYoY: 1.4, revenueQoQ: 5.2, profitQoQ: 8.3, latestRevenue: 617.9, latestProfit: 72.2, market: "Main" },
+  { code: "BNASTRA", name: "Bina Nusantara", stockCode: "7195", sector: "Education", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 71.9, profitYoY: 24.0, revenueQoQ: 15.2, profitQoQ: 12.5, latestRevenue: 396.8, latestProfit: 28.4, market: "Main" },
+  { code: "CETECH", name: "Cetech Group", stockCode: "03024", sector: "Technology", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 23.2, profitYoY: 4.3, revenueQoQ: 8.5, profitQoQ: 5.2, latestRevenue: 54.2, latestProfit: 4.8, market: "Main" },
+  { code: "ECOWLD", name: "Eco World Development", stockCode: "8206", sector: "Property", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 17.6, profitYoY: 51.9, revenueQoQ: 52.4, profitQoQ: 235.2, latestRevenue: 750.8, latestProfit: 126.7, market: "Main" },
+  { code: "HAILY", name: "Haily Group Berhad", stockCode: "0237", sector: "Construction", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 36.6, profitYoY: 52.4, revenueQoQ: 15.8, profitQoQ: 89.3, latestRevenue: 115.8, latestProfit: 3.2, market: "Main" },
+  { code: "HIGHTEC", name: "Hightec Global", stockCode: "7033", sector: "Technology", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 44.2, profitYoY: 180.6, revenueQoQ: 22.1, profitQoQ: 45.8, latestRevenue: 7.5, latestProfit: 1.1, market: "Main" },
+  { code: "KENERGY", name: "Kenergy Holdings", stockCode: "0307", sector: "Energy", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 10.4, profitYoY: 41.5, revenueQoQ: 5.2, profitQoQ: 18.3, latestRevenue: 35.1, latestProfit: 7.5, market: "Main" },
+  { code: "KMLOONG", name: "Kim Loong Resources", stockCode: "5027", sector: "Plantation", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 7.5, profitYoY: 19.7, revenueQoQ: 3.2, profitQoQ: 8.5, latestRevenue: 436.2, latestProfit: 47.3, market: "Main" },
+  { code: "M&G", name: "M&G Berhad", stockCode: "5078", sector: "Industrial", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 9.0, profitYoY: 27.7, revenueQoQ: 4.5, profitQoQ: 12.3, latestRevenue: 99.4, latestProfit: 16.6, market: "Main" },
+  { code: "MYNEWS", name: "Mynews Holdings", stockCode: "5275", sector: "Retail", yoyCategory: 1, qoqCategory: 4, hasAnalysis: true, revenueYoY: 11.3, profitYoY: 146.2, revenueQoQ: -5.8, profitQoQ: -22.4, latestRevenue: 230.9, latestProfit: 6.4, market: "Main" },
+  { code: "POHKONG", name: "Poh Kong Holdings", stockCode: "5080", sector: "Retail", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 6.7, profitYoY: 3.2, revenueQoQ: 2.5, profitQoQ: 1.8, latestRevenue: 365.5, latestProfit: 22.7, market: "Main" },
+  { code: "PRKCORP", name: "Perak Corporation", stockCode: "8346", sector: "Construction", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 19.6, profitYoY: 352.7, revenueQoQ: 12.5, profitQoQ: 85.2, latestRevenue: 43.9, latestProfit: 0.412, market: "Main" },
+  { code: "SUPERLN", name: "Superlon Holdings", stockCode: "7235", sector: "Manufacturing", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 3.3, profitYoY: 18.8, revenueQoQ: 1.5, profitQoQ: 5.2, latestRevenue: 34.5, latestProfit: 3.8, market: "Main" },
+  { code: "UMCCA", name: "UMCCA Berhad", stockCode: "2593", sector: "Plantation", yoyCategory: 1, qoqCategory: 3, hasAnalysis: true, revenueYoY: 16.9, profitYoY: 184.2, revenueQoQ: 8.2, profitQoQ: -15.3, latestRevenue: 191.6, latestProfit: 37.8, market: "Main" },
+  { code: "UWC", name: "UWC Berhad", stockCode: "5292", sector: "Manufacturing", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 43.0, profitYoY: 685.7, revenueQoQ: 28.5, profitQoQ: 112.4, latestRevenue: 108.8, latestProfit: 16.5, market: "Main" },
+  { code: "UMC", name: "United Malayan Land", stockCode: "0256", sector: "Property", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 8.4, profitYoY: 0, revenueQoQ: 3.2, profitQoQ: 2.5, latestRevenue: 14.2, latestProfit: 1.8, market: "Main" },
+  { code: "CRESNDO", name: "Crescendo Corporation", stockCode: "6718", sector: "Property", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 19.3, profitYoY: 129.6, revenueQoQ: 19.3, profitQoQ: 129.6, latestRevenue: 79.1, latestProfit: 16.3, market: "Main" },
+  { code: "KEINHIN", name: "Kelington Holdings", stockCode: "7199", sector: "Industrial", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: -0.7, profitYoY: 85.7, revenueQoQ: 5.2, profitQoQ: 25.3, latestRevenue: 82.5, latestProfit: 3.9, market: "Main" },
+  { code: "SOLID", name: "Solid Automotive", stockCode: "5242", sector: "Automotive", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: -7.4, profitYoY: 35.3, revenueQoQ: 2.5, profitQoQ: 12.5, latestRevenue: 85.1, latestProfit: 2.3, market: "Main" },
+  { code: "SCIENTX", name: "Scientex Berhad", stockCode: "4731", sector: "Industrial", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 0, profitYoY: 13.5, revenueQoQ: 12.3, profitQoQ: 22.1, latestRevenue: 1200, latestProfit: 154.3, market: "Main" },
+  { code: "VS", name: "VS Industry", stockCode: "6963", sector: "Manufacturing", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: 0, profitYoY: 0, revenueQoQ: 2.5, profitQoQ: 3.2, latestRevenue: 1100, latestProfit: 30.6, market: "Main" },
+  { code: "GLOMAC", name: "Glomac Berhad", stockCode: "5020", sector: "Property", yoyCategory: 1, qoqCategory: 1, hasAnalysis: true, revenueYoY: -1.1, profitYoY: 5.0, revenueQoQ: 3.5, profitQoQ: 8.2, latestRevenue: 55.8, latestProfit: 4.2, market: "Main" },
 
   // Category 2 YoY: Revenue DOWN, Profit UP (9 companies)
-  { code: "KOSSAN", name: "Kossan Rubber Industries", stockCode: "7153", sector: "Healthcare", yoyCategory: 2, qoqCategory: 2, revenueYoY: -13.5, profitYoY: 28.6, revenueQoQ: -8.5, profitQoQ: 15.2, latestRevenue: 439.0, latestProfit: 37.8, market: "Main" },
-  { code: "KESM", name: "KESM Industries", stockCode: "9334", sector: "Technology", yoyCategory: 2, qoqCategory: 5, revenueYoY: 0.4, profitYoY: 140.0, revenueQoQ: 5.2, profitQoQ: 0, latestRevenue: 53.0, latestProfit: 1.8, market: "Main" },
-  { code: "LBALUM", name: "LB Aluminium", stockCode: "9326", sector: "Industrial", yoyCategory: 2, qoqCategory: 1, revenueYoY: -3.3, profitYoY: 189.5, revenueQoQ: 8.5, profitQoQ: 45.2, latestRevenue: 270.9, latestProfit: 22.0, market: "Main" },
-  { code: "TECGUAN", name: "Tec Guan Holdings", stockCode: "7439", sector: "Industrial", yoyCategory: 2, qoqCategory: 2, revenueYoY: -30.2, profitYoY: 32.5, revenueQoQ: -12.5, profitQoQ: 8.5, latestRevenue: 93.4, latestProfit: 5.3, market: "Main" },
-  { code: "SCIPACK", name: "Scientex Packaging", stockCode: "8125", sector: "Industrial", yoyCategory: 2, qoqCategory: 1, revenueYoY: -3.1, profitYoY: 8.8, revenueQoQ: 2.5, profitQoQ: 5.2, latestRevenue: 176.2, latestProfit: 7.4, market: "Main" },
-  { code: "MAGNI", name: "Magni-Tech Industries", stockCode: "7087", sector: "Manufacturing", yoyCategory: 2, qoqCategory: 1, revenueYoY: -1.1, profitYoY: 24.7, revenueQoQ: 3.5, profitQoQ: 12.5, latestRevenue: 347.0, latestProfit: 32.3, market: "Main" },
-  { code: "CYL", name: "CYL Corporation", stockCode: "7157", sector: "Industrial", yoyCategory: 2, qoqCategory: 1, revenueYoY: -13.8, profitYoY: 294.7, revenueQoQ: 5.2, profitQoQ: 35.2, latestRevenue: 11.9, latestProfit: 1.2, market: "Main" },
-  { code: "SAPIND", name: "SAP Industry", stockCode: "7811", sector: "Industrial", yoyCategory: 2, qoqCategory: 5, revenueYoY: -8.9, profitYoY: 132.5, revenueQoQ: 2.5, profitQoQ: 0, latestRevenue: 65.2, latestProfit: 0.39, market: "Main" },
-  { code: "GAMUDA", name: "Gamuda Berhad", stockCode: "5398", sector: "Construction", yoyCategory: 2, qoqCategory: 2, revenueYoY: -7.3, profitYoY: 4.7, revenueQoQ: -8.2, profitQoQ: 5.6, latestRevenue: 3800, latestProfit: 215.1, market: "Main" },
+  { code: "KOSSAN", name: "Kossan Rubber Industries", stockCode: "7153", sector: "Healthcare", yoyCategory: 2, qoqCategory: 2, hasAnalysis: true, revenueYoY: -13.5, profitYoY: 28.6, revenueQoQ: -8.5, profitQoQ: 15.2, latestRevenue: 439.0, latestProfit: 37.8, market: "Main" },
+  { code: "KESM", name: "KESM Industries", stockCode: "9334", sector: "Technology", yoyCategory: 2, qoqCategory: 5, hasAnalysis: true, revenueYoY: 0.4, profitYoY: 140.0, revenueQoQ: 5.2, profitQoQ: 0, latestRevenue: 53.0, latestProfit: 1.8, market: "Main" },
+  { code: "LBALUM", name: "LB Aluminium", stockCode: "9326", sector: "Industrial", yoyCategory: 2, qoqCategory: 1, hasAnalysis: true, revenueYoY: -3.3, profitYoY: 189.5, revenueQoQ: 8.5, profitQoQ: 45.2, latestRevenue: 270.9, latestProfit: 22.0, market: "Main" },
+  { code: "TECGUAN", name: "Tec Guan Holdings", stockCode: "7439", sector: "Industrial", yoyCategory: 2, qoqCategory: 2, hasAnalysis: true, revenueYoY: -30.2, profitYoY: 32.5, revenueQoQ: -12.5, profitQoQ: 8.5, latestRevenue: 93.4, latestProfit: 5.3, market: "Main" },
+  { code: "SCIPACK", name: "Scientex Packaging", stockCode: "8125", sector: "Industrial", yoyCategory: 2, qoqCategory: 1, hasAnalysis: true, revenueYoY: -3.1, profitYoY: 8.8, revenueQoQ: 2.5, profitQoQ: 5.2, latestRevenue: 176.2, latestProfit: 7.4, market: "Main" },
+  { code: "MAGNI", name: "Magni-Tech Industries", stockCode: "7087", sector: "Manufacturing", yoyCategory: 2, qoqCategory: 1, hasAnalysis: true, revenueYoY: -1.1, profitYoY: 24.7, revenueQoQ: 3.5, profitQoQ: 12.5, latestRevenue: 347.0, latestProfit: 32.3, market: "Main" },
+  { code: "CYL", name: "CYL Corporation", stockCode: "7157", sector: "Industrial", yoyCategory: 2, qoqCategory: 1, hasAnalysis: true, revenueYoY: -13.8, profitYoY: 294.7, revenueQoQ: 5.2, profitQoQ: 35.2, latestRevenue: 11.9, latestProfit: 1.2, market: "Main" },
+  { code: "SAPIND", name: "SAP Industry", stockCode: "7811", sector: "Industrial", yoyCategory: 2, qoqCategory: 5, hasAnalysis: true, revenueYoY: -8.9, profitYoY: 132.5, revenueQoQ: 2.5, profitQoQ: 0, latestRevenue: 65.2, latestProfit: 0.39, market: "Main" },
+  { code: "GAMUDA", name: "Gamuda Berhad", stockCode: "5398", sector: "Construction", yoyCategory: 2, qoqCategory: 2, hasAnalysis: true, revenueYoY: -7.3, profitYoY: 4.7, revenueQoQ: -8.2, profitQoQ: 5.6, latestRevenue: 3800, latestProfit: 215.1, market: "Main" },
 
   // Category 3 YoY: Revenue UP, Profit DOWN (9 companies)
-  { code: "BESHOM", name: "Beshom Holdings", stockCode: "7668", sector: "Services", yoyCategory: 3, qoqCategory: 3, revenueYoY: 6.0, profitYoY: -36.4, revenueQoQ: 2.5, profitQoQ: -15.2, latestRevenue: 35.5, latestProfit: 1.4, market: "Main" },
-  { code: "MCEHLDG", name: "MCE Holdings", stockCode: "7004", sector: "Manufacturing", yoyCategory: 3, qoqCategory: 3, revenueYoY: 8.7, profitYoY: -17.1, revenueQoQ: 3.5, profitQoQ: -8.5, latestRevenue: 40.1, latestProfit: 3.4, market: "Main" },
-  { code: "SSF", name: "SSF Corporation", stockCode: "0287", sector: "Retail", yoyCategory: 3, qoqCategory: 4, revenueYoY: 3.1, profitYoY: -86.0, revenueQoQ: -5.2, profitQoQ: -45.2, latestRevenue: 33.0, latestProfit: 0.168, market: "Main" },
-  { code: "COSMOS", name: "Cosmos Holdings", stockCode: "0261", sector: "Services", yoyCategory: 3, qoqCategory: 3, revenueYoY: 2.3, profitYoY: -4.5, revenueQoQ: 1.5, profitQoQ: -2.5, latestRevenue: 4.4, latestProfit: 0.403, market: "Main" },
-  { code: "SNS", name: "SNS Network", stockCode: "0259", sector: "Technology", yoyCategory: 3, qoqCategory: 1, revenueYoY: 54.1, profitYoY: -1.0, revenueQoQ: 25.5, profitQoQ: 35.2, latestRevenue: 384.9, latestProfit: 10.1, market: "Main" },
-  { code: "XL", name: "XL Holdings", stockCode: "7121", sector: "Manufacturing", yoyCategory: 3, qoqCategory: 4, revenueYoY: 41.9, profitYoY: -37.5, revenueQoQ: -8.5, profitQoQ: -25.2, latestRevenue: 45.4, latestProfit: 2.0, market: "Main" },
-  { code: "DATAPRP", name: "Data Prep", stockCode: "8338", sector: "Technology", yoyCategory: 3, qoqCategory: 3, revenueYoY: 3.4, profitYoY: -17.4, revenueQoQ: 1.5, profitQoQ: -5.2, latestRevenue: 18.1, latestProfit: 1.9, market: "Main" },
-  { code: "GIIB", name: "GIIB Holdings", stockCode: "7192", sector: "Manufacturing", yoyCategory: 3, qoqCategory: 3, revenueYoY: 17.0, profitYoY: -22.4, revenueQoQ: 5.2, profitQoQ: -12.5, latestRevenue: 36.5, latestProfit: 3.8, market: "Main" },
-  { code: "WONG", name: "Wong Engineering", stockCode: "7050", sector: "Construction", yoyCategory: 3, qoqCategory: 4, revenueYoY: 14.6, profitYoY: -38.2, revenueQoQ: -5.2, profitQoQ: -18.5, latestRevenue: 33.8, latestProfit: 2.1, market: "Main" },
+  { code: "BESHOM", name: "Beshom Holdings", stockCode: "7668", sector: "Services", yoyCategory: 3, qoqCategory: 3, hasAnalysis: true, revenueYoY: 6.0, profitYoY: -36.4, revenueQoQ: 2.5, profitQoQ: -15.2, latestRevenue: 35.5, latestProfit: 1.4, market: "Main" },
+  { code: "MCEHLDG", name: "MCE Holdings", stockCode: "7004", sector: "Manufacturing", yoyCategory: 3, qoqCategory: 3, hasAnalysis: true, revenueYoY: 8.7, profitYoY: -17.1, revenueQoQ: 3.5, profitQoQ: -8.5, latestRevenue: 40.1, latestProfit: 3.4, market: "Main" },
+  { code: "SSF", name: "SSF Corporation", stockCode: "0287", sector: "Retail", yoyCategory: 3, qoqCategory: 4, hasAnalysis: true, revenueYoY: 3.1, profitYoY: -86.0, revenueQoQ: -5.2, profitQoQ: -45.2, latestRevenue: 33.0, latestProfit: 0.168, market: "Main" },
+  { code: "COSMOS", name: "Cosmos Holdings", stockCode: "0261", sector: "Services", yoyCategory: 3, qoqCategory: 3, hasAnalysis: true, revenueYoY: 2.3, profitYoY: -4.5, revenueQoQ: 1.5, profitQoQ: -2.5, latestRevenue: 4.4, latestProfit: 0.403, market: "Main" },
+  { code: "SNS", name: "SNS Network", stockCode: "0259", sector: "Technology", yoyCategory: 3, qoqCategory: 1, hasAnalysis: true, revenueYoY: 54.1, profitYoY: -1.0, revenueQoQ: 25.5, profitQoQ: 35.2, latestRevenue: 384.9, latestProfit: 10.1, market: "Main" },
+  { code: "XL", name: "XL Holdings", stockCode: "7121", sector: "Manufacturing", yoyCategory: 3, qoqCategory: 4, hasAnalysis: true, revenueYoY: 41.9, profitYoY: -37.5, revenueQoQ: -8.5, profitQoQ: -25.2, latestRevenue: 45.4, latestProfit: 2.0, market: "Main" },
+  { code: "DATAPRP", name: "Data Prep", stockCode: "8338", sector: "Technology", yoyCategory: 3, qoqCategory: 3, hasAnalysis: true, revenueYoY: 3.4, profitYoY: -17.4, revenueQoQ: 1.5, profitQoQ: -5.2, latestRevenue: 18.1, latestProfit: 1.9, market: "Main" },
+  { code: "GIIB", name: "GIIB Holdings", stockCode: "7192", sector: "Manufacturing", yoyCategory: 3, qoqCategory: 3, hasAnalysis: true, revenueYoY: 17.0, profitYoY: -22.4, revenueQoQ: 5.2, profitQoQ: -12.5, latestRevenue: 36.5, latestProfit: 3.8, market: "Main" },
+  { code: "WONG", name: "Wong Engineering", stockCode: "7050", sector: "Construction", yoyCategory: 3, qoqCategory: 4, hasAnalysis: true, revenueYoY: 14.6, profitYoY: -38.2, revenueQoQ: -5.2, profitQoQ: -18.5, latestRevenue: 33.8, latestProfit: 2.1, market: "Main" },
 
   // Category 4 YoY: Revenue DOWN, Profit DOWN (14 companies)
-  { code: "BAUTO", name: "Bermaz Auto", stockCode: "5248", sector: "Automotive", yoyCategory: 4, qoqCategory: 4, revenueYoY: -14.0, profitYoY: -57.3, revenueQoQ: -8.5, profitQoQ: -25.2, latestRevenue: 556.5, latestProfit: 17.2, market: "Main" },
-  { code: "HIAPTEK", name: "Hiap Teck Venture", stockCode: "5072", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, revenueYoY: -17.7, profitYoY: -58.5, revenueQoQ: -12.5, profitQoQ: -35.2, latestRevenue: 342.7, latestProfit: 19.7, market: "Main" },
-  { code: "JKGLAND", name: "JKG Land", stockCode: "6769", sector: "Property", yoyCategory: 4, qoqCategory: 4, revenueYoY: -20.9, profitYoY: -34.1, revenueQoQ: -15.2, profitQoQ: -22.5, latestRevenue: 76.6, latestProfit: 11.8, market: "Main" },
-  { code: "KRONO", name: "Kronologi Asia", stockCode: "0176", sector: "Technology", yoyCategory: 4, qoqCategory: 4, revenueYoY: -26.9, profitYoY: -31.3, revenueQoQ: -18.5, profitQoQ: -25.2, latestRevenue: 60.9, latestProfit: 1.1, market: "Main" },
-  { code: "PTRB", name: "PT Resources", stockCode: "0260", sector: "Manufacturing", yoyCategory: 4, qoqCategory: 4, revenueYoY: -28.1, profitYoY: -40.0, revenueQoQ: -15.2, profitQoQ: -28.5, latestRevenue: 118.8, latestProfit: 3.0, market: "Main" },
-  { code: "POHUAT", name: "Poh Huat Resources", stockCode: "7088", sector: "Manufacturing", yoyCategory: 4, qoqCategory: 4, revenueYoY: -11.3, profitYoY: -91.3, revenueQoQ: -8.5, profitQoQ: -65.2, latestRevenue: 93.2, latestProfit: 0.262, market: "Main" },
-  { code: "MERSEC", name: "Meridian Securities", stockCode: "0285", sector: "Finance", yoyCategory: 4, qoqCategory: 4, revenueYoY: -29.8, profitYoY: -17.9, revenueQoQ: -12.5, profitQoQ: -8.5, latestRevenue: 6.6, latestProfit: 3.2, market: "Main" },
-  { code: "ASTINO", name: "Astino Berhad", stockCode: "7162", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, revenueYoY: -5.4, profitYoY: -12.2, revenueQoQ: -3.5, profitQoQ: -5.2, latestRevenue: 168.8, latestProfit: 10.8, market: "Main" },
-  { code: "ANALABS", name: "Analabs Resources", stockCode: "7083", sector: "Healthcare", yoyCategory: 4, qoqCategory: 4, revenueYoY: -18.7, profitYoY: -38.9, revenueQoQ: -12.5, profitQoQ: -22.5, latestRevenue: 21.7, latestProfit: 1.1, market: "Main" },
-  { code: "APOLLO", name: "Apollo Food Holdings", stockCode: "6432", sector: "Consumer", yoyCategory: 4, qoqCategory: 4, revenueYoY: -4.0, profitYoY: -21.0, revenueQoQ: -2.5, profitQoQ: -12.5, latestRevenue: 65.1, latestProfit: 6.4, market: "Main" },
-  { code: "ARANK", name: "Arank Industries", stockCode: "7214", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, revenueYoY: -5.5, profitYoY: -57.1, revenueQoQ: -3.5, profitQoQ: -35.2, latestRevenue: 130.9, latestProfit: 1.8, market: "Main" },
-  { code: "MTRONIC", name: "Metronic Global", stockCode: "0043", sector: "Technology", yoyCategory: 4, qoqCategory: 4, revenueYoY: -15.6, profitYoY: -51.2, revenueQoQ: -8.5, profitQoQ: -25.2, latestRevenue: 2.7, latestProfit: 0.145, market: "Main" },
-  { code: "VIS", name: "VIS Engineering", stockCode: "0120", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, revenueYoY: -13.4, profitYoY: -50.0, revenueQoQ: -8.5, profitQoQ: -32.5, latestRevenue: 27.8, latestProfit: 3.4, market: "Main" },
-  { code: "YINSON", name: "Yinson Holdings", stockCode: "7293", sector: "Offshore", yoyCategory: 4, qoqCategory: 4, revenueYoY: -33.3, profitYoY: -50.2, revenueQoQ: -18.5, profitQoQ: -35.2, latestRevenue: 1400, latestProfit: 101, market: "Main" },
+  { code: "BAUTO", name: "Bermaz Auto", stockCode: "5248", sector: "Automotive", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -14.0, profitYoY: -57.3, revenueQoQ: -8.5, profitQoQ: -25.2, latestRevenue: 556.5, latestProfit: 17.2, market: "Main" },
+  { code: "HIAPTEK", name: "Hiap Teck Venture", stockCode: "5072", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -17.7, profitYoY: -58.5, revenueQoQ: -12.5, profitQoQ: -35.2, latestRevenue: 342.7, latestProfit: 19.7, market: "Main" },
+  { code: "JKGLAND", name: "JKG Land", stockCode: "6769", sector: "Property", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -20.9, profitYoY: -34.1, revenueQoQ: -15.2, profitQoQ: -22.5, latestRevenue: 76.6, latestProfit: 11.8, market: "Main" },
+  { code: "KRONO", name: "Kronologi Asia", stockCode: "0176", sector: "Technology", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -26.9, profitYoY: -31.3, revenueQoQ: -18.5, profitQoQ: -25.2, latestRevenue: 60.9, latestProfit: 1.1, market: "Main" },
+  { code: "PTRB", name: "PT Resources", stockCode: "0260", sector: "Manufacturing", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -28.1, profitYoY: -40.0, revenueQoQ: -15.2, profitQoQ: -28.5, latestRevenue: 118.8, latestProfit: 3.0, market: "Main" },
+  { code: "POHUAT", name: "Poh Huat Resources", stockCode: "7088", sector: "Manufacturing", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -11.3, profitYoY: -91.3, revenueQoQ: -8.5, profitQoQ: -65.2, latestRevenue: 93.2, latestProfit: 0.262, market: "Main" },
+  { code: "MERSEC", name: "Meridian Securities", stockCode: "0285", sector: "Finance", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -29.8, profitYoY: -17.9, revenueQoQ: -12.5, profitQoQ: -8.5, latestRevenue: 6.6, latestProfit: 3.2, market: "Main" },
+  { code: "ASTINO", name: "Astino Berhad", stockCode: "7162", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -5.4, profitYoY: -12.2, revenueQoQ: -3.5, profitQoQ: -5.2, latestRevenue: 168.8, latestProfit: 10.8, market: "Main" },
+  { code: "ANALABS", name: "Analabs Resources", stockCode: "7083", sector: "Healthcare", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -18.7, profitYoY: -38.9, revenueQoQ: -12.5, profitQoQ: -22.5, latestRevenue: 21.7, latestProfit: 1.1, market: "Main" },
+  { code: "APOLLO", name: "Apollo Food Holdings", stockCode: "6432", sector: "Consumer", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -4.0, profitYoY: -21.0, revenueQoQ: -2.5, profitQoQ: -12.5, latestRevenue: 65.1, latestProfit: 6.4, market: "Main" },
+  { code: "ARANK", name: "Arank Industries", stockCode: "7214", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -5.5, profitYoY: -57.1, revenueQoQ: -3.5, profitQoQ: -35.2, latestRevenue: 130.9, latestProfit: 1.8, market: "Main" },
+  { code: "MTRONIC", name: "Metronic Global", stockCode: "0043", sector: "Technology", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -15.6, profitYoY: -51.2, revenueQoQ: -8.5, profitQoQ: -25.2, latestRevenue: 2.7, latestProfit: 0.145, market: "Main" },
+  { code: "VIS", name: "VIS Engineering", stockCode: "0120", sector: "Industrial", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -13.4, profitYoY: -50.0, revenueQoQ: -8.5, profitQoQ: -32.5, latestRevenue: 27.8, latestProfit: 3.4, market: "Main" },
+  { code: "YINSON", name: "Yinson Holdings", stockCode: "7293", sector: "Offshore", yoyCategory: 4, qoqCategory: 4, hasAnalysis: true, revenueYoY: -33.3, profitYoY: -50.2, revenueQoQ: -18.5, profitQoQ: -35.2, latestRevenue: 1400, latestProfit: 101, market: "Main" },
 
   // Category 5 YoY: Turnaround (6 companies)
-  { code: "EAH", name: "EA Holdings", stockCode: "0154", sector: "Services", yoyCategory: 5, qoqCategory: 1, revenueYoY: 222.5, profitYoY: 809.1, revenueQoQ: 85.2, profitQoQ: 125.5, latestRevenue: 12.9, latestProfit: 2.3, market: "Main" },
-  { code: "SCBUILD", name: "SC Build", stockCode: "0109", sector: "Construction", yoyCategory: 5, qoqCategory: 5, revenueYoY: 144.4, profitYoY: 110.8, revenueQoQ: 45.2, profitQoQ: 0, latestRevenue: 8.8, latestProfit: 1.0, market: "Main" },
-  { code: "ASTRO", name: "Astro Malaysia", stockCode: "6399", sector: "Media", yoyCategory: 5, qoqCategory: 5, revenueYoY: -13.0, profitYoY: 100, revenueQoQ: -7.4, profitQoQ: 0, latestRevenue: 850, latestProfit: 25, market: "Main" },
-  { code: "CAMAROE", name: "Camaroe Holdings", stockCode: "0371", sector: "Construction", yoyCategory: 5, qoqCategory: 1, revenueYoY: 35.2, profitYoY: 250.0, revenueQoQ: 18.5, profitQoQ: 65.2, latestRevenue: 28.5, latestProfit: 1.8, market: "Main" },
-  { code: "ECA", name: "ECA Integrated", stockCode: "0267", sector: "Technology", yoyCategory: 5, qoqCategory: 1, revenueYoY: 45.2, profitYoY: 180.0, revenueQoQ: 22.5, profitQoQ: 55.2, latestRevenue: 35.2, latestProfit: 2.5, market: "Main" },
-  { code: "EWICAP", name: "EWEIN Capital", stockCode: "5283", sector: "Property", yoyCategory: 5, qoqCategory: 1, revenueYoY: 85.2, profitYoY: 350.0, revenueQoQ: 35.2, profitQoQ: 85.2, latestRevenue: 45.2, latestProfit: 5.2, market: "Main" },
+  { code: "EAH", name: "EA Holdings", stockCode: "0154", sector: "Services", yoyCategory: 5, qoqCategory: 1, hasAnalysis: true, revenueYoY: 222.5, profitYoY: 809.1, revenueQoQ: 85.2, profitQoQ: 125.5, latestRevenue: 12.9, latestProfit: 2.3, market: "Main" },
+  { code: "SCBUILD", name: "SC Build", stockCode: "0109", sector: "Construction", yoyCategory: 5, qoqCategory: 5, hasAnalysis: true, revenueYoY: 144.4, profitYoY: 110.8, revenueQoQ: 45.2, profitQoQ: 0, latestRevenue: 8.8, latestProfit: 1.0, market: "Main" },
+  { code: "ASTRO", name: "Astro Malaysia", stockCode: "6399", sector: "Media", yoyCategory: 5, qoqCategory: 5, hasAnalysis: true, revenueYoY: -13.0, profitYoY: 100, revenueQoQ: -7.4, profitQoQ: 0, latestRevenue: 850, latestProfit: 25, market: "Main" },
+  { code: "CAMAROE", name: "Camaroe Holdings", stockCode: "0371", sector: "Construction", yoyCategory: 5, qoqCategory: 1, hasAnalysis: true, revenueYoY: 35.2, profitYoY: 250.0, revenueQoQ: 18.5, profitQoQ: 65.2, latestRevenue: 28.5, latestProfit: 1.8, market: "Main" },
+  { code: "ECA", name: "ECA Integrated", stockCode: "0267", sector: "Technology", yoyCategory: 5, qoqCategory: 1, hasAnalysis: true, revenueYoY: 45.2, profitYoY: 180.0, revenueQoQ: 22.5, profitQoQ: 55.2, latestRevenue: 35.2, latestProfit: 2.5, market: "Main" },
+  { code: "EWICAP", name: "EWEIN Capital", stockCode: "5283", sector: "Property", yoyCategory: 5, qoqCategory: 1, hasAnalysis: true, revenueYoY: 85.2, profitYoY: 350.0, revenueQoQ: 35.2, profitQoQ: 85.2, latestRevenue: 45.2, latestProfit: 5.2, market: "Main" },
 
   // Category 6 YoY: Deteriorating (20 companies)
-  { code: "CEKD", name: "CEKD Holdings", stockCode: "0238", sector: "Services", yoyCategory: 6, qoqCategory: 6, revenueYoY: -25.2, profitYoY: -120.0, revenueQoQ: -15.2, profitQoQ: -85.2, latestRevenue: 18.5, latestProfit: -2.5, market: "Main" },
-  { code: "CYPARK", name: "Cypark Resources", stockCode: "5184", sector: "Energy", yoyCategory: 6, qoqCategory: 6, revenueYoY: -18.5, profitYoY: -135.0, revenueQoQ: -12.5, profitQoQ: -95.2, latestRevenue: 85.2, latestProfit: -15.2, market: "Main" },
-  { code: "HKB", name: "HKB Holdings", stockCode: "0359", sector: "Construction", yoyCategory: 6, qoqCategory: 6, revenueYoY: -35.2, profitYoY: -150.0, revenueQoQ: -22.5, profitQoQ: -110.0, latestRevenue: 25.2, latestProfit: -5.2, market: "Main" },
-  { code: "ICTZONE", name: "ICTZONE Holdings", stockCode: "0358", sector: "Technology", yoyCategory: 6, qoqCategory: 6, revenueYoY: -28.5, profitYoY: -125.0, revenueQoQ: -18.5, profitQoQ: -88.5, latestRevenue: 12.5, latestProfit: -2.8, market: "Main" },
-  { code: "JAYCORP", name: "Jay Corporation", stockCode: "7152", sector: "Manufacturing", yoyCategory: 6, qoqCategory: 6, revenueYoY: -22.5, profitYoY: -115.0, revenueQoQ: -15.2, profitQoQ: -75.2, latestRevenue: 45.2, latestProfit: -3.5, market: "Main" },
-  { code: "JOHAN", name: "Johan Holdings", stockCode: "3441", sector: "Property", yoyCategory: 6, qoqCategory: 6, revenueYoY: -32.5, profitYoY: -140.0, revenueQoQ: -18.5, profitQoQ: -95.2, latestRevenue: 28.5, latestProfit: -4.2, market: "Main" },
-  { code: "JSSOLAR", name: "JS Solar", stockCode: "0369", sector: "Energy", yoyCategory: 6, qoqCategory: 6, revenueYoY: -45.2, profitYoY: -180.0, revenueQoQ: -28.5, profitQoQ: -125.0, latestRevenue: 15.2, latestProfit: -8.5, market: "Main" },
-  { code: "KYM", name: "KYM Holdings", stockCode: "8362", sector: "Manufacturing", yoyCategory: 6, qoqCategory: 6, revenueYoY: -18.5, profitYoY: -110.0, revenueQoQ: -12.5, profitQoQ: -72.5, latestRevenue: 85.2, latestProfit: -5.2, market: "Main" },
-  { code: "MYAXIS", name: "MyAxis Group", stockCode: "03064", sector: "Technology", yoyCategory: 6, qoqCategory: 6, revenueYoY: -38.5, profitYoY: -165.0, revenueQoQ: -25.2, profitQoQ: -115.0, latestRevenue: 8.5, latestProfit: -3.2, market: "Main" },
-  { code: "NEXGRAM", name: "Nexgram Holdings", stockCode: "0096", sector: "Technology", yoyCategory: 6, qoqCategory: 6, revenueYoY: -42.5, profitYoY: -175.0, revenueQoQ: -28.5, profitQoQ: -120.0, latestRevenue: 5.2, latestProfit: -2.8, market: "Main" },
-  { code: "NOVAMSC", name: "Nova MSC", stockCode: "0026", sector: "Technology", yoyCategory: 6, qoqCategory: 6, revenueYoY: -28.5, profitYoY: -130.0, revenueQoQ: -18.5, profitQoQ: -85.2, latestRevenue: 18.5, latestProfit: -3.5, market: "Main" },
-  { code: "NTPM", name: "NTPM Holdings", stockCode: "5066", sector: "Consumer", yoyCategory: 6, qoqCategory: 4, revenueYoY: -8.5, profitYoY: -105.0, revenueQoQ: -5.2, profitQoQ: -35.2, latestRevenue: 185.2, latestProfit: -2.5, market: "Main" },
-  { code: "PMCK", name: "PMCK Holdings", stockCode: "0363", sector: "Services", yoyCategory: 6, qoqCategory: 6, revenueYoY: -35.2, profitYoY: -155.0, revenueQoQ: -22.5, profitQoQ: -105.0, latestRevenue: 12.5, latestProfit: -4.2, market: "Main" },
-  { code: "QUALITY", name: "Quality Concrete", stockCode: "7544", sector: "Construction", yoyCategory: 6, qoqCategory: 4, revenueYoY: -15.2, profitYoY: -108.0, revenueQoQ: -8.5, profitQoQ: -45.2, latestRevenue: 125.2, latestProfit: -3.8, market: "Main" },
-  { code: "SAPRES", name: "Sarawak Plantation", stockCode: "4596", sector: "Plantation", yoyCategory: 6, qoqCategory: 6, revenueYoY: -22.5, profitYoY: -125.0, revenueQoQ: -15.2, profitQoQ: -82.5, latestRevenue: 85.2, latestProfit: -8.5, market: "Main" },
-  { code: "SG", name: "SG Holdings", stockCode: "5157", sector: "Manufacturing", yoyCategory: 6, qoqCategory: 6, revenueYoY: -28.5, profitYoY: -135.0, revenueQoQ: -18.5, profitQoQ: -92.5, latestRevenue: 45.2, latestProfit: -5.8, market: "Main" },
-  { code: "SUNLOGY", name: "Sunlogy Holdings", stockCode: "0345", sector: "Energy", yoyCategory: 6, qoqCategory: 6, revenueYoY: -48.5, profitYoY: -185.0, revenueQoQ: -32.5, profitQoQ: -128.0, latestRevenue: 8.5, latestProfit: -4.5, market: "Main" },
-  { code: "TECHBASE", name: "Techbase Holdings", stockCode: "8966", sector: "Technology", yoyCategory: 6, qoqCategory: 6, revenueYoY: -32.5, profitYoY: -145.0, revenueQoQ: -22.5, profitQoQ: -98.5, latestRevenue: 15.2, latestProfit: -3.8, market: "Main" },
-  { code: "TFP", name: "TFP Solutions", stockCode: "0145", sector: "Services", yoyCategory: 6, qoqCategory: 6, revenueYoY: -25.2, profitYoY: -118.0, revenueQoQ: -15.2, profitQoQ: -78.5, latestRevenue: 22.5, latestProfit: -2.5, market: "Main" },
-  { code: "TRIVE", name: "Trive Property", stockCode: "0118", sector: "Property", yoyCategory: 6, qoqCategory: 6, revenueYoY: -38.5, profitYoY: -162.0, revenueQoQ: -25.2, profitQoQ: -112.0, latestRevenue: 18.5, latestProfit: -5.2, market: "Main" },
-  { code: "VANTNRG", name: "Vantage Energy", stockCode: "5218", sector: "Energy", yoyCategory: 6, qoqCategory: 6, revenueYoY: -42.5, profitYoY: -172.0, revenueQoQ: -28.5, profitQoQ: -118.0, latestRevenue: 25.2, latestProfit: -6.8, market: "Main" },
-  { code: "XPB", name: "XPB Holdings", stockCode: "0370", sector: "Technology", yoyCategory: 6, qoqCategory: 6, revenueYoY: -35.2, profitYoY: -148.0, revenueQoQ: -22.5, profitQoQ: -102.0, latestRevenue: 12.5, latestProfit: -3.2, market: "Main" },
+  { code: "CEKD", name: "CEKD Holdings", stockCode: "0238", sector: "Services", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -25.2, profitYoY: -120.0, revenueQoQ: -15.2, profitQoQ: -85.2, latestRevenue: 18.5, latestProfit: -2.5, market: "Main" },
+  { code: "CYPARK", name: "Cypark Resources", stockCode: "5184", sector: "Energy", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -18.5, profitYoY: -135.0, revenueQoQ: -12.5, profitQoQ: -95.2, latestRevenue: 85.2, latestProfit: -15.2, market: "Main" },
+  { code: "HKB", name: "HKB Holdings", stockCode: "0359", sector: "Construction", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -35.2, profitYoY: -150.0, revenueQoQ: -22.5, profitQoQ: -110.0, latestRevenue: 25.2, latestProfit: -5.2, market: "Main" },
+  { code: "ICTZONE", name: "ICTZONE Holdings", stockCode: "0358", sector: "Technology", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -28.5, profitYoY: -125.0, revenueQoQ: -18.5, profitQoQ: -88.5, latestRevenue: 12.5, latestProfit: -2.8, market: "Main" },
+  { code: "JAYCORP", name: "Jay Corporation", stockCode: "7152", sector: "Manufacturing", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -22.5, profitYoY: -115.0, revenueQoQ: -15.2, profitQoQ: -75.2, latestRevenue: 45.2, latestProfit: -3.5, market: "Main" },
+  { code: "JOHAN", name: "Johan Holdings", stockCode: "3441", sector: "Property", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -32.5, profitYoY: -140.0, revenueQoQ: -18.5, profitQoQ: -95.2, latestRevenue: 28.5, latestProfit: -4.2, market: "Main" },
+  { code: "JSSOLAR", name: "JS Solar", stockCode: "0369", sector: "Energy", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -45.2, profitYoY: -180.0, revenueQoQ: -28.5, profitQoQ: -125.0, latestRevenue: 15.2, latestProfit: -8.5, market: "Main" },
+  { code: "KYM", name: "KYM Holdings", stockCode: "8362", sector: "Manufacturing", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -18.5, profitYoY: -110.0, revenueQoQ: -12.5, profitQoQ: -72.5, latestRevenue: 85.2, latestProfit: -5.2, market: "Main" },
+  { code: "MYAXIS", name: "MyAxis Group", stockCode: "03064", sector: "Technology", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -38.5, profitYoY: -165.0, revenueQoQ: -25.2, profitQoQ: -115.0, latestRevenue: 8.5, latestProfit: -3.2, market: "Main" },
+  { code: "NEXGRAM", name: "Nexgram Holdings", stockCode: "0096", sector: "Technology", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -42.5, profitYoY: -175.0, revenueQoQ: -28.5, profitQoQ: -120.0, latestRevenue: 5.2, latestProfit: -2.8, market: "Main" },
+  { code: "NOVAMSC", name: "Nova MSC", stockCode: "0026", sector: "Technology", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -28.5, profitYoY: -130.0, revenueQoQ: -18.5, profitQoQ: -85.2, latestRevenue: 18.5, latestProfit: -3.5, market: "Main" },
+  { code: "NTPM", name: "NTPM Holdings", stockCode: "5066", sector: "Consumer", yoyCategory: 6, qoqCategory: 4, hasAnalysis: true, revenueYoY: -8.5, profitYoY: -105.0, revenueQoQ: -5.2, profitQoQ: -35.2, latestRevenue: 185.2, latestProfit: -2.5, market: "Main" },
+  { code: "PMCK", name: "PMCK Holdings", stockCode: "0363", sector: "Services", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -35.2, profitYoY: -155.0, revenueQoQ: -22.5, profitQoQ: -105.0, latestRevenue: 12.5, latestProfit: -4.2, market: "Main" },
+  { code: "QUALITY", name: "Quality Concrete", stockCode: "7544", sector: "Construction", yoyCategory: 6, qoqCategory: 4, hasAnalysis: true, revenueYoY: -15.2, profitYoY: -108.0, revenueQoQ: -8.5, profitQoQ: -45.2, latestRevenue: 125.2, latestProfit: -3.8, market: "Main" },
+  { code: "SAPRES", name: "Sarawak Plantation", stockCode: "4596", sector: "Plantation", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -22.5, profitYoY: -125.0, revenueQoQ: -15.2, profitQoQ: -82.5, latestRevenue: 85.2, latestProfit: -8.5, market: "Main" },
+  { code: "SG", name: "SG Holdings", stockCode: "5157", sector: "Manufacturing", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -28.5, profitYoY: -135.0, revenueQoQ: -18.5, profitQoQ: -92.5, latestRevenue: 45.2, latestProfit: -5.8, market: "Main" },
+  { code: "SUNLOGY", name: "Sunlogy Holdings", stockCode: "0345", sector: "Energy", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -48.5, profitYoY: -185.0, revenueQoQ: -32.5, profitQoQ: -128.0, latestRevenue: 8.5, latestProfit: -4.5, market: "Main" },
+  { code: "TECHBASE", name: "Techbase Holdings", stockCode: "8966", sector: "Technology", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -32.5, profitYoY: -145.0, revenueQoQ: -22.5, profitQoQ: -98.5, latestRevenue: 15.2, latestProfit: -3.8, market: "Main" },
+  { code: "TFP", name: "TFP Solutions", stockCode: "0145", sector: "Services", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -25.2, profitYoY: -118.0, revenueQoQ: -15.2, profitQoQ: -78.5, latestRevenue: 22.5, latestProfit: -2.5, market: "Main" },
+  { code: "TRIVE", name: "Trive Property", stockCode: "0118", sector: "Property", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -38.5, profitYoY: -162.0, revenueQoQ: -25.2, profitQoQ: -112.0, latestRevenue: 18.5, latestProfit: -5.2, market: "Main" },
+  { code: "VANTNRG", name: "Vantage Energy", stockCode: "5218", sector: "Energy", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -42.5, profitYoY: -172.0, revenueQoQ: -28.5, profitQoQ: -118.0, latestRevenue: 25.2, latestProfit: -6.8, market: "Main" },
+  { code: "XPB", name: "XPB Holdings", stockCode: "0370", sector: "Technology", yoyCategory: 6, qoqCategory: 6, hasAnalysis: true, revenueYoY: -35.2, profitYoY: -148.0, revenueQoQ: -22.5, profitQoQ: -102.0, latestRevenue: 12.5, latestProfit: -3.2, market: "Main" },
 
   // ============================================================================
   // ADDITIONAL KLSE COMPANIES (No financial analysis data yet)
@@ -229,7 +231,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "HLIND", name: "Hong Leong Industries Berhad", stockCode: "3301", sector: "Industrial", market: "Main" },
   { code: "TOPGLOV", name: "Top Glove Corporation Bhd", stockCode: "7113", sector: "Healthcare", market: "Main" },
   { code: "UOADEV", name: "UOA Development Bhd", stockCode: "5200", sector: "Property", market: "Main" },
-  { code: "ITMAX", name: "ITMAX System Berhad", stockCode: "0370", sector: "Technology", market: "Main" },
   { code: "GENP", name: "Genting Plantations Berhad", stockCode: "2291", sector: "Plantation", market: "Main" },
   { code: "OSK", name: "OSK Holdings Berhad", stockCode: "5053", sector: "Finance", market: "Main" },
   { code: "ORIENT", name: "Oriental Holdings Berhad", stockCode: "4006", sector: "Consumer", market: "Main" },
@@ -265,7 +266,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "LHI", name: "Leong Hup International Berhad", stockCode: "5287", sector: "Consumer", market: "Main" },
   { code: "HEXTECH", name: "Hextar Technologies Solutions Berhad", stockCode: "5279", sector: "Technology", market: "Main" },
   { code: "VELESTO", name: "Velesto Energy Berhad", stockCode: "5243", sector: "Energy", market: "Main" },
-  { code: "NATGATE", name: "NationGate Holdings Berhad", stockCode: "5235", sector: "Technology", market: "Main" },
   { code: "GCB", name: "Guan Chong Berhad", stockCode: "5102", sector: "Consumer", market: "Main" },
   { code: "WCEHB", name: "WCE Holdings Berhad", stockCode: "2976", sector: "Construction", market: "Main" },
   { code: "SEM", name: "7-Eleven Malaysia Holdings Berhad", stockCode: "5250", sector: "Consumer", market: "Main" },
@@ -297,7 +297,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "HSPLANT", name: "Hap Seng Plantations Holdings Berhad", stockCode: "5138", sector: "Plantation", market: "Main" },
   { code: "PHARMA", name: "Pharmaniaga Berhad", stockCode: "7081", sector: "Healthcare", market: "Main" },
   { code: "BJCORP", name: "Berjaya Corporation Berhad", stockCode: "3395", sector: "Consumer", market: "Main" },
-  { code: "LSH", name: "Lim Seong Hai Capital Berhad", stockCode: "0198", sector: "Industrial", market: "Main" },
   { code: "TSH", name: "TSH Resources Berhad", stockCode: "9059", sector: "Plantation", market: "Main" },
   { code: "MNRB", name: "MNRB Holdings Berhad", stockCode: "6459", sector: "Finance", market: "Main" },
   { code: "CHGP", name: "Chin Hin Group Property Berhad", stockCode: "0279", sector: "Property", market: "Main" },
@@ -307,7 +306,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "IGBCR", name: "IGB Commercial Real Estate Investment Trust", stockCode: "5299", sector: "Property", market: "Main" },
   { code: "PARADIGM", name: "Paradigm Real Estate Investment Trust", stockCode: "5269", sector: "Property", market: "Main" },
   { code: "AEON", name: "Aeon Co. (M) Bhd", stockCode: "6599", sector: "Consumer", market: "Main" },
-  { code: "ALPHA", name: "Alpha IVF Group Berhad", stockCode: "0318", sector: "Healthcare", market: "ACE" },
   { code: "UCHITEC", name: "Uchi Technologies Berhad", stockCode: "7100", sector: "Technology", market: "Main" },
   { code: "VSTECS", name: "VSTECS Berhad", stockCode: "5162", sector: "Technology", market: "Main" },
   { code: "MSC", name: "Malaysia Smelting Corporation Berhad", stockCode: "5916", sector: "Industrial", market: "Main" },
@@ -324,7 +322,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "DPHARMA", name: "Duopharma Biotech Berhad", stockCode: "7148", sector: "Healthcare", market: "Main" },
   { code: "HIBISCS", name: "Hibiscus Petroleum Berhad", stockCode: "5199", sector: "Energy", market: "Main" },
   { code: "MTEC", name: "Master Tec Group Berhad", stockCode: "0295", sector: "Industrial", market: "ACE" },
-  { code: "NCT", name: "NCT Alliance Berhad", stockCode: "0208", sector: "Construction", market: "Main" },
   { code: "ALAQAR", name: "Al-'Aqar Healthcare REIT", stockCode: "5116", sector: "Property", market: "Main" },
   { code: "PLINTAS", name: "Prolintas Infra Business Trust", stockCode: "5281", sector: "Industrial", market: "Main" },
   { code: "EG", name: "EG Industries Berhad", stockCode: "8907", sector: "Technology", market: "Main" },
@@ -337,21 +334,18 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "PIE", name: "P.I.E. Industrial Berhad", stockCode: "7095", sector: "Industrial", market: "Main" },
   { code: "CHINTEK", name: "Chin Teck Plantations Berhad", stockCode: "1929", sector: "Plantation", market: "Main" },
   { code: "ATECH", name: "Aurelius Technologies Berhad", stockCode: "0216", sector: "Technology", market: "Main" },
-  { code: "BMGREEN", name: "BM GreenTech Berhad", stockCode: "0193", sector: "Energy", market: "Main" },
   { code: "ANCOMNY", name: "Ancom Nylex Berhad", stockCode: "0090", sector: "Industrial", market: "Main" },
   { code: "AME", name: "AME Elite Consortium Berhad", stockCode: "5293", sector: "Property", market: "Main" },
   { code: "SKPRES", name: "SKP Resources Bhd", stockCode: "7155", sector: "Industrial", market: "Main" },
   { code: "PEKAT", name: "Pekat Group Berhad", stockCode: "0219", sector: "Industrial", market: "Main" },
   { code: "DNEX", name: "Dagang NeXchange Berhad", stockCode: "4456", sector: "Technology", market: "Main" },
   { code: "SYGROUP", name: "Shin Yang Group Berhad", stockCode: "5173", sector: "Services", market: "Main" },
-  { code: "WELLCHIP", name: "Well Chip Group Berhad", stockCode: "0208", sector: "Industrial", market: "Main" },
   { code: "SENTRAL", name: "Sentral REIT", stockCode: "5123", sector: "Property", market: "Main" },
   { code: "DKSH", name: "DKSH Holdings (Malaysia) Berhad", stockCode: "5908", sector: "Consumer", market: "Main" },
   { code: "WCT", name: "WCT Holdings Berhad", stockCode: "9679", sector: "Construction", market: "Main" },
   { code: "LCTITAN", name: "Lotte Chemical Titan Holding Berhad", stockCode: "5284", sector: "Industrial", market: "Main" },
   { code: "MULPHA", name: "Mulpha International Bhd", stockCode: "3905", sector: "Property", market: "Main" },
   { code: "SIGN", name: "Signature International Berhad", stockCode: "0099", sector: "Property", market: "Main" },
-  { code: "HEXIND", name: "Hextar Industries Berhad", stockCode: "0090", sector: "Industrial", market: "Main" },
   { code: "INNO", name: "Innoprise Plantations Berhad", stockCode: "5265", sector: "Plantation", market: "Main" },
   { code: "NGGB", name: "Nextgreen Global Berhad", stockCode: "0235", sector: "Industrial", market: "Main" },
   { code: "EKOVEST", name: "Ekovest Berhad", stockCode: "8877", sector: "Construction", market: "Main" },
@@ -439,18 +433,15 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "ZHULIAN", name: "Zhulian Corporation Berhad", stockCode: "5131", sector: "Consumer", market: "Main" },
   { code: "SENFONG", name: "Seng Fong Holdings Berhad", stockCode: "0157", sector: "Property", market: "Main" },
   { code: "REACHTEN", name: "Reach Ten Holdings Berhad", stockCode: "0263", sector: "Consumer", market: "Main" },
-  { code: "ABLEGLOB", name: "Able Global Berhad", stockCode: "5281", sector: "Industrial", market: "Main" },
   { code: "FCW", name: "FCW Holdings Berhad", stockCode: "8486", sector: "Industrial", market: "Main" },
   { code: "CSCSTEL", name: "CSC Steel Holdings Berhad", stockCode: "5094", sector: "Industrial", market: "Main" },
   { code: "DELEUM", name: "Deleum Berhad", stockCode: "5132", sector: "Energy", market: "Main" },
   { code: "ELKDESA", name: "ELK-Desa Resources Berhad", stockCode: "5228", sector: "Finance", market: "Main" },
   { code: "SKYWLD", name: "SkyWorld Development Berhad", stockCode: "0201", sector: "Property", market: "Main" },
   { code: "JAGCPTL", name: "KUB Malaysia Berhad", stockCode: "6874", sector: "Consumer", market: "Main" },
-  { code: "SCICOM", name: "Scicom (MSC) Berhad", stockCode: "0099", sector: "Technology", market: "Main" },
   { code: "HENGYUAN", name: "Hengyuan Refining Company Berhad", stockCode: "4324", sector: "Energy", market: "Main" },
   { code: "KIMLUN", name: "Kimlun Corporation Berhad", stockCode: "5171", sector: "Construction", market: "Main" },
   { code: "THPLANT", name: "TH Plantations Berhad", stockCode: "5112", sector: "Plantation", market: "Main" },
-  { code: "WELLS", name: "Wellspire Holdings Berhad", stockCode: "0271", sector: "Consumer", market: "ACE" },
   { code: "PGLOBE", name: "Paragon Globe Berhad", stockCode: "0281", sector: "Property", market: "Main" },
   { code: "ENGTEX", name: "Engtex Group Berhad", stockCode: "5205", sector: "Industrial", market: "Main" },
   { code: "JFTECH", name: "JF Technology Berhad", stockCode: "0167", sector: "Technology", market: "Main" },
@@ -458,9 +449,7 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "UUE", name: "UUE Holdings Berhad", stockCode: "0240", sector: "Industrial", market: "Main" },
   { code: "BJFOOD", name: "Berjaya Food Berhad", stockCode: "5196", sector: "Consumer", market: "Main" },
   { code: "MENANG", name: "Menang Corporation (M) Berhad", stockCode: "0204", sector: "Property", market: "Main" },
-  { code: "GDB", name: "GDB Holdings Berhad", stockCode: "0198", sector: "Construction", market: "Main" },
   { code: "CIHLDG", name: "C.I. Holdings Berhad", stockCode: "2828", sector: "Consumer", market: "Main" },
-  { code: "OCK", name: "OCK Group Berhad", stockCode: "0172", sector: "Services", market: "Main" },
   { code: "SAB", name: "Southern Acids (M) Berhad", stockCode: "5134", sector: "Industrial", market: "Main" },
   { code: "AVANGAAD", name: "Avangaad Berhad", stockCode: "0270", sector: "Industrial", market: "Main" },
   { code: "TNLOGIS", name: "Tiong Nam Logistics Holdings Berhad", stockCode: "8397", sector: "Services", market: "Main" },
@@ -480,23 +469,18 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "GUOCO", name: "GuocoLand (Malaysia) Berhad", stockCode: "1503", sector: "Property", market: "Main" },
   { code: "RAMSSOL", name: "Ramssol Group Berhad", stockCode: "0220", sector: "Technology", market: "Main" },
   { code: "NAIM", name: "Naim Holdings Berhad", stockCode: "5073", sector: "Property", market: "Main" },
-  { code: "PGLOBAL", name: "Pantech Global Berhad", stockCode: "0217", sector: "Industrial", market: "Main" },
   { code: "TCHONG", name: "Tan Chong Motor Holdings Berhad", stockCode: "4405", sector: "Automotive", market: "Main" },
   { code: "MUHIBAH", name: "Muhibbah Engineering (M) Bhd", stockCode: "5703", sector: "Construction", market: "Main" },
   { code: "TASCO", name: "TASCO Berhad", stockCode: "5140", sector: "Services", market: "Main" },
-  { code: "PTRANS", name: "Perak Transit Berhad", stockCode: "0186", sector: "Services", market: "Main" },
   { code: "RSAWIT", name: "Rimbunan Sawit Berhad", stockCode: "5113", sector: "Plantation", market: "Main" },
   { code: "CPETECH", name: "CPE Technology Berhad", stockCode: "0222", sector: "Industrial", market: "Main" },
-  { code: "EMCC", name: "Evergreen Max Cash Capital Berhad", stockCode: "0286", sector: "Finance", market: "ACE" },
   { code: "PGF", name: "PGF Capital Berhad", stockCode: "5177", sector: "Finance", market: "Main" },
   { code: "FAVCO", name: "Favelle Favco Berhad", stockCode: "7229", sector: "Industrial", market: "Main" },
   { code: "CITAGLB", name: "Citaglobal Berhad", stockCode: "0112", sector: "Construction", market: "Main" },
   { code: "VARIA", name: "Varia Berhad", stockCode: "5006", sector: "Industrial", market: "Main" },
   { code: "ATRIUM", name: "Atrium Real Estate Investment Trust", stockCode: "5130", sector: "Property", market: "Main" },
   { code: "KITACON", name: "Kumpulan Kitacon Berhad", stockCode: "0169", sector: "Construction", market: "Main" },
-  { code: "PARAGON", name: "Paragon Union Berhad", stockCode: "5162", sector: "Industrial", market: "Main" },
   { code: "PERDANA", name: "Perdana Petroleum Berhad", stockCode: "7108", sector: "Offshore", market: "Main" },
-  { code: "SENDAI", name: "Eversendai Corporation Berhad", stockCode: "5205", sector: "Construction", market: "Main" },
   { code: "HARNLEN", name: "Harn Len Corporation Bhd", stockCode: "7101", sector: "Plantation", market: "Main" },
   { code: "CLOUDPT", name: "Cloudpoint Technology Berhad", stockCode: "0221", sector: "Technology", market: "Main" },
   { code: "ULICORP", name: "United U-LI Corporation Berhad", stockCode: "8230", sector: "Industrial", market: "Main" },
@@ -506,48 +490,35 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "KTI", name: "KTI Landmark Berhad", stockCode: "0243", sector: "Construction", market: "Main" },
   { code: "WENTEL", name: "Wentel Engineering Holdings Berhad", stockCode: "0298", sector: "Industrial", market: "ACE" },
   { code: "KLUANG", name: "Kluang Rubber Company (Malaya) Berhad", stockCode: "2453", sector: "Plantation", market: "Main" },
-  { code: "PWRWELL", name: "Powerwell Holdings Berhad", stockCode: "0221", sector: "Industrial", market: "Main" },
   { code: "REDTONE", name: "REDtone Digital Berhad", stockCode: "0032", sector: "Services", market: "Main" },
   { code: "SFPTECH", name: "SFP Tech Holdings Berhad", stockCode: "0251", sector: "Technology", market: "ACE" },
-  { code: "SORENTO", name: "Sorento Capital Berhad", stockCode: "0213", sector: "Finance", market: "Main" },
   { code: "RGB", name: "RGB International Bhd", stockCode: "0037", sector: "Consumer", market: "Main" },
   { code: "GOPENG", name: "Gopeng Berhad", stockCode: "2135", sector: "Plantation", market: "Main" },
-  { code: "SEAL", name: "Seal Incorporated Berhad", stockCode: "0251", sector: "Industrial", market: "Main" },
   { code: "KPS", name: "Kumpulan Perangsang Selangor Berhad", stockCode: "5843", sector: "Industrial", market: "Main" },
   { code: "CANONE", name: "Can-One Berhad", stockCode: "7200", sector: "Industrial", market: "Main" },
   { code: "KAWAN", name: "Kawan Food Berhad", stockCode: "7216", sector: "Consumer", market: "Main" },
   { code: "MBRIGHT", name: "Meta Bright Group Berhad", stockCode: "0102", sector: "Technology", market: "Main" },
-  { code: "QES", name: "QES Group Berhad", stockCode: "0196", sector: "Technology", market: "Main" },
-  { code: "MAG", name: "MAG Holdings Berhad", stockCode: "0090", sector: "Consumer", market: "Main" },
-  { code: "FM", name: "FM Global Logistics Holdings Berhad", stockCode: "0261", sector: "Services", market: "Main" },
   { code: "SWIFT", name: "Swift Haulage Berhad", stockCode: "5303", sector: "Services", market: "Main" },
   { code: "CHB", name: "Critical Holdings Berhad", stockCode: "0255", sector: "Healthcare", market: "Main" },
   { code: "WTK", name: "W T K Holdings Berhad", stockCode: "4243", sector: "Plantation", market: "Main" },
   { code: "KKB", name: "KKB Engineering Berhad", stockCode: "9466", sector: "Industrial", market: "Main" },
   { code: "OFI", name: "Oriental Food Industries Holdings Berhad", stockCode: "7107", sector: "Consumer", market: "Main" },
-  { code: "OPTIMAX", name: "Optimax Holdings Berhad", stockCode: "0276", sector: "Healthcare", market: "Main" },
   { code: "HEKTAR", name: "Hektar Real Estate Investment Trust", stockCode: "5121", sector: "Property", market: "Main" },
   { code: "AORB", name: "Alpha Ocean Resources Berhad", stockCode: "0377", sector: "Industrial", market: "Main" },
-  { code: "NADIBHD", name: "Gagasan Nadi Cergas Berhad", stockCode: "0166", sector: "Construction", market: "Main" },
   { code: "TITIJYA", name: "Titijaya Land Berhad", stockCode: "5239", sector: "Property", market: "Main" },
   { code: "TDM", name: "TDM Berhad", stockCode: "2054", sector: "Plantation", market: "Main" },
   { code: "AVALAND", name: "Avaland Berhad", stockCode: "5182", sector: "Property", market: "Main" },
-  { code: "FOCUSP", name: "Focus Point Holdings Berhad", stockCode: "0157", sector: "Consumer", market: "Main" },
-  { code: "HM", name: "Harvest Miracle Capital Berhad", stockCode: "0251", sector: "Finance", market: "Main" },
   { code: "YSPSAH", name: "Y.S.P. Southeast Asia Holding Berhad", stockCode: "7178", sector: "Healthcare", market: "Main" },
   { code: "MAYBULK", name: "Maybulk Berhad", stockCode: "5077", sector: "Services", market: "Main" },
   { code: "TEXCYCL", name: "Tex Cycle Technology (M) Berhad", stockCode: "0089", sector: "Industrial", market: "Main" },
   { code: "CVIEW", name: "Country View Berhad", stockCode: "5049", sector: "Consumer", market: "Main" },
-  { code: "PESTEC", name: "Pestec International Berhad", stockCode: "0037", sector: "Consumer", market: "Main" },
   { code: "SENHENG", name: "Senheng New Retail Berhad", stockCode: "5305", sector: "Consumer", market: "Main" },
   { code: "PANSAR", name: "Pansar Berhad", stockCode: "8419", sector: "Industrial", market: "Main" },
   { code: "JTGROUP", name: "Jati Tinggi Group Berhad", stockCode: "0254", sector: "Industrial", market: "Main" },
   { code: "3REN", name: "3REN Berhad", stockCode: "0328", sector: "Technology", market: "ACE" },
   { code: "NOTION", name: "Notion VTec Berhad", stockCode: "0083", sector: "Technology", market: "Main" },
-  { code: "ALSREIT", name: "Al-Salam Real Estate Investment Trust", stockCode: "5269", sector: "Property", market: "Main" },
   { code: "CORAZA", name: "Coraza Integrated Technology Berhad", stockCode: "0211", sector: "Technology", market: "Main" },
   { code: "MAXIM", name: "Maxim Global Berhad", stockCode: "4022", sector: "Consumer", market: "Main" },
-  { code: "CEB", name: "Cape EMS Berhad", stockCode: "0089", sector: "Technology", market: "Main" },
   { code: "TOMEI", name: "Tomei Consolidated Berhad", stockCode: "7230", sector: "Consumer", market: "Main" },
   { code: "MAGNA", name: "Magna Prima Berhad", stockCode: "0060", sector: "Property", market: "Main" },
   { code: "UZMA", name: "Uzma Berhad", stockCode: "7250", sector: "Energy", market: "Main" },
@@ -555,12 +526,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "JAKS", name: "JAKS Resources Berhad", stockCode: "4723", sector: "Construction", market: "Main" },
   { code: "POS", name: "Pos Malaysia Berhad", stockCode: "4634", sector: "Services", market: "Main" },
   { code: "SALCON", name: "Salcon Berhad", stockCode: "8567", sector: "Construction", market: "Main" },
-  { code: "BEDI", name: "BEDI Berhad", stockCode: "0287", sector: "Consumer", market: "Main" },
   { code: "MHC", name: "MHC Plantations Bhd", stockCode: "5026", sector: "Plantation", market: "Main" },
-  { code: "KPPROP", name: "Kerjaya Prospek Property Berhad", stockCode: "0274", sector: "Property", market: "Main" },
   { code: "NHFATT", name: "New Hoong Fatt Holdings Berhad", stockCode: "5085", sector: "Automotive", market: "Main" },
   { code: "LGMS", name: "LGMS Berhad", stockCode: "0181", sector: "Technology", market: "Main" },
-  { code: "ASIAFLE", name: "Asia File Corporation Bhd", stockCode: "0090", sector: "Industrial", market: "Main" },
   { code: "T7GLOBAL", name: "T7 Global Berhad", stockCode: "0150", sector: "Energy", market: "Main" },
   { code: "SLP", name: "SLP Resources Berhad", stockCode: "7248", sector: "Industrial", market: "Main" },
   { code: "PTARAS", name: "Pintaras Jaya Berhad", stockCode: "6002", sector: "Construction", market: "Main" },
@@ -582,21 +550,15 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "D&O", name: "D & O Green Technologies Berhad", stockCode: "7204", sector: "Technology", market: "Main" },
   { code: "E&O", name: "Eastern & Oriental Berhad", stockCode: "3417", sector: "Property", market: "Main" },
   { code: "L&G", name: "Land & General Berhad", stockCode: "1152", sector: "Property", market: "Main" },
-  { code: "M&A", name: "M & A Equity Holdings Berhad", stockCode: "0271", sector: "Finance", market: "Main" },
 
   // Additional A companies
-  { code: "ADVPKG", name: "Advance Packaging Group Berhad", stockCode: "0287", sector: "Industrial", market: "ACE" },
-  { code: "AEMULUS", name: "Aemulus Holdings Berhad", stockCode: "0181", sector: "Technology", market: "ACE" },
   { code: "AGESON", name: "Ageson Berhad", stockCode: "3453", sector: "Construction", market: "Main" },
   { code: "AGES", name: "Ages International Holdings Berhad", stockCode: "0304", sector: "Healthcare", market: "ACE" },
   { code: "AGROUP", name: "A Group Berhad", stockCode: "0343", sector: "Consumer", market: "ACE" },
   { code: "AGRICOR", name: "Agricore CS Holdings Berhad", stockCode: "0309", sector: "Consumer", market: "ACE" },
-  { code: "AIRASIA", name: "AirAsia Group Berhad", stockCode: "5099", sector: "Transportation", market: "Main" },
   { code: "AKMSB", name: "AKM Services Berhad", stockCode: "0291", sector: "Services", market: "ACE" },
-  { code: "AMATEL", name: "AMA Telecommunications Berhad", stockCode: "0307", sector: "Technology", market: "ACE" },
   { code: "AMEDIA", name: "Asia Media Group Berhad", stockCode: "0159", sector: "Media", market: "ACE" },
   { code: "ANEKA", name: "Aneka Jaringan Holdings Berhad", stockCode: "0226", sector: "Construction", market: "Main" },
-  { code: "APPASIA", name: "AppAsia Berhad", stockCode: "0150", sector: "Technology", market: "ACE" },
   { code: "ARTRONIQ", name: "Artroniq Berhad", stockCode: "0038", sector: "Industrial", market: "ACE" },
   { code: "ASIABRN", name: "Asia Brands Berhad", stockCode: "7203", sector: "Consumer", market: "Main" },
   { code: "ASIACRD", name: "Asia Card Holdings Berhad", stockCode: "5380", sector: "Industrial", market: "Main" },
@@ -606,14 +568,8 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "ATAIMS", name: "ATA IMS Berhad", stockCode: "8176", sector: "Technology", market: "Main" },
 
   // Additional B companies
-  { code: "BERTAM", name: "Bertam Alliance Berhad", stockCode: "0270", sector: "Property", market: "Main" },
-  { code: "BINACOM", name: "Bina Composite Technologies Berhad", stockCode: "0271", sector: "Industrial", market: "ACE" },
   { code: "BINTAI", name: "Bintai Kinden Corporation Berhad", stockCode: "6998", sector: "Construction", market: "Main" },
-  { code: "BIOHLDG", name: "Bioalpha Holdings Berhad", stockCode: "0179", sector: "Healthcare", market: "ACE" },
-  { code: "BINASTRA", name: "Bina Stra Industries Berhad", stockCode: "0295", sector: "Construction", market: "ACE" },
-  { code: "BJMEDIA", name: "Berjaya Media Berhad", stockCode: "3239", sector: "Media", market: "Main" },
   { code: "BOON", name: "Boon Koon Group Berhad", stockCode: "0110", sector: "Construction", market: "Main" },
-  { code: "BIG", name: "BIG Industries Berhad", stockCode: "0204", sector: "Industrial", market: "Main" },
   { code: "BIOINTE", name: "Bio Integrasi Holdings Berhad", stockCode: "0290", sector: "Healthcare", market: "ACE" },
 
   // Additional C companies
@@ -622,12 +578,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "CHEETAH", name: "Cheetah Holdings Berhad", stockCode: "7209", sector: "Consumer", market: "Main" },
   { code: "CHINWEL", name: "Chin Well Holdings Berhad", stockCode: "5007", sector: "Industrial", market: "Main" },
   { code: "CHUAN", name: "Chuan Hup Holdings Berhad", stockCode: "0056", sector: "Construction", market: "Main" },
-  { code: "CIMBT", name: "CIMB Thai Bank Public Company Limited", stockCode: "1082", sector: "Finance", market: "Main" },
   { code: "CNI", name: "CNI Holdings Berhad", stockCode: "5104", sector: "Consumer", market: "Main" },
   { code: "COCOALAND", name: "Cocoaland Holdings Berhad", stockCode: "7205", sector: "Consumer", market: "Main" },
-  { code: "COMPLET", name: "Complete Logistic Services Berhad", stockCode: "0185", sector: "Transportation", market: "ACE" },
   { code: "CONNECT", name: "Connectcounty Holdings Berhad", stockCode: "0163", sector: "Technology", market: "ACE" },
-  { code: "CONTOR", name: "Contourglobal Plc", stockCode: "0286", sector: "Energy", market: "Main" },
   { code: "COUNTRY", name: "Country Heights Holdings Berhad", stockCode: "4812", sector: "Property", market: "Main" },
   { code: "CREABIZ", name: "Creative Alibiz Holdings Berhad", stockCode: "0283", sector: "Consumer", market: "ACE" },
 
@@ -638,12 +591,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "DIGISTA", name: "Digistar Corporation Berhad", stockCode: "0055", sector: "Technology", market: "Main" },
   { code: "DKLS", name: "DKLS Industries Berhad", stockCode: "7173", sector: "Construction", market: "Main" },
   { code: "DPS", name: "DPS Resources Berhad", stockCode: "0258", sector: "Industrial", market: "Main" },
-  { code: "DSONIC", name: "Dsonic Berhad", stockCode: "0041", sector: "Technology", market: "ACE" },
 
   // Additional E companies
-  { code: "EASTCOA", name: "East Coast Resources Berhad", stockCode: "0293", sector: "Plantation", market: "ACE" },
   { code: "EASTPRT", name: "Eastparc Holdings Berhad", stockCode: "0296", sector: "Healthcare", market: "ACE" },
-  { code: "EBWORX", name: "Ebworx Berhad", stockCode: "0217", sector: "Technology", market: "ACE" },
   { code: "ECBUILD", name: "EC Buildings Berhad", stockCode: "0303", sector: "Construction", market: "ACE" },
   { code: "ECOHLDG", name: "Eco Holdings Berhad", stockCode: "0229", sector: "Industrial", market: "Main" },
   { code: "EFORCE", name: "E-Force Berhad", stockCode: "0297", sector: "Technology", market: "ACE" },
@@ -652,23 +602,17 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "ELECTRA", name: "Electroscon Berhad", stockCode: "0284", sector: "Industrial", market: "ACE" },
   { code: "EMICO", name: "Emico Holdings Berhad", stockCode: "7187", sector: "Industrial", market: "Main" },
   { code: "ENCORP", name: "Encorp Berhad", stockCode: "4529", sector: "Property", market: "Main" },
-  { code: "ENRA", name: "Enra Group Berhad", stockCode: "0190", sector: "Industrial", market: "Main" },
   { code: "EQUITYRE", name: "Equityre Holdings Berhad", stockCode: "0299", sector: "Consumer", market: "ACE" },
   { code: "ESCERAM", name: "ES Ceramics Technology Berhad", stockCode: "0114", sector: "Industrial", market: "Main" },
-  { code: "ESTHORE", name: "Eastern & Oriental Berhad", stockCode: "3417", sector: "Property", market: "Main" },
   { code: "EUROSP", name: "Euro Holdings Berhad", stockCode: "7094", sector: "Manufacturing", market: "Main" },
   { code: "EVERGRN", name: "Evergreen Fibreboard Berhad", stockCode: "5101", sector: "Industrial", market: "Main" },
   { code: "EWEIN", name: "Ewein Berhad", stockCode: "7249", sector: "Property", market: "Main" },
 
   // Additional F companies
-  { code: "FACTSOFT", name: "Factsoft Berhad", stockCode: "0286", sector: "Technology", market: "ACE" },
   { code: "FASTBND", name: "Fast Bond Holdings Berhad", stockCode: "0268", sector: "Industrial", market: "ACE" },
   { code: "FCMW", name: "FCW Corporation Berhad", stockCode: "7124", sector: "Manufacturing", market: "Main" },
   { code: "FIHB", name: "FI Holdings Berhad", stockCode: "0214", sector: "Services", market: "Main" },
   { code: "FIRMTEN", name: "Firma Ten Holdings Berhad", stockCode: "0292", sector: "Consumer", market: "ACE" },
-  { code: "FLEXI", name: "Flexi Berhad", stockCode: "0295", sector: "Industrial", market: "ACE" },
-  { code: "FORMIS", name: "Formis Resources Berhad", stockCode: "7216", sector: "Technology", market: "Main" },
-  { code: "FSBM", name: "FSBM Holdings Berhad", stockCode: "0114", sector: "Technology", market: "Main" },
   { code: "FTES", name: "F T E S International Group Berhad", stockCode: "0373", sector: "Consumer", market: "ACE" },
   { code: "FUCEHS", name: "Fu Ce Hs Holdings Berhad", stockCode: "0302", sector: "Consumer", market: "ACE" },
 
@@ -691,8 +635,6 @@ export const COMPANY_DATA: CompanyData[] = [
 
   // H companies
   { code: "HANDAL", name: "Handal Energy Berhad", stockCode: "0105", sector: "Energy", market: "Main" },
-  { code: "HAP", name: "Hap Seng Consolidated Berhad", stockCode: "3034", sector: "Consumer", market: "Main" },
-  { code: "HAVAV", name: "Harvest Miracle Capital Berhad", stockCode: "0251", sector: "Finance", market: "Main" },
   { code: "HBGLOB", name: "HB Global Limited", stockCode: "7066", sector: "Consumer", market: "Main" },
   { code: "HEDJ", name: "Hedj Tech Berhad", stockCode: "0323", sector: "Technology", market: "ACE" },
   { code: "HEVEA", name: "HeveaBoard Berhad", stockCode: "5095", sector: "Industrial", market: "Main" },
@@ -706,19 +648,14 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "IDELIVR", name: "I-Deliver Group Berhad", stockCode: "0232", sector: "Transportation", market: "Main" },
   { code: "IEPMECH", name: "IEP Power Engineering Berhad", stockCode: "0306", sector: "Industrial", market: "ACE" },
   { code: "IFCAMSC", name: "IFCA MSC Berhad", stockCode: "0023", sector: "Technology", market: "Main" },
-  { code: "IKHLAS", name: "Ikhmas Jaya Group Berhad", stockCode: "0284", sector: "Construction", market: "ACE" },
   { code: "IMDA", name: "Imda Corporation Berhad", stockCode: "0133", sector: "Services", market: "Main" },
-  { code: "IMPACTE", name: "Impact Ebiz Berhad", stockCode: "0284", sector: "Technology", market: "ACE" },
   { code: "IRIS", name: "IRIS Corporation Berhad", stockCode: "0010", sector: "Technology", market: "Main" },
   { code: "ISTONE", name: "Istone Group Berhad", stockCode: "0353", sector: "Industrial", market: "ACE" },
-  { code: "ITRONIC", name: "I-Tronic Group Berhad", stockCode: "0339", sector: "Consumer", market: "ACE" },
   { code: "IVALUE", name: "I-Value Solutions Berhad", stockCode: "0324", sector: "Technology", market: "ACE" },
 
   // J companies
   { code: "JAG", name: "JAG Berhad", stockCode: "0024", sector: "Technology", market: "Main" },
   { code: "JAMBAT", name: "Jambatan Experts Berhad", stockCode: "0294", sector: "Construction", market: "ACE" },
-  { code: "JAS", name: "Jas Solutions Berhad", stockCode: "0285", sector: "Technology", market: "ACE" },
-  { code: "JBC", name: "JBC Corporation Berhad", stockCode: "0295", sector: "Construction", market: "ACE" },
   { code: "JDIPC", name: "JD I Plus Corporation Berhad", stockCode: "0317", sector: "Industrial", market: "ACE" },
   { code: "JERASIA", name: "Jer Asia Mining Berhad", stockCode: "0273", sector: "Industrial", market: "Main" },
   { code: "JIANKUN", name: "Jiankun International Berhad", stockCode: "0199", sector: "Industrial", market: "Main" },
@@ -730,19 +667,13 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "KAMDAR", name: "Kamdar Group (M) Berhad", stockCode: "7219", sector: "Consumer", market: "Main" },
   { code: "KBH", name: "KBH Berhad", stockCode: "0320", sector: "Consumer", market: "ACE" },
   { code: "KBES", name: "K Best Berhad", stockCode: "0280", sector: "Services", market: "ACE" },
-  { code: "KCS", name: "K C S Berhad", stockCode: "0285", sector: "Manufacturing", market: "ACE" },
-  { code: "KEURO", name: "Kumpulan Europlus Berhad", stockCode: "5026", sector: "Construction", market: "Main" },
   { code: "KHIND", name: "Khind Holdings Berhad", stockCode: "7062", sector: "Consumer", market: "Main" },
-  { code: "KIA", name: "Kia Lim Berhad", stockCode: "0353", sector: "Property", market: "ACE" },
   { code: "KIARA", name: "Kiara Glory Berhad", stockCode: "0329", sector: "Consumer", market: "ACE" },
   { code: "KIM", name: "Kim Teck Cheong Consolidated Berhad", stockCode: "0046", sector: "Consumer", market: "Main" },
-  { code: "KIMHIN", name: "Kim Hin Industry Berhad", stockCode: "5096", sector: "Industrial", market: "Main" },
   { code: "KINRARA", name: "Kinrara Media Berhad", stockCode: "0282", sector: "Media", market: "ACE" },
   { code: "KISAS", name: "Kisaran Resources Berhad", stockCode: "0340", sector: "Energy", market: "ACE" },
-  { code: "KLGAPS", name: "KLG Group Berhad", stockCode: "0359", sector: "Industrial", market: "ACE" },
   { code: "KMAK", name: "K Ma K Berhad", stockCode: "0301", sector: "Consumer", market: "ACE" },
   { code: "KOMARK", name: "Komarkcorp Berhad", stockCode: "7071", sector: "Industrial", market: "Main" },
-  { code: "KPOWER", name: "Kpower Berhad", stockCode: "0300", sector: "Energy", market: "ACE" },
   { code: "KRISM", name: "Krismas Berhad", stockCode: "0277", sector: "Consumer", market: "Main" },
   { code: "KRONOS", name: "Kronos Global Berhad", stockCode: "0352", sector: "Industrial", market: "ACE" },
   { code: "KUANTAN", name: "Kuantan Flour Mills Berhad", stockCode: "6160", sector: "Consumer", market: "Main" },
@@ -752,9 +683,7 @@ export const COMPANY_DATA: CompanyData[] = [
 
   // L companies
   { code: "LAGANG", name: "Lagang Holdings Berhad", stockCode: "0367", sector: "Consumer", market: "ACE" },
-  { code: "LAKIE", name: "Lakie Industries Berhad", stockCode: "0247", sector: "Industrial", market: "Main" },
   { code: "LAMS", name: "LAM Soon (M) Berhad", stockCode: "0341", sector: "Consumer", market: "ACE" },
-  { code: "LANDMRK", name: "Landmark Properties Berhad", stockCode: "0284", sector: "Property", market: "ACE" },
   { code: "LATITUDE", name: "Latitude Tree Holdings Berhad", stockCode: "7165", sector: "Industrial", market: "Main" },
   { code: "LAYHONG", name: "Lay Hong Berhad", stockCode: "9385", sector: "Consumer", market: "Main" },
   { code: "LCTH", name: "LCTH Corporation Berhad", stockCode: "5009", sector: "Industrial", market: "Main" },
@@ -764,13 +693,10 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "LEONG", name: "Leong Huat Berhad", stockCode: "0344", sector: "Manufacturing", market: "ACE" },
   { code: "LEOS", name: "Leos Holdings Berhad", stockCode: "0326", sector: "Consumer", market: "ACE" },
   { code: "LIBERTY", name: "Liberty Resources Berhad", stockCode: "0312", sector: "Consumer", market: "ACE" },
-  { code: "LIENHWA", name: "Lien Hwa Corporation Berhad", stockCode: "7165", sector: "Consumer", market: "Main" },
-  { code: "LIFW", name: "Lifewater Holdings Berhad", stockCode: "0227", sector: "Consumer", market: "Main" },
   { code: "LIIHEN", name: "Lii Hen Industries Berhad", stockCode: "7089", sector: "Industrial", market: "Main" },
   { code: "LIMKOKW", name: "Limkokwing Holdings Berhad", stockCode: "0319", sector: "Education", market: "ACE" },
   { code: "LINGUI", name: "Lingui Developments Berhad", stockCode: "2011", sector: "Plantation", market: "Main" },
   { code: "LION", name: "Lion Industries Corporation Berhad", stockCode: "4235", sector: "Industrial", market: "Main" },
-  { code: "LIONIND", name: "Lion Industries Corporation Berhad", stockCode: "4235", sector: "Industrial", market: "Main" },
   { code: "LONBISC", name: "London Biscuits Berhad", stockCode: "7126", sector: "Consumer", market: "Main" },
   { code: "LTKM", name: "LTKM Berhad", stockCode: "7085", sector: "Consumer", market: "Main" },
   { code: "LUBSKY", name: "Lubosky Holdings Berhad", stockCode: "0327", sector: "Consumer", market: "ACE" },
@@ -782,14 +708,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "1TECH", name: "Onetech Solutions Holdings Berhad", stockCode: "03041", sector: "Technology", market: "LEAP" },
   { code: "A1AKK", name: "A1 A.K. Koh Group Berhad", stockCode: "0365", sector: "Consumer", market: "ACE" },
   { code: "ACO", name: "ACO Group Berhad", stockCode: "0218", sector: "Consumer", market: "Main" },
-  { code: "ADVCON", name: "Advancecon Holdings Berhad", stockCode: "5281", sector: "Construction", market: "Main" },
   { code: "ADVENTA", name: "Adventa Berhad", stockCode: "7191", sector: "Healthcare", market: "Main" },
-  { code: "AGMO", name: "AGMO Holdings Berhad", stockCode: "0258", sector: "Technology", market: "ACE" },
-  { code: "AGX", name: "AGX Group Berhad", stockCode: "0299", sector: "Services", market: "ACE" },
   { code: "AHB", name: "AHB Holdings Berhad", stockCode: "7315", sector: "Consumer", market: "Main" },
   { code: "AIM", name: "Advance Information Marketing Berhad", stockCode: "0122", sector: "Technology", market: "Main" },
-  { code: "AIMFLEX", name: "Aimflex Berhad", stockCode: "0209", sector: "Technology", market: "ACE" },
-  { code: "AIZO", name: "Aizo Group Berhad", stockCode: "7219", sector: "Industrial", market: "Main" },
   { code: "ALAM", name: "Alam Maritim Resources Berhad", stockCode: "5115", sector: "Energy", market: "Main" },
   { code: "ALCOM", name: "Alcom Group Berhad", stockCode: "2674", sector: "Industrial", market: "Main" },
   { code: "ALRICH", name: "Aldrich Resources Berhad", stockCode: "0079", sector: "Industrial", market: "ACE" },
@@ -800,7 +721,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "ARK", name: "Ark Resources Holdings Berhad", stockCode: "7007", sector: "Construction", market: "Main" },
   { code: "ARBB", name: "ARB Berhad", stockCode: "7181", sector: "Industrial", market: "Main" },
   { code: "ASB", name: "Advance Synergy Berhad", stockCode: "1481", sector: "Consumer", market: "Main" },
-  { code: "ASIAPLY", name: "Asiaply Berhad", stockCode: "0105", sector: "Industrial", market: "Main" },
   { code: "ASTRA", name: "Astra Berhad", stockCode: "3032", sector: "Consumer", market: "Main" },
   { code: "AURORA", name: "Aurora Berhad", stockCode: "3037", sector: "Consumer", market: "Main" },
   { code: "AWANTEC", name: "Awanbiru Technology Berhad", stockCode: "5204", sector: "Technology", market: "Main" },
@@ -814,7 +734,6 @@ export const COMPANY_DATA: CompanyData[] = [
   // ============================================================================
   { code: "BABA", name: "Baba Eco Group Berhad", stockCode: "03012", sector: "Consumer", market: "LEAP" },
   { code: "BCB", name: "BCB Berhad", stockCode: "6602", sector: "Property", market: "Main" },
-  { code: "BCMALL", name: "BCM Alliance Berhad", stockCode: "0187", sector: "Technology", market: "ACE" },
   { code: "BDB", name: "Bina Darulaman Berhad", stockCode: "6173", sector: "Construction", market: "Main" },
   { code: "BENALEC", name: "Benalec Holdings Berhad", stockCode: "5190", sector: "Construction", market: "Main" },
   { code: "BHIC", name: "Boustead Heavy Industries Corporation Berhad", stockCode: "8133", sector: "Industrial", market: "Main" },
@@ -822,7 +741,6 @@ export const COMPANY_DATA: CompanyData[] = [
   // ============================================================================
   // ADDITIONAL C COMPANIES (December 2024)
   // ============================================================================
-  { code: "CREST", name: "Crest Group Berhad", stockCode: "0323", sector: "Industrial", market: "ACE" },
 
   // ============================================================================
   // ADDITIONAL E COMPANIES (December 2024)
@@ -839,7 +757,6 @@ export const COMPANY_DATA: CompanyData[] = [
   // ============================================================================
   { code: "MALTON", name: "Malton Berhad", stockCode: "6181", sector: "Property", market: "Main" },
   { code: "MARRY", name: "Marry Brown Holdings Berhad", stockCode: "5378", sector: "Consumer", market: "Main" },
-  { code: "MASDEC", name: "Masteel Industrial Berhad", stockCode: "0343", sector: "Industrial", market: "ACE" },
   { code: "MASMALL", name: "Masterskill Holdings Berhad", stockCode: "0331", sector: "Consumer", market: "ACE" },
   { code: "MEDIAC", name: "Media Concept Berhad", stockCode: "0347", sector: "Media", market: "ACE" },
   { code: "MERC", name: "Mercury Securities Group Berhad", stockCode: "0351", sector: "Finance", market: "ACE" },
@@ -847,8 +764,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "MINDA", name: "Minda Global Berhad", stockCode: "0337", sector: "Technology", market: "ACE" },
   { code: "MOBILIA", name: "Mobilia Holdings Berhad", stockCode: "0333", sector: "Consumer", market: "ACE" },
   { code: "MPHB", name: "MPHB Capital Berhad", stockCode: "5237", sector: "Finance", market: "Main" },
-  { code: "MTAG", name: "MTAG Group Berhad", stockCode: "0360", sector: "Technology", market: "ACE" },
-  { code: "MYMALL", name: "MyMalls Berhad", stockCode: "0358", sector: "Property", market: "ACE" },
   { code: "MYSPEED", name: "MySpeedNet Berhad", stockCode: "0335", sector: "Telecommunications", market: "ACE" },
 
   // ============================================================================
@@ -864,7 +779,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "OCEAN", name: "Ocean Holdings Berhad", stockCode: "0336", sector: "Consumer", market: "ACE" },
   { code: "OLEOCHEM", name: "Oleochemical Holdings Berhad", stockCode: "0362", sector: "Industrial", market: "ACE" },
   { code: "OMNIA", name: "Omnia Tech Berhad", stockCode: "0364", sector: "Technology", market: "ACE" },
-  { code: "ONGTK", name: "Ong Teck Holdings Berhad", stockCode: "0345", sector: "Consumer", market: "ACE" },
   { code: "OPENSYS", name: "Opensys (M) Berhad", stockCode: "0040", sector: "Technology", market: "Main" },
   { code: "OPERON", name: "Operon Holdings Berhad", stockCode: "0321", sector: "Industrial", market: "ACE" },
   { code: "OVERSEA", name: "Overseas Holdings Berhad", stockCode: "0349", sector: "Industrial", market: "ACE" },
@@ -872,9 +786,7 @@ export const COMPANY_DATA: CompanyData[] = [
   // ============================================================================
   // P COMPANIES
   // ============================================================================
-  { code: "PCCS", name: "PCCS Group Berhad", stockCode: "0359", sector: "Consumer", market: "ACE" },
   { code: "PJBUMI", name: "PJ Bumi Berhad", stockCode: "0366", sector: "Construction", market: "ACE" },
-  { code: "PKFACB", name: "PKF-CAB Berhad", stockCode: "0363", sector: "Services", market: "ACE" },
   { code: "PNE", name: "PNE PCB Berhad", stockCode: "0322", sector: "Technology", market: "ACE" },
   { code: "POWER", name: "Power Holdings Berhad", stockCode: "0355", sector: "Consumer", market: "ACE" },
   { code: "PREGEN", name: "Pregen Berhad", stockCode: "0348", sector: "Industrial", market: "ACE" },
@@ -892,7 +804,6 @@ export const COMPANY_DATA: CompanyData[] = [
   // ============================================================================
   { code: "REDONE", name: "Red One Berhad", stockCode: "0357", sector: "Telecommunications", market: "ACE" },
   { code: "RELIANCE", name: "Reliance Pacific Berhad", stockCode: "4558", sector: "Consumer", market: "Main" },
-  { code: "REVENUE", name: "Revenue Group Berhad", stockCode: "0200", sector: "Technology", market: "Main" },
 
   // ============================================================================
   // S COMPANIES
@@ -927,14 +838,12 @@ export const COMPANY_DATA: CompanyData[] = [
   // 2025 NEW IPO COMPANIES (December 2025)
   // ============================================================================
   { code: "BMS", name: "BMS Holdings Berhad", stockCode: "0385", sector: "Consumer", market: "ACE" },
-  { code: "FARMPRICE", name: "Farm Price Holdings Berhad", stockCode: "0304", sector: "Consumer", market: "ACE" },
   { code: "GENERGY", name: "Wasco Greenergy Berhad", stockCode: "5343", sector: "Energy", market: "Main" },
   { code: "GENETEC", name: "Genetec Technology Berhad", stockCode: "0104", sector: "Technology", market: "ACE" },
   { code: "HEXZA", name: "Hexza Corporation Berhad", stockCode: "3298", sector: "Industrial", market: "Main" },
   { code: "LACMED", name: "LAC Med Berhad", stockCode: "5341", sector: "Healthcare", market: "Main" },
   { code: "ORKIM", name: "Orkim Berhad", stockCode: "5348", sector: "Energy", market: "Main" },
   { code: "POLYMER", name: "Polymer Link Holdings Berhad", stockCode: "0381", sector: "Industrial", market: "ACE" },
-  { code: "SUMI", name: "SumiSaujana Group Berhad", stockCode: "0349", sector: "Energy", market: "ACE" },
 
   // ============================================================================
   // ADDITIONAL 2024-2025 COMPANIES
@@ -947,11 +856,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "APEX", name: "Apex Equity Holdings Berhad", stockCode: "5088", sector: "Financial", market: "Main" },
   { code: "ARKA", name: "Arka Berhad", stockCode: "7218", sector: "Transportation", market: "Main" },
   { code: "ASDION", name: "Asdion Berhad", stockCode: "0068", sector: "Technology", market: "ACE" },
-  { code: "ASM", name: "ASM Automation Group Berhad", stockCode: "0362", sector: "Technology", market: "ACE" },
   { code: "AURO", name: "Auro Holdings Berhad", stockCode: "5025", sector: "Industrial", market: "Main" },
   { code: "AUTORIS", name: "Autoris Group Holdings Berhad", stockCode: "03059", sector: "Financial", market: "LEAP" },
   { code: "AVI", name: "Avillion Berhad", stockCode: "8885", sector: "Consumer", market: "Main" },
-  { code: "BETA", name: "Betamek Berhad", stockCode: "0263", sector: "Industrial", market: "ACE" },
 
   // ============================================================================
   // ACE MARKET ADDITIONS (December 2024)
@@ -961,11 +868,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "DFX", name: "DFx Technology Group Berhad", stockCode: "0131", sector: "Technology", market: "ACE" },
   { code: "DGB2", name: "DGB Asia Berhad", stockCode: "0152", sector: "Technology", market: "ACE" },
   { code: "EDUSPEC", name: "Eduspec Holdings Berhad", stockCode: "0107", sector: "Technology", market: "ACE" },
-  { code: "EFRAME", name: "E-Frame Berhad", stockCode: "0227", sector: "Industrial", market: "ACE" },
   { code: "ERDASAN", name: "Erdasan Berhad", stockCode: "0072", sector: "Industrial", market: "ACE" },
   { code: "FAST", name: "Fast Energy Holdings Berhad", stockCode: "0084", sector: "Industrial", market: "ACE" },
   { code: "FOCUS", name: "Focus Dynamics Group Berhad", stockCode: "0116", sector: "Consumer", market: "ACE" },
-  { code: "GLXT", name: "Globalxtreme Berhad", stockCode: "0284", sector: "Industrial", market: "ACE" },
   { code: "GOCEAN", name: "G Ocean Berhad", stockCode: "0074", sector: "Consumer", market: "ACE" },
   { code: "HEXCAP", name: "Hexcapital Berhad", stockCode: "0035", sector: "Telecommunications", market: "ACE" },
   { code: "HHHCORP", name: "HHH Corp Berhad", stockCode: "0160", sector: "Industrial", market: "ACE" },
@@ -981,7 +886,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "MNC", name: "MN Holdings Corporation Berhad", stockCode: "0103", sector: "Telecommunications", market: "ACE" },
   { code: "MPAY", name: "Mobipay Berhad", stockCode: "0156", sector: "Technology", market: "ACE" },
   { code: "MQTECH", name: "MQ Technology Berhad", stockCode: "0070", sector: "Technology", market: "ACE" },
-  { code: "MTEC2", name: "MTec Holding Berhad", stockCode: "0295", sector: "Industrial", market: "ACE" },
   { code: "MTOUCHE", name: "M-Touche Technology Berhad", stockCode: "0092", sector: "Telecommunications", market: "ACE" },
   { code: "N2N", name: "N2N Connect Berhad", stockCode: "0108", sector: "Technology", market: "ACE" },
   { code: "NETX", name: "NetX Holdings Berhad", stockCode: "0020", sector: "Technology", market: "ACE" },
@@ -997,11 +901,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "PUC", name: "PUC Berhad", stockCode: "0007", sector: "Media", market: "ACE" },
   { code: "RAMSSOL2", name: "Ramssol Group Berhad", stockCode: "0236", sector: "Technology", market: "ACE" },
   { code: "SALIRAN", name: "Saliran Group Berhad", stockCode: "0346", sector: "Industrial", market: "ACE" },
-  { code: "SBH", name: "SB Holdings Berhad", stockCode: "0300", sector: "Consumer", market: "ACE" },
   { code: "SCC", name: "SCC Holdings Berhad", stockCode: "0158", sector: "Consumer", market: "ACE" },
   { code: "SCOPE", name: "Scope Industries Berhad", stockCode: "0028", sector: "Industrial", market: "ACE" },
   { code: "SEDANIA", name: "Sedania Innovator Berhad", stockCode: "0178", sector: "Consumer", market: "ACE" },
-  { code: "SERSOL", name: "Serba Dinamik Holdings Berhad", stockCode: "0055", sector: "Industrial", market: "ACE" },
   { code: "SMETRIC", name: "Smart Metric Group Berhad", stockCode: "0203", sector: "Technology", market: "ACE" },
   { code: "SOLUTN", name: "Solution Engineering Holdings Berhad", stockCode: "0093", sector: "Technology", market: "ACE" },
   { code: "SRIDGE", name: "Sunridge Group Berhad", stockCode: "0129", sector: "Telecommunications", market: "ACE" },
@@ -1010,12 +912,10 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "SUNZEN", name: "Sunzen Biotech Berhad", stockCode: "0148", sector: "Consumer", market: "ACE" },
   { code: "SYSTECH", name: "Systech Berhad", stockCode: "0050", sector: "Technology", market: "ACE" },
   { code: "TAGHILL", name: "Taghill Berhad", stockCode: "0241", sector: "Construction", market: "ACE" },
-  { code: "TCS", name: "TCS Group Holdings Berhad", stockCode: "0221", sector: "Construction", market: "ACE" },
   { code: "TDEX", name: "Tele Dynamics Holdings Berhad", stockCode: "0132", sector: "Technology", market: "ACE" },
   { code: "UCREST", name: "UCrest Berhad", stockCode: "0005", sector: "Technology", market: "ACE" },
   { code: "VINVEST", name: "VinVest Capital Holdings Berhad", stockCode: "0069", sector: "Technology", market: "ACE" },
   { code: "VSOLAR", name: "VSolar Group Berhad", stockCode: "0066", sector: "Technology", market: "ACE" },
-  { code: "WESTRVR", name: "West River Holdings Berhad", stockCode: "0353", sector: "Industrial", market: "ACE" },
   { code: "XOXNET", name: "XOX Network Berhad", stockCode: "0140", sector: "Consumer", market: "ACE" },
   { code: "YBS", name: "YBS International Berhad", stockCode: "0025", sector: "Industrial", market: "ACE" },
   { code: "YEWLEE", name: "Yew Lee Pacific Group Berhad", stockCode: "0248", sector: "Industrial", market: "ACE" },
@@ -1125,14 +1025,24 @@ export function getSectorStats(limit: number = 5): SectorStats[] {
     .slice(0, limit)
 }
 
-// Get companies with full financial data (Core 80)
-export function getCompaniesWithData(): CompanyData[] {
-  return COMPANY_DATA.filter(c => c.yoyCategory !== undefined)
+// Get companies with full financial analysis
+export function getAnalyzedCompanies(): CompanyData[] {
+  return COMPANY_DATA.filter(c => c.hasAnalysis === true)
 }
 
-// Get companies without full financial data (new additions)
+// Alias for backward compatibility
+export function getCompaniesWithData(): CompanyData[] {
+  return getAnalyzedCompanies()
+}
+
+// Get companies without full financial analysis
 export function getCompaniesWithoutData(): CompanyData[] {
-  return COMPANY_DATA.filter(c => c.yoyCategory === undefined)
+  return COMPANY_DATA.filter(c => c.hasAnalysis !== true)
+}
+
+// Get count of analyzed companies
+export function getAnalyzedCompanyCount(): number {
+  return getAnalyzedCompanies().length
 }
 
 // Get total company count
@@ -1143,4 +1053,15 @@ export function getTotalCompanyCount(): number {
 // Check if company has full financial data
 export function hasFinancialData(company: CompanyData): boolean {
   return company.yoyCategory !== undefined && company.profitYoY !== undefined
+}
+
+// Check if a stock code has analysis data (replacement for isCore80Stock)
+export function hasAnalysisData(stockCode: string): boolean {
+  const company = getCompanyByStockCode(stockCode)
+  return company?.hasAnalysis === true
+}
+
+// Get all stock codes with analysis data
+export function getAnalyzedStockCodes(): string[] {
+  return getAnalyzedCompanies().map(c => c.stockCode)
 }

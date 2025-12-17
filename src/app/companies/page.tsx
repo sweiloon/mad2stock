@@ -153,7 +153,7 @@ export default function CompaniesPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
             <p className="text-muted-foreground">
-              Browse {filteredCompanies.length} of {totalCount} KLSE listed companies ({analyzedCount} with full analysis)
+              Browse {filteredCompanies.length} of {totalCount} Malaysian listed companies ({analyzedCount} with full analysis)
             </p>
           </div>
         </div>

@@ -328,7 +328,7 @@ How can I help you with ${company.code}?`
             `| ${c.code} | ${(c.revenueYoY ?? 0) > 0 ? "+" : ""}${(c.revenueYoY ?? 0).toFixed(1)}% | ${(c.profitYoY ?? 0) > 0 ? "+" : ""}${(c.profitYoY ?? 0).toFixed(1)}% |`
           ).join('\n')
 
-          response = `## Top Performers - KLSE Analysis
+          response = `## Top Performers - Market Analysis
 
 ### Category 1: Revenue UP, Profit UP
 
@@ -374,7 +374,7 @@ ${turnarounds.length > 0 ? turnarounds.map(c =>
 
 These companies have turned from loss to profit.`
         } else {
-          response = `## KLSE Market Intelligence
+          response = `## Market Intelligence
 
 Data available on **${totalCompanies} Malaysian listed companies**.
 Financial analysis completed for **${analyzedCount} companies**.
@@ -430,7 +430,7 @@ What would you like to explore?`
             </div>
             <div className="min-w-0">
               <h1 className="text-lg font-semibold truncate">AI Stock Analyst</h1>
-              <p className="text-xs text-muted-foreground">KLSE Intelligence</p>
+              <p className="text-xs text-muted-foreground">Market Intelligence</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -641,7 +641,7 @@ What would you like to explore?`
               <div className="flex gap-2">
                 <Textarea
                   ref={inputRef}
-                  placeholder={selectedCompany === "all" ? "Ask about any KLSE stock..." : `Ask about ${selectedCompanyData?.code}...`}
+                  placeholder={selectedCompany === "all" ? "Ask about any Malaysian stock..." : `Ask about ${selectedCompanyData?.code}...`}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
