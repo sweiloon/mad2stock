@@ -109,7 +109,15 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
       }
     } catch (err) {
       console.error('Error fetching insights:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Unable to generate insights'
+      let errorMessage = err instanceof Error ? err.message : 'Unable to generate insights'
+
+      // Provide user-friendly messages for common errors
+      if (errorMessage.includes('401') || errorMessage.includes('API key')) {
+        errorMessage = 'AI service configuration error. Please contact support.'
+      } else if (errorMessage.includes('503') || errorMessage.includes('not configured')) {
+        errorMessage = 'AI service is temporarily unavailable.'
+      }
+
       setError(errorMessage)
     } finally {
       setLoading(false)
