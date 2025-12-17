@@ -80,7 +80,8 @@ function validateRequest(request: NextRequest): boolean {
 // ============================================================================
 
 interface StockCandidate {
-  code: string
+  code: string          // Text code (MAYBANK) for signals
+  numeric_code: string  // Numeric code (1155) for stock_prices lookup
   name: string
   sector: string
   price: number | null
@@ -97,13 +98,7 @@ async function selectCandidates(
   // Get stocks with significant price movement or volume
   const { data: stocks, error } = await supabase
     .from('stock_prices')
-    .select(`
-      stock_code,
-      price,
-      change_percent,
-      volume,
-      companies!inner(name, sector)
-    `)
+    .select('stock_code, price, change_percent, volume')
     .not('price', 'is', null)
     .order('updated_at', { ascending: false })
 
@@ -112,10 +107,29 @@ async function selectCandidates(
     return []
   }
 
+  // Get all numeric codes from stock_prices
+  const numericCodes = stocks.map((s: any) => s.stock_code)
+
+  // Lookup companies by numeric_code
+  const { data: companies } = await supabase
+    .from('companies')
+    .select('code, name, sector, numeric_code')
+    .in('numeric_code', numericCodes)
+
+  // Create a map for quick lookup (numeric_code -> company info)
+  const companyMap = new Map<string, { code: string; name: string; sector: string; numeric_code: string }>()
+  companies?.forEach((c: any) => {
+    companyMap.set(c.numeric_code, { code: c.code, name: c.name, sector: c.sector, numeric_code: c.numeric_code })
+  })
+
   // Score and rank candidates
   const candidates: StockCandidate[] = stocks
     .map((stock: any) => {
       let score = 0
+      const company = companyMap.get(stock.stock_code)
+
+      // Skip if no matching company found
+      if (!company) return null
 
       // Price change scoring
       const changeAbs = Math.abs(stock.change_percent || 0)
@@ -132,9 +146,10 @@ async function selectCandidates(
       if (stock.change_percent && stock.change_percent < -3) score += 5
 
       return {
-        code: stock.stock_code,
-        name: stock.companies?.name || stock.stock_code,
-        sector: stock.companies?.sector || 'Unknown',
+        code: company.code, // Use text code (MAYBANK) for signals
+        numeric_code: company.numeric_code, // Use for stock_prices lookup
+        name: company.name,
+        sector: company.sector || 'Unknown',
         price: stock.price,
         change_percent: stock.change_percent,
         volume: stock.volume,
@@ -142,7 +157,7 @@ async function selectCandidates(
         priority_score: score
       }
     })
-    .filter((c: StockCandidate) => c.priority_score > 0)
+    .filter((c): c is StockCandidate => c !== null && c.priority_score > 0)
     .sort((a: StockCandidate, b: StockCandidate) => b.priority_score - a.priority_score)
 
   // Check for existing active signals to avoid duplicates
@@ -173,11 +188,11 @@ async function gatherStockData(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   candidate: StockCandidate
 ): Promise<SignalInputData> {
-  // Get stock price data
+  // Get stock price data (use numeric_code for stock_prices table)
   const { data: priceData } = await supabase
     .from('stock_prices')
     .select('*')
-    .eq('stock_code', candidate.code)
+    .eq('stock_code', candidate.numeric_code)
     .single()
 
   // Get YoY analysis
@@ -457,7 +472,7 @@ export async function GET(request: NextRequest) {
 
     const { data: company } = await supabase
       .from('companies')
-      .select('code, name, sector')
+      .select('code, name, sector, numeric_code')
       .eq('code', singleCode.toUpperCase())
       .single()
 
@@ -465,8 +480,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 })
     }
 
+    if (!company.numeric_code) {
+      return NextResponse.json({ error: 'Company has no numeric_code mapping' }, { status: 400 })
+    }
+
     const candidate: StockCandidate = {
       code: company.code,
+      numeric_code: company.numeric_code,
       name: company.name,
       sector: company.sector || 'Unknown',
       price: null,
