@@ -83,11 +83,50 @@ export function toKLSECode(codeOrName: string): string {
 const MAX_RETRIES = 2
 const RETRY_DELAY = 1000
 
+// ============================================================================
+// IN-MEMORY CACHE FOR HISTORICAL DATA
+// ============================================================================
+interface CacheEntry {
+  data: StockHistoricalData[]
+  timestamp: number
+}
+
+const historyCache = new Map<string, CacheEntry>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes cache
+
+// Request queue to prevent rate limiting
+const pendingRequests = new Map<string, Promise<StockHistoricalData[]>>()
+let lastYahooRequest = 0
+const MIN_REQUEST_INTERVAL = 1000 // 1 second between requests
+
+function getCacheKey(symbol: string, period: string): string {
+  return `${symbol}-${period}`
+}
+
+function getCachedHistory(symbol: string, period: string): StockHistoricalData[] | null {
+  const key = getCacheKey(symbol, period)
+  const entry = historyCache.get(key)
+
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+    console.log(`[Stock API] Cache hit for ${symbol} ${period}`)
+    return entry.data
+  }
+
+  return null
+}
+
+function setCachedHistory(symbol: string, period: string, data: StockHistoricalData[]): void {
+  const key = getCacheKey(symbol, period)
+  historyCache.set(key, { data, timestamp: Date.now() })
+}
+
 async function fetchWithRetry(url: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<Response> {
   try {
     const response = await fetch(url, options)
     if (!response.ok && retries > 0 && response.status !== 401 && response.status !== 403) {
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
+      // Use longer delay for rate limiting (429)
+      const delay = response.status === 429 ? RETRY_DELAY * 3 : RETRY_DELAY
+      await new Promise(resolve => setTimeout(resolve, delay))
       return fetchWithRetry(url, options, retries - 1)
     }
     return response
@@ -329,16 +368,40 @@ async function fetchYahooHistory(
   period: string = '1mo',
   interval: string = '1d'
 ): Promise<StockHistoricalData[]> {
-  try {
-    const symbol = toYahooSymbol(codeOrName)
+  const symbol = toYahooSymbol(codeOrName)
+  const cacheKey = getCacheKey(symbol, period)
 
-    let adjustedInterval = interval
-    if (period === '1d') adjustedInterval = '5m'
-    else if (period === '5d') adjustedInterval = '15m'
+  // Check cache first
+  const cached = getCachedHistory(symbol, period)
+  if (cached) {
+    return cached
+  }
 
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${adjustedInterval}`
+  // Check if there's already a pending request for this data
+  const pendingRequest = pendingRequests.get(cacheKey)
+  if (pendingRequest) {
+    console.log(`[Stock API] Waiting for pending request: ${symbol} ${period}`)
+    return pendingRequest
+  }
 
-    console.log(`[Stock API] Fetching Yahoo history: ${symbol}, period: ${period}`)
+  // Create the request promise
+  const requestPromise = (async (): Promise<StockHistoricalData[]> => {
+    try {
+      // Rate limit: wait if needed
+      const now = Date.now()
+      const timeSinceLastRequest = now - lastYahooRequest
+      if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+        await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+      }
+      lastYahooRequest = Date.now()
+
+      let adjustedInterval = interval
+      if (period === '1d') adjustedInterval = '5m'
+      else if (period === '5d') adjustedInterval = '15m'
+
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${period}&interval=${adjustedInterval}`
+
+      console.log(`[Stock API] Fetching Yahoo history: ${symbol}, period: ${period}`)
 
     const response = await fetchWithRetry(url, {
       headers: {
@@ -347,16 +410,25 @@ async function fetchYahooHistory(
         'Origin': 'https://finance.yahoo.com',
         'Referer': 'https://finance.yahoo.com/',
       },
-      next: { revalidate: 300 },
+      cache: 'no-store', // Disable caching for real-time data
     })
 
-    if (!response.ok) return []
+    if (!response.ok) {
+      console.error(`[Stock API] Yahoo history response not ok: ${response.status}`)
+      return []
+    }
 
     const data = await response.json()
-    if (data?.chart?.error) return []
+    if (data?.chart?.error) {
+      console.error(`[Stock API] Yahoo chart error:`, data.chart.error)
+      return []
+    }
 
     const result: YahooChartResult = data?.chart?.result?.[0]
-    if (!result?.timestamp || !result?.indicators?.quote?.[0]) return []
+    if (!result?.timestamp || !result?.indicators?.quote?.[0]) {
+      console.error(`[Stock API] Yahoo missing data: timestamp=${!!result?.timestamp}, quotes=${!!result?.indicators?.quote?.[0]}`)
+      return []
+    }
 
     const { timestamp } = result
     const quote = result.indicators.quote[0]
@@ -376,11 +448,26 @@ async function fetchYahooHistory(
     }
 
     console.log(`[Stock API] Yahoo: Retrieved ${history.length} data points`)
-    return history
-  } catch (error) {
-    console.error(`[Stock API] Yahoo history error:`, error)
-    return []
-  }
+
+      // Cache the results
+      if (history.length > 0) {
+        setCachedHistory(symbol, period, history)
+      }
+
+      return history
+    } catch (error) {
+      console.error(`[Stock API] Yahoo history error:`, error)
+      return []
+    } finally {
+      // Clean up pending request
+      pendingRequests.delete(cacheKey)
+    }
+  })()
+
+  // Store the pending request
+  pendingRequests.set(cacheKey, requestPromise)
+
+  return requestPromise
 }
 
 // ============================================================================
