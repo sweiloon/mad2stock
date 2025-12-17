@@ -320,19 +320,19 @@ async function saveSignal(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   inputData: SignalInputData,
   signal: SignalOutput
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string }> {
   try {
     const signalCode = generateSignalCode(inputData.stockCode)
 
     // Calculate valid_until based on time horizon
-    const validUntilDays = {
+    const validUntilDays: Record<string, number> = {
       'Intraday': 1,
       'Short-term': 7,
       'Medium-term': 30,
       'Long-term': 90
     }
     const validUntil = new Date()
-    validUntil.setDate(validUntil.getDate() + validUntilDays[signal.time_horizon])
+    validUntil.setDate(validUntil.getDate() + (validUntilDays[signal.time_horizon] || 7))
 
     // Insert signal
     const { data: savedSignal, error: signalError } = await supabase
@@ -363,11 +363,11 @@ async function saveSignal(
         risks: signal.risks,
 
         sources_used: {
-          technical: signal.sources.filter(s => s.type === 'technical_indicator'),
-          fundamental: signal.sources.filter(s => s.type === 'fundamental_data'),
-          ai_insight: signal.sources.filter(s => s.type === 'ai_insight'),
-          news: signal.sources.filter(s => s.type === 'news'),
-          other: signal.sources.filter(s => !['technical_indicator', 'fundamental_data', 'ai_insight', 'news'].includes(s.type))
+          technical: signal.sources?.filter(s => s.type === 'technical_indicator') || [],
+          fundamental: signal.sources?.filter(s => s.type === 'fundamental_data') || [],
+          ai_insight: signal.sources?.filter(s => s.type === 'ai_insight') || [],
+          news: signal.sources?.filter(s => s.type === 'news') || [],
+          other: signal.sources?.filter(s => !['technical_indicator', 'fundamental_data', 'ai_insight', 'news'].includes(s.type)) || []
         },
         data_quality_score: signal.data_quality_score,
 
@@ -380,11 +380,11 @@ async function saveSignal(
 
     if (signalError) {
       console.error(`[Signal Gen] Failed to save signal for ${inputData.stockCode}:`, signalError)
-      return false
+      return { success: false, error: signalError.message }
     }
 
     // Insert detailed sources
-    if (savedSignal && signal.sources.length > 0) {
+    if (savedSignal && signal.sources && signal.sources.length > 0) {
       const sourcesToInsert = signal.sources.map(source => ({
         signal_id: savedSignal.id,
         source_type: source.type,
@@ -403,11 +403,11 @@ async function saveSignal(
       }
     }
 
-    return true
+    return { success: true }
 
   } catch (error) {
     console.error(`[Signal Gen] Error saving signal for ${inputData.stockCode}:`, error)
-    return false
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -483,10 +483,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to generate signal' }, { status: 500 })
     }
 
-    const saved = await saveSignal(supabase, inputData, signal)
+    const saveResult = await saveSignal(supabase, inputData, signal)
 
     return NextResponse.json({
-      success: saved,
+      success: saveResult.success,
       stockCode: singleCode.toUpperCase(),
       signal: {
         type: signal.signal_type,
@@ -494,6 +494,7 @@ export async function GET(request: NextRequest) {
         strength: signal.strength,
         summary: signal.summary
       },
+      saveError: saveResult.error || null,
       duration: Date.now() - startTime
     })
   }
@@ -524,8 +525,8 @@ export async function GET(request: NextRequest) {
       const signal = await generateSignal(openai, inputData)
 
       if (signal) {
-        const saved = await saveSignal(supabase, inputData, signal)
-        if (saved) {
+        const saveResult = await saveSignal(supabase, inputData, signal)
+        if (saveResult.success) {
           results.success++
           results.signals.push({
             code: candidate.code,
@@ -533,6 +534,7 @@ export async function GET(request: NextRequest) {
             confidence: signal.confidence_level
           })
         } else {
+          console.error(`[Signal Gen] Save failed for ${candidate.code}:`, saveResult.error)
           results.failed++
         }
       } else {
