@@ -31,6 +31,7 @@ import { LastUpdatedBadge, LastUpdatedDot } from "@/components/LastUpdatedBadge"
 import { COMPANY_DATA, getCompanyByCode, hasFinancialData } from "@/lib/company-data"
 import { StockChart } from "@/components/StockChart"
 import { TechnicalAnalysis } from "@/components/TechnicalAnalysis"
+import { AIInsightsCard } from "@/components/AIInsightsCard"
 
 // ============================================================================
 // TYPES
@@ -443,6 +444,26 @@ export default function CompanyProfilePage() {
                 stockCode={stockCode}
               />
             </Card>
+
+            {/* AI Insights */}
+            <AIInsightsCard
+              company={{
+                code: company.code,
+                name: company.name,
+                sector: company.sector,
+                price: stockData?.price ?? undefined,
+                changePercent: stockData?.changePercent ?? undefined,
+                volume: stockData?.volume ?? undefined,
+                revenue: company.revenue,
+                profit: company.profit,
+                revenueYoY: company.yoyRevenueChange,
+                profitYoY: company.yoyProfitChange,
+                revenueQoQ: company.qoqRevenueChange,
+                profitQoQ: company.qoqProfitChange,
+                yoyCategory: company.yoyCategory,
+                qoqCategory: company.qoqCategory,
+              }}
+            />
 
             {/* Company Info */}
             <Card>
