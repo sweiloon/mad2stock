@@ -127,8 +127,9 @@ export function getTiersToUpdate(currentTime: Date = new Date()): (1 | 2 | 3)[] 
 }
 
 /**
- * Check if it's within Malaysian market hours
+ * Check if it's within Malaysian market hours (with buffer for final update)
  * Market hours: 9:00 AM - 5:00 PM MYT (UTC+8)
+ * Buffer: Extended to 5:30 PM to ensure final closing prices are captured
  */
 export function isMarketHours(currentTime: Date = new Date()): boolean {
   // Convert to Malaysia time (UTC+8)
@@ -139,9 +140,10 @@ export function isMarketHours(currentTime: Date = new Date()): boolean {
   // Handle day overflow
   const normalizedMinutes = malaysiaMinutes % (24 * 60)
 
-  // Market hours: 9:00 (540 min) to 17:00 (1020 min)
+  // Market hours: 9:00 (540 min) to 17:30 (1050 min)
+  // Extended 30 minutes after market close to capture final prices
   const marketOpen = 9 * 60 // 9:00 AM
-  const marketClose = 17 * 60 // 5:00 PM
+  const marketCloseWithBuffer = 17 * 60 + 30 // 5:30 PM (30 min buffer after 5pm close)
 
   // Check day of week (Malaysia time)
   const malaysiaDate = new Date(currentTime.getTime() + malaysiaOffset * 60 * 1000)
@@ -150,7 +152,7 @@ export function isMarketHours(currentTime: Date = new Date()): boolean {
   // Monday (1) to Friday (5)
   const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
 
-  return isWeekday && normalizedMinutes >= marketOpen && normalizedMinutes < marketClose
+  return isWeekday && normalizedMinutes >= marketOpen && normalizedMinutes < marketCloseWithBuffer
 }
 
 /**
