@@ -123,7 +123,7 @@ async function selectCandidates(
   })
 
   // Score and rank candidates
-  const candidates: StockCandidate[] = stocks
+  const candidates = stocks
     .map((stock: any) => {
       let score = 0
       const company = companyMap.get(stock.stock_code)
@@ -153,12 +153,12 @@ async function selectCandidates(
         price: stock.price,
         change_percent: stock.change_percent,
         volume: stock.volume,
-        avg_volume: null, // Would need historical data
+        avg_volume: null as number | null, // Would need historical data
         priority_score: score
       }
     })
     .filter((c): c is StockCandidate => c !== null && c.priority_score > 0)
-    .sort((a: StockCandidate, b: StockCandidate) => b.priority_score - a.priority_score)
+    .sort((a, b) => b.priority_score - a.priority_score)
 
   // Check for existing active signals to avoid duplicates
   const topCodes = candidates.slice(0, limit * 3).map(c => c.code)
