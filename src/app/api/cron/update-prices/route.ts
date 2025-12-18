@@ -24,7 +24,7 @@ type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['U
 // EODHD API is SLOW (~1.5s per stock even with concurrency)
 // Testing with 10 stocks to see if we can fit more in 10 seconds
 
-const STOCKS_PER_RUN = 10       // Testing with 10 stocks
+const STOCKS_PER_RUN = 8        // Testing with 8 stocks
 const BATCH_SIZE = 5            // DB batch size for upserting
 const PARALLEL_BATCHES = 10     // Concurrent EODHD requests (handled in eodhd-api.ts)
 const DB_BATCH_SIZE = 5         // Upsert 5 records at a time
