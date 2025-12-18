@@ -184,8 +184,9 @@ export async function fetchHybridBatchQuotes(
       }
 
       // Small delay between Yahoo requests to avoid rate limiting
+      // Reduced from 500ms to 100ms to fit within Vercel 10s timeout
       if (i < failedFromEODHD.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
     }
 

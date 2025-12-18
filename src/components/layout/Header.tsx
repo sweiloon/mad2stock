@@ -6,19 +6,12 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Bell, Search, Menu, Moon, Sun, TrendingUp, Star, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getStrongBuyCompanies } from "@/lib/company-data"
+import { UserMenu } from "@/components/auth/UserMenu"
+import { useAuth } from "@/components/auth/AuthProvider"
 
 interface HeaderProps {
   onMenuClick?: () => void
@@ -28,6 +21,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const { theme, setTheme } = useTheme()
+  const { user } = useAuth()
 
   // Get top strong buy companies (Category 1 with highest profit growth)
   const strongBuyCompanies = useMemo(() => getStrongBuyCompanies(3), [])
@@ -112,41 +106,21 @@ export function Header({ onMenuClick }: HeaderProps) {
           <span className="sr-only">Toggle theme</span>
         </Button>
 
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
-          <Bell className="h-4 w-4" />
-          <Badge
-            variant="destructive"
-            className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-bold"
-          >
-            3
-          </Badge>
-        </Button>
+        {/* Notifications - only show when logged in */}
+        {user && (
+          <Button variant="ghost" size="icon" className="relative h-9 w-9">
+            <Bell className="h-4 w-4" />
+            <Badge
+              variant="destructive"
+              className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] font-bold"
+            >
+              3
+            </Badge>
+          </Button>
+        )}
 
-        {/* Profile */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
-              <Avatar className="h-9 w-9 border-2 border-primary/50">
-                <AvatarFallback className="bg-primary/20 text-primary font-semibold">A</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Admin User</p>
-                <p className="text-xs leading-none text-muted-foreground">admin@klse.com</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Watchlist</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Log out</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* User Menu */}
+        <UserMenu />
       </div>
     </header>
   )

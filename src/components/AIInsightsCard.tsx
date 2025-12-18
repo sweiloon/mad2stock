@@ -20,6 +20,8 @@ import {
   Lock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BlurredContent } from "@/components/auth/BlurredContent"
+import { useAuth } from "@/components/auth/AuthProvider"
 
 interface AIInsightsCardProps {
   company: {
@@ -69,9 +71,7 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
   const [insights, setInsights] = useState<InsightsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // Future: Check if user is a member
-  const isMember = true // TODO: Replace with actual auth check
+  const { user } = useAuth()
 
   const fetchInsights = useCallback(async () => {
     if (!company.code) return
@@ -113,34 +113,58 @@ export function AIInsightsCard({ company, className }: AIInsightsCardProps) {
   const outlookConfig = insights?.outlook ? OUTLOOK_CONFIG[insights.outlook] : OUTLOOK_CONFIG.Neutral
   const OutlookIcon = outlookConfig.icon
 
-  // If not a member (future feature)
-  if (!isMember) {
+  // Placeholder content for unauthenticated users
+  const placeholderContent = (
+    <Card className={cn("overflow-hidden", className)}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-violet-500" />
+          </div>
+          <div>
+            <CardTitle className="text-sm font-medium">AI Insights</CardTitle>
+            <p className="text-xs text-muted-foreground">Updated daily after market close</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed">
+            Based on recent market activity and financial data, {company.code} shows
+            interesting patterns in both revenue growth and profit margins...
+          </p>
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="text-xs font-medium text-primary">Key Highlight</span>
+            </div>
+            <p className="text-sm mt-1">Strong quarterly performance with notable improvements...</p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+              <p className="text-sm text-muted-foreground">Technical indicators suggest potential opportunity...</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+              <p className="text-sm text-muted-foreground">Market sentiment shows positive momentum...</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  // If user is not authenticated, show blurred content
+  if (!user) {
     return (
-      <Card className={cn("overflow-hidden", className)}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-violet-500" />
-            </div>
-            <div>
-              <CardTitle className="text-sm font-medium">AI Insights</CardTitle>
-              <p className="text-xs text-muted-foreground">Premium Feature</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-center py-6">
-            <Lock className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-            <p className="text-sm font-medium">Member-Only Feature</p>
-            <p className="text-xs text-muted-foreground mt-1 mb-4">
-              Subscribe to access AI-powered insights for all companies
-            </p>
-            <Button variant="outline" size="sm" disabled>
-              Coming Soon
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <BlurredContent
+        title="Sign in to view AI Insights"
+        description={`Get personalized AI analysis for ${company.code} and 800+ other stocks.`}
+        minHeight="280px"
+      >
+        {placeholderContent}
+      </BlurredContent>
     )
   }
 
