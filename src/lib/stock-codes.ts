@@ -5,7 +5,7 @@
  * Format: { "COMPANY_NAME": "NUMERIC_CODE" }
  * Yahoo Finance format: {CODE}.KL (e.g., "5139.KL" for AEONCR)
  *
- * Total companies: 775
+ * Total companies: 768
  * Last updated: December 2025
  */
 
@@ -280,7 +280,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "CEB": "5311",
   "CENSOF": "5195",
   "CERATEC": "0165",
-  "CGB": "0212",
+  "CGB": "8052",
   "CHEETAH": "7209",
   "CHB": "0255",
   "CHEEDING": "0372",
@@ -298,10 +298,9 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "CMSB": "2852",
   "CNI": "5104",
   "COASTAL": "5071",
-  "COMPLET": "5136",
   "CONNECT": "0163",
   "CORAZA": "0211",
-  "COUNTRY": "4812",
+  "COUNTRY": "5738",
   "CPETECH": "5317",
   "CREABIZ": "0283",
   "CSCSTEL": "5094",
@@ -342,7 +341,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "EG": "8907",
   "EITA": "5208",
   "EKOVEST": "8877",
-  "ELANCO": "0245",
   "ELSOFT": "0090",
   "ELKDESA": "5228",
   "ELRIDGE": "0318",
@@ -369,7 +367,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "FIHB": "0214",
   "FINTEC": "0150",
   "FIMACOR": "3107",
-  "FIRMTEN": "0292",
   "FLEXI": "0231",
   "FM": "7210",
   "FOCUSP": "0157",
@@ -495,7 +492,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "KHIND": "7062",
   "KIALIM": "6211",
   "KIARA": "0329",
-  "KIM": "0046",
   "KIMHIN": "5371",
   "KIMLUN": "5171",
   "KINRARA": "0282",
@@ -579,7 +575,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "MCEMENT": "3794",
   "MEDIA": "4502",
   "MEDIAC": "0347",
-  "MEGAFB": "0239",
+  "MEGAFB": "5327",
   "MENANG": "1694",
   "MERC": "8192",
   "METECH": "0315",
@@ -678,7 +674,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "PPJACK": "0242",
   "PREGEN": "0348",
   "PRESTAR": "9873",
-  "PROLEXU": "8058",
   "PTARAS": "6002",
   "PTRANS": "0186",
   "PWF": "7134",
@@ -697,7 +692,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "REACHTEN": "5332",
   "REDONE": "0357",
   "REDTONE": "0032",
-  "RELIANCE": "4558",
   "REVENUE": "0200",
   "RGB": "0037",
   "RHBBANK": "1066",
@@ -874,7 +868,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "MNC": "0103",
   "MPAY": "0156",
   "MQTECH": "0070",
-  "MTEC2": "0295",
   "MTOUCHE": "0092",
 
   // N - ACE
