@@ -33,18 +33,32 @@ function LoginForm() {
     setLoading(true)
 
     try {
+      console.log("[Login] Attempting sign in for:", email)
       const result = await signIn(email, password)
+      console.log("[Login] Sign in result:", { success: result.success, error: result.error })
 
       if (!result.success) {
-        setError(result.error?.message || "Failed to sign in")
+        // Check for specific error conditions
+        const errorCode = result.error?.code
+        const errorMessage = result.error?.message || "Failed to sign in"
+
+        console.error("[Login] Sign in failed:", { code: errorCode, message: errorMessage })
+
+        // If it's a "not configured" error, the mock client is being used
+        if (errorCode === 'not_configured') {
+          setError("Authentication service is not available. Please try again later.")
+        } else {
+          setError(errorMessage)
+        }
         setLoading(false)
         return
       }
 
+      console.log("[Login] Success, redirecting to:", redirect)
       // Success - force redirect using window.location for reliability
       window.location.href = redirect
     } catch (err) {
-      console.error("Login error:", err)
+      console.error("[Login] Unexpected error:", err)
       setError("An unexpected error occurred. Please try again.")
       setLoading(false)
     }
