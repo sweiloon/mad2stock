@@ -65,15 +65,19 @@ export default function SignUpPage() {
         return
       }
 
-      // Check if email confirmation is required
-      if (result.error?.code === "confirmation_required") {
-        setSuccess(true)
-        setLoading(false)
-        return
+      // Auto-confirm email using admin API (bypasses Supabase email confirmation setting)
+      try {
+        await fetch('/api/auth/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+      } catch (confirmError) {
+        console.error('Auto-confirm error:', confirmError)
+        // Continue even if confirm fails - user can still request confirmation email
       }
 
-      // Email confirmation is disabled - sign out and redirect to login
-      // This ensures user goes through proper login flow
+      // Sign out and redirect to login page
       await signOut()
       router.push("/login?message=Account created successfully! Please sign in.")
       router.refresh()
