@@ -5,8 +5,19 @@ export function createClient() {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
+    console.warn('Supabase environment variables not configured')
     // Return a mock client for build time / SSG
     return {
+      auth: {
+        signUp: () => Promise.resolve({ data: { user: null, session: null }, error: { message: 'Supabase not configured', code: 'not_configured' } }),
+        signInWithPassword: () => Promise.resolve({ data: { user: null, session: null }, error: { message: 'Supabase not configured', code: 'not_configured' } }),
+        signOut: () => Promise.resolve({ error: null }),
+        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        resetPasswordForEmail: () => Promise.resolve({ error: null }),
+        updateUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      },
       from: () => ({
         select: () => ({
           eq: () => ({

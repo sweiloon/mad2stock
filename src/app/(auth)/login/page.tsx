@@ -41,10 +41,10 @@ function LoginForm() {
         return
       }
 
-      // Redirect to intended page or dashboard
-      router.push(redirect)
-      router.refresh()
-    } catch {
+      // Success - force redirect using window.location for reliability
+      window.location.href = redirect
+    } catch (err) {
+      console.error("Login error:", err)
       setError("An unexpected error occurred. Please try again.")
       setLoading(false)
     }
