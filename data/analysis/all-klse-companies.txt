@@ -774,9 +774,6 @@ https://www.klsescreener.com/v2/stocks/view/6114
 LBS (5789) | LBS Bina Group Berhad | Property | Main | 0.39 | 601.26M
 https://www.klsescreener.com/v2/stocks/view/5789
 
-PTT (5217) | PTT Synergy Group Berhad | Industrial Products | Main | 1.37 | 599.46M
-https://www.klsescreener.com/v2/stocks/view/5217
-
 FIAMMA (6939) | Fiamma Holdings Berhad | Consumer | Main | 1.13 | 599.25M
 https://www.klsescreener.com/v2/stocks/view/6939
 

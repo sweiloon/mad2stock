@@ -5,7 +5,7 @@
  * Format: { "COMPANY_NAME": "NUMERIC_CODE" }
  * Yahoo Finance format: {CODE}.KL (e.g., "5139.KL" for AEONCR)
  *
- * Total companies: 802
+ * Total companies: 775
  * Last updated: December 2025
  */
 
@@ -215,19 +215,16 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "ASB": "1481",
   "ASIABRN": "7203",
   "ASM": "0362",
-  "ASIACRD": "5380",
   "ASIAFLE": "7129",
   "ASIAPAC": "0361",
   "ASIAPLY": "0105",
   "ASTEEL": "2602",
-  "ASTRA": "3032",
   "ATAIMS": "8176",
   "ATECH": "0216",
   "ATLAN": "7048",
   "ATRIUM": "5130",
   "AUMAS": "0246",
   "AURO": "5025",
-  "AURORA": "3037",
   "AUTORIS": "03059",
   "AVALAND": "5182",
   "AVI": "8885",
@@ -264,11 +261,9 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "BJCORP": "3395",
   "BJFOOD": "5196",
   "BJLAND": "4219",
-  "BJMEDIA": "6025",
   "BKAWAN": "1899",
   "BLDPLNT": "5163",
   "BMGREEN": "0168",
-  "BOON": "0110",
   "BPURI": "5932",
   "BURSA": "1818",
 
@@ -303,7 +298,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "CMSB": "2852",
   "CNI": "5104",
   "COASTAL": "5071",
-  "COCOALAND": "7205",
   "COMPLET": "5136",
   "CONNECT": "0163",
   "CORAZA": "0211",
@@ -337,7 +331,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   // E
   "E&O": "3417",
   "EASTPRT": "0296",
-  "EBWORX": "0030",
   "ECOFIRS": "3557",
   "ECOHLDG": "0229",
   "ECOMATE": "0274",
@@ -370,7 +363,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "FARMPRICE": "0304",
   "FASTBND": "0268",
   "FAVCO": "7229",
-  "FCMW": "7124",
   "FCW": "8486",
   "FFB": "5306",
   "FIAMMA": "6939",
@@ -402,11 +394,9 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "GENTING": "3182",
   "GESHEN": "7197",
   "GFM": "0215",
-  "GHLSYS": "0021",
   "GIGASUNS": "0308",
   "GLOBETRO": "7022",
   "GMUTUAL": "0305",
-  "GOLDIS": "5074",
   "GOPENG": "2135",
   "GPACKET": "0082",
   "GPHAROS": "0330",
@@ -444,7 +434,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "HPMT": "5291",
   "HSPLANT": "5138",
   "HSSEB": "0185",
-  "HUAAN": "0194",
   "HUMEIND": "3646",
   "HUPSENG": "5024",
   "HHRG": "0175",
@@ -466,7 +455,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "INARI": "0166",
   "INFOM": "0265",
   "INNO": "5265",
-  "INSBIO": "0088",
   "INSAS": "3379",
   "INTA": "0192",
   "IOICORP": "1961",
@@ -474,17 +462,14 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "IRIS": "0010",
   "ITMAX": "5309",
   "ITRONIC": "9393",
-  "IVALUE": "0324",
 
   // J
   "JAG": "0024",
   "JAGCPTL": "6874",
   "JAKS": "4723",
-  "JAMBAT": "0294",
   "JBC": "0250",
   "JCY": "5161",
   "JDIPC": "0317",
-  "JERASIA": "8931",
   "JFTECH": "0167",
   "JHM": "0164",
   "JIANKUN": "0199",
@@ -495,7 +480,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
 
   // K
   "KAB": "0202",
-  "KAF": "5096",
   "KAMDAR": "8672",
   "KANGER": "0170",
   "KAREX": "5247",
@@ -539,7 +523,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "KTI": "0243",
   "KUANTAN": "6160",
   "KUCHIN": "0316",
-  "KULIM": "2003",
   "KUNRONG": "0350",
 
   // L
@@ -558,7 +541,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "LECHANG": "0342",
   "LEFORM": "0266",
   "LEGEND": "0313",
-  "LEONG": "0344",
   "LFG": "5255",
   "LGMS": "0249",
   "LHI": "5287",
@@ -566,15 +548,12 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "LIIHEN": "7089",
   "LKL": "0182",
   "LIMKOKW": "0319",
-  "LINGUI": "2011",
   "LIONIND": "4235",
-  "LONBISC": "7126",
   "LPI": "8621",
   "LSH": "0351",
   "LTKM": "7085",
   "LUBSKY": "0327",
   "LUXCHEM": "5143",
-  "LUXWL": "0314",
   "LWSABAH": "5328",
 
   // M
@@ -587,7 +566,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "MALAKOF": "5264",
   "MALTON": "6181",
   "MANULFE": "1058",
-  "MARRY": "5378",
   "MASDEC": "0343",
   "MASMALL": "0331",
   "MATRIX": "5236",
@@ -621,7 +599,6 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "MNRB": "6459",
   "MOBILIA": "0333",
   "MPI": "3867",
-  "MPHB": "5237",
   "MRCB": "1651",
   "MRDIY": "5296",
   "MSC": "5916",
@@ -654,8 +631,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "OFI": "7107",
   "OIB": "5827",
   "OMH": "5298",
-  "OMNIA": "0364",
-    "OPENSYS": "0040",
+  "OPENSYS": "0040",
   "OPERON": "0321",
   "OPTIMAX": "0222",
   "ORIENT": "4006",
@@ -705,13 +681,11 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "PROLEXU": "8058",
   "PTARAS": "6002",
   "PTRANS": "0186",
-  "PTT": "5217",
   "PWF": "7134",
   "PWROOT": "7237",
   "PWRWELL": "0217",
 
   // Q
-  "QCAPITA": "0334",
   "QES": "0196",
   "QL": "7084",
 

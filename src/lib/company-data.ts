@@ -404,7 +404,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "GDEX", name: "GDEX Berhad", stockCode: "0078", sector: "Services", market: "Main" },
   { code: "MKH", name: "MKH Berhad", stockCode: "6114", sector: "Property", market: "Main" },
   { code: "LBS", name: "LBS Bina Group Berhad", stockCode: "5789", sector: "Property", market: "Main" },
-  { code: "PTT", name: "PTT Synergy Group Berhad", stockCode: "5217", sector: "Industrial", market: "Main" },
   { code: "FIAMMA", name: "Fiamma Holdings Berhad", stockCode: "6939", sector: "Consumer", market: "Main" },
   { code: "NE", name: "Northeast Group Berhad", stockCode: "0272", sector: "Industrial", market: "Main" },
   { code: "MAGMA", name: "Magma Group Berhad", stockCode: "0172", sector: "Industrial", market: "Main" },
@@ -559,7 +558,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "ANEKA", name: "Aneka Jaringan Holdings Berhad", stockCode: "0226", sector: "Construction", market: "Main" },
   { code: "ARTRONIQ", name: "Artroniq Berhad", stockCode: "0038", sector: "Industrial", market: "ACE" },
   { code: "ASIABRN", name: "Asia Brands Berhad", stockCode: "7203", sector: "Consumer", market: "Main" },
-  { code: "ASIACRD", name: "Asia Card Holdings Berhad", stockCode: "5380", sector: "Industrial", market: "Main" },
   { code: "ASIAFLE", name: "Asia File Corporation Berhad", stockCode: "7129", sector: "Industrial", market: "Main" },
   { code: "ASIAPAC", name: "Asia Pacific Higher Learning Sdn Bhd", stockCode: "0361", sector: "Education", market: "ACE" },
   { code: "ASTEEL", name: "Amalgamated Steel Mills Berhad", stockCode: "2602", sector: "Industrial", market: "Main" },
@@ -567,7 +565,6 @@ export const COMPANY_DATA: CompanyData[] = [
 
   // Additional B companies
   { code: "BINTAI", name: "Bintai Kinden Corporation Berhad", stockCode: "6998", sector: "Construction", market: "Main" },
-  { code: "BOON", name: "Boon Koon Group Berhad", stockCode: "0110", sector: "Construction", market: "Main" },
   { code: "BIOINTE", name: "Bio Integrasi Holdings Berhad", stockCode: "0290", sector: "Healthcare", market: "ACE" },
 
   // Additional C companies
@@ -577,7 +574,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "CHINWEL", name: "Chin Well Holdings Berhad", stockCode: "5007", sector: "Industrial", market: "Main" },
   { code: "CHUAN", name: "Chuan Hup Holdings Berhad", stockCode: "0056", sector: "Construction", market: "Main" },
   { code: "CNI", name: "CNI Holdings Berhad", stockCode: "5104", sector: "Consumer", market: "Main" },
-  { code: "COCOALAND", name: "Cocoaland Holdings Berhad", stockCode: "7205", sector: "Consumer", market: "Main" },
   { code: "CONNECT", name: "Connectcounty Holdings Berhad", stockCode: "0163", sector: "Technology", market: "ACE" },
   { code: "COUNTRY", name: "Country Heights Holdings Berhad", stockCode: "4812", sector: "Property", market: "Main" },
   { code: "CREABIZ", name: "Creative Alibiz Holdings Berhad", stockCode: "0283", sector: "Consumer", market: "ACE" },
@@ -605,7 +601,6 @@ export const COMPANY_DATA: CompanyData[] = [
 
   // Additional F companies
   { code: "FASTBND", name: "Fast Bond Holdings Berhad", stockCode: "0268", sector: "Industrial", market: "ACE" },
-  { code: "FCMW", name: "FCW Corporation Berhad", stockCode: "7124", sector: "Manufacturing", market: "Main" },
   { code: "FIHB", name: "FI Holdings Berhad", stockCode: "0214", sector: "Services", market: "Main" },
   { code: "FIRMTEN", name: "Firma Ten Holdings Berhad", stockCode: "0292", sector: "Consumer", market: "ACE" },
   { code: "FTES", name: "F T E S International Group Berhad", stockCode: "0373", sector: "Consumer", market: "ACE" },
@@ -619,11 +614,9 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "GBGAQRS", name: "GBA Holdings Berhad", stockCode: "0162", sector: "Property", market: "ACE" },
   { code: "GCSB", name: "Green Coast Seafood Berhad", stockCode: "0310", sector: "Consumer", market: "ACE" },
   { code: "GFM", name: "GFM Services Berhad", stockCode: "0215", sector: "Services", market: "Main" },
-  { code: "GHLSYS", name: "GHL Systems Berhad", stockCode: "0021", sector: "Technology", market: "Main" },
   { code: "GIGASUNS", name: "Giga Sunshine Berhad", stockCode: "0308", sector: "Energy", market: "ACE" },
   { code: "GLOBETRO", name: "Globetronics Technology Bhd", stockCode: "7022", sector: "Technology", market: "Main" },
   { code: "GMUTUAL", name: "G Mutual Berhad", stockCode: "0305", sector: "Services", market: "ACE" },
-  { code: "GOLDIS", name: "Goldis Berhad", stockCode: "5074", sector: "Property", market: "Main" },
   { code: "GPACKET", name: "Green Packet Berhad", stockCode: "0082", sector: "Technology", market: "Main" },
   { code: "GPHAROS", name: "Grand Pharos Holdings Berhad", stockCode: "0330", sector: "Consumer", market: "ACE" },
   { code: "GSTEEL", name: "Glomac Steel Berhad", stockCode: "0288", sector: "Industrial", market: "ACE" },
@@ -635,7 +628,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "HHHSB", name: "HHH Plantations Berhad", stockCode: "0311", sector: "Plantation", market: "ACE" },
   { code: "HOMERIZ", name: "Homeriz Corporation Berhad", stockCode: "7132", sector: "Consumer", market: "Main" },
   { code: "HPMT", name: "HPMT Holdings Berhad", stockCode: "0192", sector: "Industrial", market: "Main" },
-  { code: "HUAAN", name: "Hua An Holdings Berhad", stockCode: "0194", sector: "Consumer", market: "Main" },
   { code: "HWGB", name: "HWGB Holdings Berhad", stockCode: "0175", sector: "Services", market: "Main" },
 
   // I companies
@@ -644,18 +636,14 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "IFCAMSC", name: "IFCA MSC Berhad", stockCode: "0023", sector: "Technology", market: "Main" },
   { code: "IMDA", name: "Imda Corporation Berhad", stockCode: "0133", sector: "Services", market: "Main" },
   { code: "IRIS", name: "IRIS Corporation Berhad", stockCode: "0010", sector: "Technology", market: "Main" },
-  { code: "IVALUE", name: "I-Value Solutions Berhad", stockCode: "0324", sector: "Technology", market: "ACE" },
 
   // J companies
   { code: "JAG", name: "JAG Berhad", stockCode: "0024", sector: "Technology", market: "Main" },
-  { code: "JAMBAT", name: "Jambatan Experts Berhad", stockCode: "0294", sector: "Construction", market: "ACE" },
   { code: "JDIPC", name: "JD I Plus Corporation Berhad", stockCode: "0317", sector: "Industrial", market: "ACE" },
-  { code: "JERASIA", name: "Jer Asia Mining Berhad", stockCode: "0273", sector: "Industrial", market: "Main" },
   { code: "JIANKUN", name: "Jiankun International Berhad", stockCode: "0199", sector: "Industrial", market: "Main" },
   { code: "JTKBHD", name: "JTK Technology Berhad", stockCode: "0325", sector: "Technology", market: "ACE" },
 
   // K companies
-  { code: "KAF", name: "KAF Investment Bank Berhad", stockCode: "5096", sector: "Finance", market: "Main" },
   { code: "KAMDAR", name: "Kamdar Group (M) Berhad", stockCode: "7219", sector: "Consumer", market: "Main" },
   { code: "KBH", name: "KBH Berhad", stockCode: "0320", sector: "Consumer", market: "ACE" },
   { code: "KBES", name: "K Best Berhad", stockCode: "0280", sector: "Services", market: "ACE" },
@@ -669,7 +657,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "KRONOS", name: "Kronos Global Berhad", stockCode: "0352", sector: "Industrial", market: "ACE" },
   { code: "KUANTAN", name: "Kuantan Flour Mills Berhad", stockCode: "6160", sector: "Consumer", market: "Main" },
   { code: "KUCHIN", name: "Kuching Resources Berhad", stockCode: "0316", sector: "Industrial", market: "ACE" },
-  { code: "KULIM", name: "Kulim (Malaysia) Berhad", stockCode: "2003", sector: "Plantation", market: "Main" },
   { code: "KUNRONG", name: "Kunrong Holdings Berhad", stockCode: "0350", sector: "Services", market: "ACE" },
 
   // L companies
@@ -681,15 +668,11 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "LDMD", name: "LDMD Holdings Berhad", stockCode: "0289", sector: "Industrial", market: "ACE" },
   { code: "LECHANG", name: "Lechang Berhad", stockCode: "0342", sector: "Consumer", market: "ACE" },
   { code: "LEGEND", name: "Legend Holdings Berhad", stockCode: "0313", sector: "Consumer", market: "ACE" },
-  { code: "LEONG", name: "Leong Huat Berhad", stockCode: "0344", sector: "Manufacturing", market: "ACE" },
   { code: "LIBERTY", name: "Liberty Resources Berhad", stockCode: "0312", sector: "Consumer", market: "ACE" },
   { code: "LIIHEN", name: "Lii Hen Industries Berhad", stockCode: "7089", sector: "Industrial", market: "Main" },
   { code: "LIMKOKW", name: "Limkokwing Holdings Berhad", stockCode: "0319", sector: "Education", market: "ACE" },
-  { code: "LINGUI", name: "Lingui Developments Berhad", stockCode: "2011", sector: "Plantation", market: "Main" },
-  { code: "LONBISC", name: "London Biscuits Berhad", stockCode: "7126", sector: "Consumer", market: "Main" },
   { code: "LTKM", name: "LTKM Berhad", stockCode: "7085", sector: "Consumer", market: "Main" },
   { code: "LUBSKY", name: "Lubosky Holdings Berhad", stockCode: "0327", sector: "Consumer", market: "ACE" },
-  { code: "LUXWL", name: "Luxe World Berhad", stockCode: "0314", sector: "Consumer", market: "ACE" },
 
   // ============================================================================
   // ADDITIONAL A COMPANIES (December 2024)
@@ -710,8 +693,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "ARK", name: "Ark Resources Holdings Berhad", stockCode: "7007", sector: "Construction", market: "Main" },
   { code: "ARBB", name: "ARB Berhad", stockCode: "7181", sector: "Industrial", market: "Main" },
   { code: "ASB", name: "Advance Synergy Berhad", stockCode: "1481", sector: "Consumer", market: "Main" },
-  { code: "ASTRA", name: "Astra Berhad", stockCode: "3032", sector: "Consumer", market: "Main" },
-  { code: "AURORA", name: "Aurora Berhad", stockCode: "3037", sector: "Consumer", market: "Main" },
   { code: "AWANTEC", name: "Awanbiru Technology Berhad", stockCode: "5204", sector: "Technology", market: "Main" },
   { code: "AWC", name: "AWC Berhad", stockCode: "7579", sector: "Services", market: "Main" },
   { code: "AYS", name: "AYS Ventures Berhad", stockCode: "5021", sector: "Industrial", market: "Main" },
@@ -745,14 +726,12 @@ export const COMPANY_DATA: CompanyData[] = [
   // M COMPANIES
   // ============================================================================
   { code: "MALTON", name: "Malton Berhad", stockCode: "6181", sector: "Property", market: "Main" },
-  { code: "MARRY", name: "Marry Brown Holdings Berhad", stockCode: "5378", sector: "Consumer", market: "Main" },
   { code: "MASMALL", name: "Masterskill Holdings Berhad", stockCode: "0331", sector: "Consumer", market: "ACE" },
   { code: "MEDIAC", name: "Media Concept Berhad", stockCode: "0347", sector: "Media", market: "ACE" },
   { code: "MERC", name: "Mercury Securities Group Berhad", stockCode: "0351", sector: "Finance", market: "ACE" },
   { code: "METECH", name: "Mah Tek Holdings Berhad", stockCode: "0315", sector: "Industrial", market: "ACE" },
   { code: "MINDA", name: "Minda Global Berhad", stockCode: "0337", sector: "Technology", market: "ACE" },
   { code: "MOBILIA", name: "Mobilia Holdings Berhad", stockCode: "0333", sector: "Consumer", market: "ACE" },
-  { code: "MPHB", name: "MPHB Capital Berhad", stockCode: "5237", sector: "Finance", market: "Main" },
   { code: "MYSPEED", name: "MySpeedNet Berhad", stockCode: "0335", sector: "Telecommunications", market: "ACE" },
 
   // ============================================================================
@@ -766,7 +745,6 @@ export const COMPANY_DATA: CompanyData[] = [
   // O COMPANIES
   // ============================================================================
   { code: "OCEAN", name: "Ocean Holdings Berhad", stockCode: "0336", sector: "Consumer", market: "ACE" },
-  { code: "OMNIA", name: "Omnia Tech Berhad", stockCode: "0364", sector: "Technology", market: "ACE" },
   { code: "OPENSYS", name: "Opensys (M) Berhad", stockCode: "0040", sector: "Technology", market: "Main" },
   { code: "OPERON", name: "Operon Holdings Berhad", stockCode: "0321", sector: "Industrial", market: "ACE" },
   { code: "OVERSEA", name: "Overseas Holdings Berhad", stockCode: "0349", sector: "Industrial", market: "ACE" },
@@ -784,7 +762,6 @@ export const COMPANY_DATA: CompanyData[] = [
   // ============================================================================
   // Q COMPANIES
   // ============================================================================
-  { code: "QCAPITA", name: "QCapita Berhad", stockCode: "0334", sector: "Services", market: "ACE" },
 
   // ============================================================================
   // R COMPANIES
@@ -931,14 +908,12 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "BIG", name: "Big Industries Berhad", stockCode: "7005", sector: "Industrial", market: "Main" },
   { code: "BINACOM", name: "Binasat Communications Berhad", stockCode: "0195", sector: "Telecommunications", market: "Main" },
   { code: "BIOHLDG", name: "Bio Holdings Berhad", stockCode: "0179", sector: "Consumer", market: "ACE" },
-  { code: "BJMEDIA", name: "Berjaya Media Berhad", stockCode: "6025", sector: "Media", market: "Main" },
   { code: "BMGREEN", name: "BM Green Berhad", stockCode: "0168", sector: "Industrial", market: "ACE" },
   { code: "CATCHA", name: "Catcha Investment Corp", stockCode: "0173", sector: "Technology", market: "ACE" },
   { code: "CEB", name: "CEB Berhad", stockCode: "5311", sector: "Industrial", market: "Main" },
   { code: "COMPLET", name: "Complete Logistic Services Berhad", stockCode: "5136", sector: "Services", market: "Main" },
   { code: "CREST", name: "Crest Builder Holdings Berhad", stockCode: "0323", sector: "Construction", market: "ACE" },
   { code: "DSONIC", name: "D'Sonic Group Berhad", stockCode: "0041", sector: "Technology", market: "Main" },
-  { code: "EBWORX", name: "EB World Berhad", stockCode: "0030", sector: "Technology", market: "Main" },
   { code: "EFRAME", name: "EFrame Berhad", stockCode: "0227", sector: "Industrial", market: "Main" },
   { code: "ELSOFT", name: "Elsoft Research Berhad", stockCode: "0090", sector: "Technology", market: "Main" },
   { code: "EMCC", name: "EMCC Holdings Berhad", stockCode: "0286", sector: "Industrial", market: "ACE" },
@@ -959,7 +934,6 @@ export const COMPANY_DATA: CompanyData[] = [
   { code: "HLT", name: "HLT Global Berhad", stockCode: "0188", sector: "Technology", market: "ACE" },
   { code: "HM", name: "HM Sdn Bhd", stockCode: "0060", sector: "Industrial", market: "Main" },
   { code: "HSSEB", name: "HSS Engineers Berhad", stockCode: "0185", sector: "Services", market: "Main" },
-  { code: "INSBIO", name: "Inari Bio Berhad", stockCode: "0088", sector: "Technology", market: "Main" },
   { code: "INTA", name: "Inta Bina Group Berhad", stockCode: "0192", sector: "Construction", market: "Main" },
   { code: "ITMAX", name: "Itmax System Berhad", stockCode: "5309", sector: "Technology", market: "Main" },
   { code: "ITRONIC", name: "I-Tronic Solutions Berhad", stockCode: "9393", sector: "Technology", market: "Main" },
