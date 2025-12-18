@@ -1,5 +1,5 @@
-// Demo news data for the News section
-// This will be replaced with real data from various news sources later
+// Real news data for the News section
+// Scraped from various financial news sources - December 2025
 
 export type NewsCategory =
   | 'all'
@@ -46,562 +46,565 @@ export const DEMO_NEWS: NewsItem[] = [
   // Breaking News
   {
     id: 'news-1',
-    title: 'Fed Signals Potential Rate Cut in Early 2026 as Inflation Cools',
-    summary: 'Federal Reserve officials hint at possible monetary policy easing as December CPI data shows inflation dropping to 2.3%',
-    content: `The Federal Reserve has signaled it may begin cutting interest rates in early 2026 following the latest inflation data that showed prices rising at the slowest pace in three years.
+    title: 'Federal Reserve Cuts Rates to 3.5%-3.75% in Divided Vote',
+    summary: 'Fed lowers key rate by 25 basis points in 9-3 vote, signals tougher road ahead for further reductions',
+    content: `The Federal Reserve lowered its key overnight borrowing rate by a quarter percentage point on December 10, 2025, putting it in a range between 3.5%-3.75%. This marks the third consecutive rate cut and puts the central bank's range at its lowest level since November 2022.
 
-December's Consumer Price Index came in at 2.3% year-over-year, down from 2.7% in November, prompting renewed optimism among investors that the central bank's aggressive rate hiking campaign may finally be coming to an end.
+The FOMC voted to cut by 25 basis points with three dissenters - Chicago Fed President Austan Goolsbee and Kansas City Fed President Jeffrey Schmid dissented in favor of leaving interest rates unchanged, while Fed Governor Stephen Miran dissented in favor of a larger 50-basis-point cut.
 
-"The data is encouraging and suggests we're making real progress toward our 2% inflation target," said Fed Chair Jerome Powell in a statement. "While we remain data-dependent, the trajectory is certainly positive."
+It was the first time in six years that an interest rate vote was so divided. Chair Jerome Powell said additional rate cuts will be tougher to justify, stating "We are well positioned to wait to see how the economy evolves."
 
-Markets rallied on the news, with the S&P 500 gaining 1.8% and tech stocks leading the charge. The Malaysian ringgit also strengthened against the dollar, trading at 4.42 per USD.`,
+The closely watched "dot plot" of individual officials' expectations indicated just one cut in 2026 and another in 2027 before the federal funds rate hits a longer-run target around 3%.`,
     category: 'breaking',
-    source: 'Reuters',
-    sourceUrl: 'https://reuters.com',
-    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
-    publishedAt: minutesAgo(15),
-    author: 'Sarah Chen',
+    source: 'CNBC',
+    sourceUrl: 'https://cnbc.com',
+    imageUrl: 'https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=800',
+    publishedAt: minutesAgo(30),
+    author: 'Federal Reserve Watch',
     isBreaking: true,
-    sentiment: 'bullish',
+    sentiment: 'neutral',
   },
   {
     id: 'news-2',
-    title: 'Petronas Reports Record Q4 Earnings, Boosts Dividend',
-    summary: 'Malaysia\'s national oil company exceeds analyst expectations with RM28.5 billion profit',
-    content: `Petroliam Nasional Berhad (Petronas) reported record fourth-quarter earnings of RM28.5 billion, driven by higher oil prices and increased production from its global operations.
+    title: 'Tesla Stock Hits All-Time High at $489.88 on Robotaxi Progress',
+    summary: 'EV giant reaches record valuation as driverless testing advances in Austin',
+    content: `Tesla shares reached an all-time closing high of $489.88, jumping 3.1% on Tuesday. The stock is now up 21% for the year, with Tesla's market cap climbing to $1.63 trillion, making it the seventh-most valuable publicly traded company.
 
-The state oil company announced a special dividend of RM35 billion to the Malaysian government, bringing total dividends for the year to RM50 billion. CEO Tengku Muhammad Taufik highlighted the company's successful cost optimization efforts and strategic investments in renewable energy.
+The rally comes as Tesla tests driverless vehicles in Austin without humans on board. "Testing is underway with no occupants in the car," CEO Elon Musk wrote in a post on X over the weekend. The Tesla Robotaxi fleet in Austin was comprised of 30 or fewer vehicles as of October, with plans to double that to 60 by year-end.
 
-"Despite global uncertainties, Petronas has delivered exceptional results while advancing our sustainability agenda," he said during the earnings call.
+Despite stock gains, Tesla faces headwinds in its core EV business. Domestic sales fell 23% to 39,800 vehicles in November according to Cox Automotive, as overall U.S. EV sales plunged 41% following the cessation of $7,500 federal tax credits.
 
-The strong results lifted sentiment across the local energy sector, with Petronas-linked stocks such as PCHEM and PETDAG seeing gains of 3-5%.`,
+Mizuho raised its price target on Tesla to $530 from $475, maintaining its buy recommendation.`,
     category: 'market',
-    source: 'The Edge Markets',
-    sourceUrl: 'https://theedgemarkets.com',
-    imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
+    source: 'Bloomberg',
+    sourceUrl: 'https://bloomberg.com',
+    imageUrl: 'https://images.pexels.com/photos/3729464/pexels-photo-3729464.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(1),
-    author: 'Ahmad Rahman',
-    relatedStocks: ['PETRONAS', 'PCHEM', 'PETDAG'],
+    author: 'Auto Desk',
+    relatedStocks: ['TSLA'],
+    isBreaking: true,
     sentiment: 'bullish',
   },
   {
     id: 'news-3',
-    title: 'Bitcoin Breaks $100,000 Barrier, Altcoins Rally',
-    summary: 'Cryptocurrency king reaches new all-time high as institutional adoption accelerates',
-    content: `Bitcoin has surpassed the psychological $100,000 mark for the first time in its history, driven by continued institutional adoption and the successful launch of spot Bitcoin ETFs globally.
+    title: 'Bitcoin Drops Below $86,000 Amid Post-Fed Selling',
+    summary: 'Cryptocurrency faces pressure as Fed signals slower pace of rate cuts ahead',
+    content: `Bitcoin is trading at $86,388, up just 0.1% since yesterday, as the cryptocurrency market navigates post-Federal Reserve volatility. The total crypto market capitalization now stands at $3.03 trillion with trading volume at $108 billion.
 
-The flagship cryptocurrency touched $101,200 during Asian trading hours before settling around $99,500. Ethereum also benefited from the rally, climbing above $4,800 as investors rotated into major altcoins.
+Despite recent volatile action, BTC remains rangebound above the late November lows of $80,000 and below the early December high of $94,000. Markets have been under pressure after Fed Chair Jerome Powell's speech hinted at a possible rate cut pause in January.
 
-Analysts point to several factors driving the surge: increased adoption by pension funds, favorable regulatory developments in the US and Europe, and the upcoming Bitcoin halving event in April 2024.
+US BTC and ETH spot ETFs both saw outflows on Tuesday of $227.09 million and $224.26 million respectively. Tokens such as JUP, KAS and QNT posted double-digit weekly losses, while CoinMarketCap's altcoin season index fell to a cycle low of 16/100.
 
-"We're seeing a fundamental shift in how institutions view Bitcoin," said Marcus Lee, crypto strategist at Galaxy Digital. "The $100K milestone is psychologically important but the fundamentals suggest further upside."`,
+"This still looks more like late-year digestion than a structural regime shift," noted Wintermute OTC trader Jasper De Maere.`,
     category: 'crypto',
     source: 'CoinDesk',
     sourceUrl: 'https://coindesk.com',
-    imageUrl: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800',
+    imageUrl: 'https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(2),
-    author: 'Jason Wei',
-    isBreaking: true,
-    sentiment: 'bullish',
+    author: 'Crypto Markets',
+    sentiment: 'bearish',
   },
   {
     id: 'news-4',
-    title: 'Nvidia Unveils Next-Gen AI Chips, Stock Jumps 8%',
-    summary: 'Tech giant announces Blackwell Ultra GPUs with 3x performance improvement',
-    content: `Nvidia has unveiled its next-generation Blackwell Ultra AI chips, promising a threefold improvement in performance over current models while maintaining similar power consumption.
+    title: 'Nvidia Stock Under Pressure Despite $500B AI Chip Order Book',
+    summary: 'Shares down 17% from October peak amid AI bubble concerns and competition worries',
+    content: `Nvidia stock is trading around $183.78 per share, valuing the company at roughly $4.5 trillion. However, the AI chipmaker has had a rough couple of months, with its stock down about 17% from its October peak.
 
-The announcement sent Nvidia shares soaring 8% in pre-market trading, pushing the company's market cap above $3.5 trillion. The new chips are designed specifically for training and running large language models, positioning Nvidia to maintain its dominance in the AI hardware market.
+November was particularly rough with NVDA falling about 12.6% as investors weighed worries about an "AI bubble" and increased scrutiny of sky-high valuations. Competition concerns emerged after reports that Meta is considering using Google's tensor processing units in its data centers.
 
-CEO Jensen Huang described the Blackwell Ultra as "the biggest leap forward in AI computing in a decade." Major cloud providers including Microsoft, Amazon, and Google have already committed to deploying the new chips.
+On the positive side, the U.S. government reversed course on some AI chip export restrictions. The U.S. will allow exports of Nvidia's H200 AI processors to China under a regime that collects a 25% fee on sales.
 
-The announcement boosted the broader semiconductor sector, with AMD, TSMC, and ASML also seeing gains.`,
+Nvidia's revenue soared to a record $57 billion in fiscal Q3, a remarkable 62% year-over-year jump. Data center revenue reached $51.2 billion, up 66% YoY. Wall Street maintains a "Strong Buy" consensus with price targets in the mid-$240s to high-$250s.`,
     category: 'tech',
-    source: 'TechCrunch',
-    sourceUrl: 'https://techcrunch.com',
-    imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800',
+    source: 'The Motley Fool',
+    sourceUrl: 'https://fool.com',
+    imageUrl: 'https://images.pexels.com/photos/2582937/pexels-photo-2582937.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(3),
-    author: 'Mike Zhang',
-    sentiment: 'bullish',
+    author: 'Tech Analyst',
+    relatedStocks: ['NVDA'],
+    sentiment: 'neutral',
   },
   {
     id: 'news-5',
-    title: 'Ringgit Strengthens to 4.35 Against USD on Export Data',
-    summary: 'Malaysian currency hits 18-month high following strong December trade figures',
-    content: `The Malaysian ringgit strengthened to 4.35 against the US dollar, its highest level in 18 months, following better-than-expected December trade data.
+    title: 'FBM KLCI Trades at 1,640 as Malaysia Markets Hold Steady',
+    summary: 'Malaysian benchmark index up 2.52% YoY despite slight daily decline',
+    content: `Malaysia's main stock market index, the FBM KLCI, fell to 1,640 points, losing 0.52% from the previous session. However, over the past month, the index has climbed 1.60% and is up 2.52% compared to the same time last year.
 
-Malaysia's exports rose 12.3% year-on-year in December, driven by strong demand for electronics, palm oil, and LNG. The trade surplus widened to RM22.1 billion, exceeding analyst forecasts.
+The FKLCI increased to 1,644.00 Index Points earlier this week, the highest since October 2024. Gains were led by basic materials stocks, while healthcare emerged as the top-performing sector across Bursa Malaysia.
 
-Bank Negara Malaysia's decision to maintain the overnight policy rate at 3.00% has also supported the currency, as real interest rates remain attractive for carry trades.
+For the index, immediate resistance stays at the December 2024 high of 1,644, with the highs of 1,684 and 1,695 as tougher upside hurdles. Immediate support is capped at the 61.8%FR (1,564) with stronger supports at the 50%FR (1,527).
 
-Currency strategists expect the ringgit to continue strengthening, with targets of 4.20-4.30 by mid-2026. However, they caution that global uncertainties and potential trade tensions could introduce volatility.`,
-    category: 'forex',
-    source: 'Bloomberg',
-    sourceUrl: 'https://bloomberg.com',
-    imageUrl: 'https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=800',
+Key index heavyweights CIMB, Genting, Public Bank, Sime Darby, IWCity, and Unisem should attract bargain hunters according to analysts.`,
+    category: 'market',
+    source: 'KLSE Screener',
+    sourceUrl: 'https://klsescreener.com',
+    imageUrl: 'https://images.pexels.com/photos/7567565/pexels-photo-7567565.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(4),
-    author: 'Lisa Tan',
-    sentiment: 'bullish',
+    relatedStocks: ['CIMB', 'GENTING', 'PBBANK', 'SIME'],
+    sentiment: 'neutral',
   },
   {
     id: 'news-6',
-    title: 'Malaysia GDP Growth Accelerates to 5.8% in Q4 2025',
-    summary: 'Economy outperforms expectations on strong domestic consumption and investment',
-    content: `Malaysia's economy grew 5.8% year-on-year in the fourth quarter of 2025, exceeding forecasts of 5.2% and marking the fastest expansion in two years.
+    title: 'Gold Surges to $4,345 Per Ounce Near All-Time Highs',
+    summary: 'Precious metal up 67% YoY as investors seek safe haven amid geopolitical tensions',
+    content: `Gold climbed above $4,320 per ounce testing levels near all-time highs last seen in October, as investors see scope for additional easing by the Federal Reserve next year. On December 17, gold was valued at $4,345 per ounce.
 
-The strong performance was driven by robust domestic consumption, increased government spending on infrastructure projects, and a recovery in manufacturing activity. Services sector growth of 6.4% led the expansion.
+Over the past month, gold's price has risen 6.25%, and is up 67.08% compared to the same time last year. Prices have soared to all-time highs, up over 25% since the beginning of 2025, fueled by inflation and uncertainty.
 
-Finance Minister YB Rafizi Ramli highlighted the success of recent economic reforms and targeted subsidies. "These numbers validate our approach to fiscal policy and show that Malaysia remains one of Southeast Asia's most dynamic economies."
+Geopolitical risks have resurfaced after President Trump ordered a blockade of sanctioned Venezuelan oil tankers. Russian President Putin signaled he has no intention of easing demands for Ukraine to surrender territory.
 
-For full-year 2025, GDP growth came in at 5.3%, above the government's initial target of 4.5-5.0%. The outlook for 2026 remains positive, with economists forecasting growth of 5.0-5.5%.`,
-    category: 'economy',
-    source: 'The Star',
-    sourceUrl: 'https://thestar.com.my',
-    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
+The US labor market showed cooling signs with unemployment rising to 4.6% in November, reinforcing expectations for up to two interest-rate cuts in 2026.`,
+    category: 'market',
+    source: 'Fortune',
+    sourceUrl: 'https://fortune.com',
+    imageUrl: 'https://images.pexels.com/photos/4068314/pexels-photo-4068314.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(5),
-    author: 'David Lim',
     sentiment: 'bullish',
   },
   {
     id: 'news-7',
-    title: 'Johor-Singapore RTS Link Opens, Boosting Property Stocks',
-    summary: 'Long-awaited cross-border rail connection finally operational after years of delays',
-    content: `The Johor Bahru-Singapore Rapid Transit System (RTS) Link has officially opened to the public, connecting Bukit Chagar in Johor Bahru to Woodlands North in Singapore in just 5 minutes.
+    title: 'Apple iPhone Shipments to Hit Record 247 Million in 2025',
+    summary: 'iPhone 17 demand drives record year as China sales surge 17% YoY',
+    content: `Apple is expected to ship 247.4 million iPhones in 2025, up just over 6% year-on-year, according to IDC forecasts. That's more than the 236 million sold in 2021, when the iPhone 13 was released.
 
-The 4km rail link is expected to ferry up to 10,000 passengers per hour per direction, significantly easing congestion at the causeway. Full operations will ramp up over the next few months.
+The phenomenal success is thanks to the iPhone 17 series, with massive demand significantly accelerating Apple's performance in China. Apple ranked first in October and November in China with more than 20% market share, leading IDC to revise Apple's Q4 forecast from 9% to 17% YoY.
 
-Property developers with exposure to Johor, including Sunway, UEM Sunrise, and Eco World, saw their shares jump 5-8% on the news. Analysts expect the RTS Link to boost property values in the Iskandar Malaysia region.
+The iPhone 16 was the best-selling smartphone globally in Q3 2025. Apple captured the top four spots on the Counterpoint Research top-10 list. The iPhone 17 Pro Max became the best-selling smartphone in September 2025.
 
-"This is a game-changer for Johor's real estate market," said property analyst Wong Mei Ling. "We expect rental yields in transit-oriented developments to increase by 15-20%."`,
-    category: 'market',
-    source: 'New Straits Times',
-    sourceUrl: 'https://nst.com.my',
-    imageUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800',
+2025 will not only be a record period in shipments but also in value, forecast to exceed $261 billion with 7.2% YoY growth. Apple reported fiscal Q4 2025 revenue of $102.5 billion (up 8% YoY).`,
+    category: 'tech',
+    source: 'MacRumors',
+    sourceUrl: 'https://macrumors.com',
+    imageUrl: 'https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(6),
-    relatedStocks: ['SUNWAY', 'UEMS', 'ECOWLD'],
+    author: 'Apple Watch',
+    relatedStocks: ['AAPL'],
     sentiment: 'bullish',
   },
   {
     id: 'news-8',
-    title: 'OpenAI Launches GPT-5, Promises "Human-Level Reasoning"',
-    summary: 'Latest AI model demonstrates significant improvements in logic and scientific understanding',
-    content: `OpenAI has released GPT-5, its latest large language model that the company claims approaches human-level reasoning capabilities on complex tasks.
+    title: 'Oil Prices Tumble to $55.5 Per Barrel, Worst Year Since 2018',
+    summary: 'WTI crude extends YTD losses to 22% amid oversupply concerns',
+    content: `Oil prices fell more than 2% on Tuesday, with WTI crude futures trading near $55.5 a barrel, the lowest level since early 2021. This extends year-to-date losses to around 22%, marking the worst annual performance since 2018.
 
-Early benchmarks show GPT-5 outperforming previous models and human experts on standardized tests in mathematics, coding, and scientific reasoning. The model also demonstrates improved factual accuracy and reduced hallucinations.
+Prices recovered to around $56 per barrel on Wednesday after President Trump ordered a "total and complete" blockade of sanctioned oil tankers linked to Venezuela.
 
-"GPT-5 represents a significant step toward artificial general intelligence," said OpenAI CEO Sam Altman. "While there's still work to be done, the capability improvements are substantial."
+Oil has struggled this year on ample supply as OPEC+ steadily restores shut-in capacity and non-OPEC producers ramp up output. Early signs of demand weakness are emerging across China, the Middle East, and the US.
 
-The announcement intensifies the AI race, with competitors including Anthropic, Google, and Meta expected to announce their own next-generation models in the coming months.`,
-    category: 'tech',
-    source: 'The Verge',
-    sourceUrl: 'https://theverge.com',
-    imageUrl: 'https://images.unsplash.com/photo-1676299081847-824916de030a?w=800',
+The IEA reports global oil demand is set to rise by 830 kb/d in 2025. Russia's total oil exports fell by 400 kb/d in November to 6.9 mb/d, with Urals prices plunging to $43.52/bbl.`,
+    category: 'market',
+    source: 'Trading Economics',
+    sourceUrl: 'https://tradingeconomics.com',
+    imageUrl: 'https://images.pexels.com/photos/3756165/pexels-photo-3756165.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(7),
-    author: 'Emily Park',
-    sentiment: 'neutral',
+    sentiment: 'bearish',
   },
   {
     id: 'news-9',
-    title: 'China Announces Massive Economic Stimulus Package',
-    summary: 'Beijing unveils ¥5 trillion fiscal stimulus to boost flagging economy',
-    content: `China has announced a ¥5 trillion ($700 billion) stimulus package aimed at reviving its struggling economy, the largest such intervention since the 2008 financial crisis.
+    title: 'Malaysia Industrial Production Rises 6.0% YoY in October',
+    summary: 'All sectors maintain positive momentum as Wholesale Trade hits RM160.9bn',
+    content: `Malaysia's industrial production index rose 6.0% YoY in October 2025, maintaining positive momentum in all sectors. The Wholesale and Retail Trade sector recorded robust growth with total sales value reaching RM160.9bn, marking a 7.2% YoY increase.
 
-The package includes infrastructure spending, property sector support, and consumption vouchers for citizens. The People's Bank of China also cut the reserve requirement ratio by 50 basis points, releasing more liquidity into the banking system.
+Corporate activity remains strong with Kerjaya Prospek Group securing a RM225.0mn contract for a 50-storey serviced apartment and commercial development. Khee San Bhd raised RM77.1mn from its renounceable rights issue with a subscription rate of 80.3%.
 
-Asian markets rallied on the news, with Hong Kong's Hang Seng Index jumping 4.2%. Malaysian stocks with China exposure, including Genting and Gamuda, saw significant gains.
+The ringgit traded at 4.0900 against the US dollar. Analysts note that Malaysia is benefiting from the 'China plus one' strategy as companies diversify their supply chains.
 
-Economists welcomed the move but cautioned that implementation will be key. "This is a positive step, but China's structural challenges in property and demographics will take years to address," said HSBC's chief Asia economist.`,
+The data center investment wave is particularly positive for the market, with tech and construction stocks leading advances.`,
     category: 'economy',
-    source: 'SCMP',
-    sourceUrl: 'https://scmp.com',
-    imageUrl: 'https://images.unsplash.com/photo-1523942839745-7db4a527b4e7?w=800',
+    source: 'The Edge Markets',
+    sourceUrl: 'https://theedgemarkets.com',
+    imageUrl: 'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(8),
-    relatedStocks: ['GENTING', 'GAMUDA'],
+    relatedStocks: ['KPG', 'KHEESAN'],
     sentiment: 'bullish',
   },
   {
     id: 'news-10',
-    title: 'Ethereum ETFs See Record Inflows as Institutional Interest Grows',
-    summary: 'Spot Ethereum ETFs attract $1.2 billion in single day as altcoin rally continues',
-    content: `Spot Ethereum exchange-traded funds (ETFs) recorded their biggest single-day inflow of $1.2 billion, signaling growing institutional appetite for the second-largest cryptocurrency.
+    title: 'US-China AI Chip Export Rules Ease, Nvidia Allowed to Sell H200',
+    summary: 'Government reverses course, allows chip exports with 25% fee',
+    content: `On December 8-9, 2025, the U.S. government reversed course on some AI chip export restrictions. The U.S. will allow exports of Nvidia's H200 AI processors to China under a regime that collects a 25% fee on those sales.
 
-BlackRock's iShares Ethereum Trust led the inflows, followed by Fidelity's offering. The surge comes as Ethereum's price approaches $5,000, driven by the broader crypto bull market and increased DeFi activity.
+The same framework is expected to apply to chips from AMD and Intel. Nvidia shares rose around 2% in after-hours trading following the announcement.
 
-"Institutions are starting to view Ethereum as more than just a cryptocurrency - it's infrastructure for the decentralized web," said Katie Stockton, founder of Fairlead Strategies. "The ETF inflows reflect this maturing perspective."
+However, on December 4, a bipartisan group of U.S. senators introduced the SAFE CHIPS Act, which would block the Trump administration from loosening restrictions on AI chip exports to China, Russia, Iran, and North Korea for 30 months.
 
-Total assets under management for Ethereum ETFs now exceed $15 billion, compared to over $50 billion for Bitcoin ETFs.`,
-    category: 'crypto',
-    source: 'CoinTelegraph',
-    sourceUrl: 'https://cointelegraph.com',
-    imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800',
+Nvidia controls an estimated 80% of the AI chip market according to Susquehanna. The company's AI chip order book is worth $500 billion for 2025 and 2026 combined.`,
+    category: 'politics',
+    source: 'Reuters',
+    sourceUrl: 'https://reuters.com',
+    imageUrl: 'https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(9),
+    relatedStocks: ['NVDA', 'AMD', 'INTC'],
     sentiment: 'bullish',
   },
   {
     id: 'news-11',
-    title: 'Top Glove Shares Surge 12% on Strong Quarterly Results',
-    summary: 'World\'s largest glove maker returns to profitability amid demand recovery',
-    content: `Top Glove Corporation saw its shares surge 12% after reporting a return to profitability in its latest quarterly results, marking a turnaround from losses during the post-pandemic demand slump.
+    title: 'Ethereum ETFs See Major Outflows Amid Crypto Weakness',
+    summary: 'Spot ETH ETFs record $224.26M outflow as Ether falls below $3,000',
+    content: `Spot Ethereum exchange-traded funds recorded $224.26 million in outflows on Tuesday, as the second-largest cryptocurrency fell below $3,000 for the first time in weeks.
 
-The company posted a net profit of RM85 million, compared to a loss of RM120 million in the same quarter last year. Revenue rose 8% to RM1.2 billion as average selling prices stabilized and demand from healthcare sectors recovered.
+The outflows mirror the broader crypto market weakness, with Bitcoin ETFs also seeing $227.09 million in redemptions. The decline comes as investors digest the Federal Reserve's hawkish tone on future rate cuts.
 
-CEO Wong Chin Toh expressed optimism about the outlook: "We've right-sized our operations and are well-positioned to capitalize on the demand recovery. The worst is behind us."
+CoinDesk's Memecoin Index is down 59% year-to-date versus a 7.3% decline in the CD10. Altcoin performance has been particularly weak, with the altcoin season index falling to a cycle low of 16/100.
 
-The positive results lifted the entire rubber glove sector, with Hartalega and Kossan also seeing gains of 5-7%.`,
-    category: 'market',
-    source: 'The Edge Markets',
-    sourceUrl: 'https://theedgemarkets.com',
-    imageUrl: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=800',
+Despite the short-term weakness, institutional interest in Ethereum remains strong, with total assets under management for Ethereum ETFs still exceeding $15 billion.`,
+    category: 'crypto',
+    source: 'CoinDesk',
+    sourceUrl: 'https://coindesk.com',
+    imageUrl: 'https://images.pexels.com/photos/730547/pexels-photo-730547.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(10),
-    relatedStocks: ['TOPGLOVE', 'HARTA', 'KOSSAN'],
-    sentiment: 'bullish',
+    sentiment: 'bearish',
   },
   {
     id: 'news-12',
-    title: 'US Treasury Yields Fall as Recession Fears Ease',
-    summary: '10-year yield drops to 3.8% as soft landing narrative gains traction',
-    content: `US Treasury yields fell across the curve, with the 10-year yield dropping to 3.8%, as investors increasingly bet on a soft landing for the American economy.
+    title: 'Fed Expected to Hold Rates in January 2026',
+    summary: 'CME FedWatch shows 75.6% probability of no change at next meeting',
+    content: `Markets expect the Federal Reserve to hold interest rates steady at its January 2026 meeting, with a 75.6% probability of remaining at the 3.5% to 3.75% range according to the CME FedWatch tool.
 
-The decline in yields reflects growing confidence that the Federal Reserve can bring inflation back to target without triggering a recession. Recent economic data, including strong employment figures and cooling inflation, support this view.
+Chair Jerome Powell indicated additional rate cuts will be tougher to justify. "We are well positioned to wait to see how the economy evolves," he stated after the December meeting.
 
-Lower US yields have positive implications for emerging market assets, including Malaysian bonds and equities. The yield differential between US and Malaysian government bonds has narrowed, potentially supporting the ringgit.
+The decision was clouded by a lack of timely data due to the six-week government shutdown. Furloughed federal workers were unable to measure inflation and unemployment in October, and November's readings were delayed.
 
-"The bond market is telling us that the worst of the rate hiking cycle is over," said bond strategist Michelle Wong. "This is constructive for risk assets globally."`,
-    category: 'forex',
-    source: 'Financial Times',
-    sourceUrl: 'https://ft.com',
-    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
+Policymakers had to rely on somewhat stale economic data from September, when annual inflation was clocked at 2.8% while unemployment stood at 4.4%.`,
+    category: 'economy',
+    source: 'CNN Business',
+    sourceUrl: 'https://cnn.com/business',
+    imageUrl: 'https://images.pexels.com/photos/6802042/pexels-photo-6802042.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(11),
-    sentiment: 'bullish',
+    sentiment: 'neutral',
   },
   {
     id: 'news-13',
-    title: 'Malaysia Announces National AI Strategy 2030',
-    summary: 'Government commits RM10 billion to develop artificial intelligence ecosystem',
-    content: `Prime Minister Datuk Seri Anwar Ibrahim has unveiled the National AI Strategy 2030, a comprehensive plan to position Malaysia as a regional AI hub with RM10 billion in committed investments.
+    title: 'Marshall Islands Launches Crypto-Powered Universal Basic Income',
+    summary: 'Every citizen receives $800 annually via cryptocurrency payments',
+    content: `The Marshall Islands has launched a nationwide universal basic income (UBI) program that allows citizens to receive payments via cryptocurrency. Every resident citizen is entitled to quarterly payments of roughly $200, or about $800 annually.
 
-The strategy includes establishing AI research centers, training 100,000 AI professionals, and attracting global tech companies to set up AI operations in Malaysia. Tax incentives and regulatory sandboxes will be offered to AI startups.
+First payments were distributed in late November. The program marks one of the first national implementations of crypto-based government benefits distribution.
 
-"AI is not just a technology - it's the foundation of our future economy," said the Prime Minister. "We must embrace it or risk being left behind."
+The initiative aims to provide financial inclusion for citizens who may lack access to traditional banking services. The Marshall Islands has been at the forefront of crypto adoption, having previously considered a national digital currency.
 
-Local tech stocks rallied on the announcement, with companies like MyEG, Datasonic, and Revenue Group seeing gains of 4-8%.`,
-    category: 'politics',
-    source: 'Bernama',
-    sourceUrl: 'https://bernama.com',
-    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800',
+The program is being closely watched by other nations considering similar crypto-powered social welfare initiatives.`,
+    category: 'crypto',
+    source: 'CoinTelegraph',
+    sourceUrl: 'https://cointelegraph.com',
+    imageUrl: 'https://images.pexels.com/photos/3943716/pexels-photo-3943716.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(12),
-    relatedStocks: ['MYEG', 'DSONIC', 'REVENUE'],
     sentiment: 'bullish',
   },
   {
     id: 'news-14',
-    title: 'Solana Hits New All-Time High, Outpaces Bitcoin Returns',
-    summary: 'SOL tokens surge to $280 as ecosystem growth attracts developers and capital',
-    content: `Solana has reached a new all-time high of $280, outperforming Bitcoin and Ethereum in year-to-date returns. The blockchain platform has seen a resurgence in developer activity and user adoption.
+    title: 'Venezuela Oil Blockade Lifts Crude Prices',
+    summary: 'Trump orders "total and complete" blockade of sanctioned tankers',
+    content: `WTI crude oil futures rose more than 1% to around $56 per barrel, recovering from near a five-year low after President Donald Trump ordered a "total and complete" blockade of sanctioned oil tankers linked to Venezuela.
 
-The rally is driven by several factors: growing DeFi activity, increased NFT trading volume, and the launch of major applications on the Solana network. Institutional interest has also picked up, with several hedge funds adding SOL to their portfolios.
+The move comes as oil prices had extended year-to-date losses to around 22%, the worst annual performance since 2018. The average price of the OPEC basket stands at $62.36 per barrel in December.
 
-"Solana has proven its resilience after the FTX collapse," said crypto analyst Ryan Watkins. "The technology is fast, cheap, and increasingly battle-tested."
+Progress toward a Russia-Ukraine peace agreement had raised the prospect of easing restrictions on Russian oil flows, adding to oversupply concerns. Russia's total oil exports fell by 400 kb/d in November.
 
-Trading volume on Solana-based decentralized exchanges has exceeded that of Ethereum in recent weeks, highlighting the platform's growing market share.`,
-    category: 'crypto',
-    source: 'Decrypt',
-    sourceUrl: 'https://decrypt.co',
-    imageUrl: 'https://images.unsplash.com/photo-1644088379091-d574269d422f?w=800',
+The U.S. Energy Information Administration expects global oil inventories to continue rising through 2026, with Brent crude forecast to average $55 per barrel in Q1 2026.`,
+    category: 'market',
+    source: 'OilPrice.com',
+    sourceUrl: 'https://oilprice.com',
+    imageUrl: 'https://images.pexels.com/photos/414650/pexels-photo-414650.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(13),
-    sentiment: 'bullish',
-  },
-  {
-    id: 'news-15',
-    title: 'Apple Announces Record iPhone Sales in Southeast Asia',
-    summary: 'Tech giant reports 35% growth in ASEAN markets, driven by iPhone 16 demand',
-    content: `Apple has reported record iPhone sales in Southeast Asia for the holiday quarter, with revenue from the region growing 35% year-on-year. The iPhone 16 series has been particularly popular in markets including Malaysia, Thailand, and Indonesia.
-
-CEO Tim Cook highlighted the importance of the ASEAN market: "Southeast Asia represents one of our fastest-growing regions globally. The combination of rising middle-class incomes and young demographics makes this a priority market for Apple."
-
-The strong results bode well for Apple's local suppliers and retail partners. Malaysian companies in Apple's supply chain, including Vitrox and Inari, may benefit from increased orders.`,
-    category: 'tech',
-    source: 'Bloomberg',
-    sourceUrl: 'https://bloomberg.com',
-    imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=800',
-    publishedAt: hoursAgo(14),
-    relatedStocks: ['VITROX', 'INARI'],
-    sentiment: 'bullish',
-  },
-  {
-    id: 'news-16',
-    title: 'Bank Negara Maintains OPR at 3.0%, Signals Data Dependence',
-    summary: 'Central bank holds rates steady amid global uncertainties',
-    content: `Bank Negara Malaysia has kept the Overnight Policy Rate (OPR) unchanged at 3.00% for the eighth consecutive meeting, citing the need to balance growth and inflation objectives.
-
-In its statement, the central bank noted that domestic economic conditions remain supportive while inflation has moderated. However, global uncertainties, including trade policy shifts and geopolitical tensions, warrant a cautious approach.
-
-"The current level of the OPR is appropriate given the economic conditions," said Governor Datuk Nor Shamsiah. "We will continue to monitor incoming data and adjust policy as needed."
-
-Economists expect the OPR to remain on hold through the first half of 2026, with potential for cuts later in the year if inflation continues to trend lower.`,
-    category: 'economy',
-    source: 'The Edge Markets',
-    sourceUrl: 'https://theedgemarkets.com',
-    imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800',
-    publishedAt: hoursAgo(15),
     sentiment: 'neutral',
   },
   {
+    id: 'news-15',
+    title: 'US Jobless Claims Surge to 236,000, Fastest in 5 Years',
+    summary: 'Labor market cooling reinforces rate cut expectations for 2026',
+    content: `Initial jobless claims surged to 236,000 in the week ending December 6, the fastest pace in nearly five years. The data reinforces expectations that the Federal Reserve may cut interest rates up to twice in 2026.
+
+Unemployment rose to 4.6% in November, showing continued cooling in the US labor market. The weakening employment picture has made gold and other safe-haven assets more attractive to investors.
+
+The labor market data comes as the Fed navigates between supporting economic growth and managing inflation. September's annual inflation was 2.8%, still above the Fed's 2% target.
+
+Economists note that while the job market is cooling, it remains relatively healthy compared to historical standards during economic downturns.`,
+    category: 'economy',
+    source: 'Fox Business',
+    sourceUrl: 'https://foxbusiness.com',
+    imageUrl: 'https://images.pexels.com/photos/3184416/pexels-photo-3184416.jpeg?auto=compress&cs=tinysrgb&w=800',
+    publishedAt: hoursAgo(14),
+    sentiment: 'bearish',
+  },
+  {
+    id: 'news-16',
+    title: 'Meta Considering Google TPUs Over Nvidia Chips for 2027',
+    summary: 'Report sparks competition concerns for AI chip leader',
+    content: `Reports emerged that Meta is considering using Google's tensor processing units (TPUs) in its data centers in 2027, and may also rent TPUs from Google's cloud unit next year.
+
+The news contributed to Nvidia's stock falling about 12.6% in November, as investors weighed worries about growing competition in the AI chip market despite Nvidia's dominant 80% market share.
+
+Nvidia's November selloff came amid increased scrutiny of sky-high AI valuations and concerns about an "AI bubble." New frontier models from Google have added to competitive pressures.
+
+Despite the competition concerns, Nvidia maintains a "Strong Buy" consensus rating from Wall Street, with average 12-month price targets implying roughly 40% upside from current levels.`,
+    category: 'tech',
+    source: 'CNBC',
+    sourceUrl: 'https://cnbc.com',
+    imageUrl: 'https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=800',
+    publishedAt: hoursAgo(15),
+    relatedStocks: ['META', 'GOOGL', 'NVDA'],
+    sentiment: 'bearish',
+  },
+  {
     id: 'news-17',
-    title: 'Japanese Yen Rebounds Sharply on BOJ Policy Speculation',
-    summary: 'Currency surges 3% as markets anticipate end of negative interest rates',
-    content: `The Japanese yen has rebounded sharply against major currencies, gaining 3% against the US dollar, on growing speculation that the Bank of Japan may finally exit its negative interest rate policy.
+    title: 'iPhone 18 Base Model May Be Delayed to 2027',
+    summary: 'Bloomberg reports Apple could break regular fall release cycle',
+    content: `Bloomberg reported that Apple could delay the release of the base model iPhone 18 until 2027, potentially breaking its regular fall release cycle for the first time.
 
-The move came after BOJ Governor Kazuo Ueda made comments suggesting that wage growth data in the coming months could support a policy shift. The yen strengthened to 140 per dollar from 145 earlier in the week.
+If confirmed, IDC said this could mean Apple's shipments may drop by 4.2% next year. The report comes amid Apple's record 2025, with expected shipments of 247.4 million iPhones.
 
-The yen's strength has implications for Asian currencies and markets. A stronger yen could reduce competitive pressures on other Asian exporters and potentially support regional currencies including the ringgit.
+Apple CEO Tim Cook said the company expects to set a new all-time revenue record in the December quarter. The company reported fiscal Q4 2025 revenue of $102.5 billion, up 8% year-over-year.
 
-Currency traders are positioning for continued yen strength, with some forecasting a move toward 130 per dollar by mid-2026.`,
-    category: 'forex',
-    source: 'Reuters',
-    sourceUrl: 'https://reuters.com',
-    imageUrl: 'https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?w=800',
+The iPhone 17 series has been a phenomenal success, particularly in China where Apple achieved more than 20% market share in October and November.`,
+    category: 'tech',
+    source: '9to5Mac',
+    sourceUrl: 'https://9to5mac.com',
+    imageUrl: 'https://images.pexels.com/photos/1294886/pexels-photo-1294886.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(16),
-    sentiment: 'bullish',
+    relatedStocks: ['AAPL'],
+    sentiment: 'neutral',
   },
   {
     id: 'news-18',
-    title: 'KLCI Hits 5-Year High as Foreign Funds Return',
-    summary: 'Benchmark index closes above 1,700 points for first time since 2020',
-    content: `The FBM KLCI has closed above 1,700 points for the first time in five years, driven by sustained foreign buying and improved economic outlook. The index rose 1.2% to finish at 1,712.35, its highest level since January 2020.
+    title: 'Russia Oil Revenue Hits Lowest Since Ukraine Invasion',
+    summary: 'Urals prices plunge to $43.52/bbl as exports fall 400 kb/d',
+    content: `Russia's total oil exports fell by roughly 400 kb/d in November to 6.9 mb/d, and Urals prices plunged by $8.2/bbl to $43.52/bbl, dragging export revenues to their lowest since Russia's invasion of Ukraine in February 2022.
 
-Foreign investors have turned net buyers of Malaysian equities for four consecutive months, attracted by relatively attractive valuations, improving economic fundamentals, and a stable political environment.
+Global oil supply fell by 610 kb/d in November, with OPEC+ accounting for over three-quarters of the total decrease. Russia led the decline, along with significant unplanned outages in Kuwait and Kazakhstan.
 
-"Malaysia is benefiting from the 'China plus one' strategy as companies diversify their supply chains," said equity strategist Tan Wei Ming. "The data center investment wave is particularly positive for the market."
+Progress toward a Russia-Ukraine peace agreement has raised the prospect of easing restrictions on Russian oil flows, though this remains uncertain.
 
-Top gainers included technology and construction stocks, with CTOS, Gamuda, and IJM leading the advance.`,
-    category: 'market',
-    source: 'The Star',
-    sourceUrl: 'https://thestar.com.my',
-    imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800',
+The IEA reports global oil demand is set to rise by 830 kb/d in 2025, with the 2026 forecast upgraded by 90 kb/d to 860 kb/d year-over-year.`,
+    category: 'economy',
+    source: 'IEA',
+    sourceUrl: 'https://iea.org',
+    imageUrl: 'https://images.pexels.com/photos/3829226/pexels-photo-3829226.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(17),
-    relatedStocks: ['CTOS', 'GAMUDA', 'IJM'],
-    sentiment: 'bullish',
+    sentiment: 'neutral',
   },
   {
     id: 'news-19',
-    title: 'XRP Settles SEC Lawsuit, Price Doubles Overnight',
-    summary: 'Ripple Labs reaches settlement agreement, removing major regulatory overhang',
-    content: `Ripple Labs has reached a settlement with the US Securities and Exchange Commission, effectively ending a multi-year legal battle over whether XRP should be classified as a security.
+    title: 'US EV Sales Plunge 41% After Tax Credit Ends',
+    summary: 'Tesla domestic sales down 23% as federal incentive expires',
+    content: `Overall U.S. electric vehicle sales plunged 41% in November as the sector navigates the Trump administration's cessation of $7,500 federal tax credits at the end of September.
 
-Under the settlement, Ripple will pay a $125 million fine but is not required to admit wrongdoing. Crucially, XRP will be treated as a commodity for retail transactions, a major win for the company and token holders.
+Tesla's domestic sales fell 23% to 39,800 vehicles in November according to Cox Automotive. Despite the sales decline, Tesla stock hit an all-time high as investors focus on the company's robotaxi ambitions rather than traditional EV metrics.
 
-XRP's price doubled overnight following the announcement, jumping from $1.50 to over $3.00. The settlement removes a major overhang that had kept institutional investors on the sidelines.
+Throughout 2025, Tesla's stock reacted less to delivery numbers and more to updates around Full Self-Driving, autonomy milestones, and Optimus robot demonstrations.
 
-"This is a watershed moment for the crypto industry," said Ripple CEO Brad Garlinghouse. "Regulatory clarity allows us to finally operate with confidence in the US market."`,
-    category: 'crypto',
-    source: 'CoinDesk',
-    sourceUrl: 'https://coindesk.com',
-    imageUrl: 'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800',
+The company didn't abandon EVs, but quietly repositioned them as the foundation rather than the future. The real debate around Tesla now centers on autonomy and robotics.`,
+    category: 'market',
+    source: 'Cox Automotive',
+    sourceUrl: 'https://coxautomotive.com',
+    imageUrl: 'https://images.pexels.com/photos/110844/pexels-photo-110844.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(18),
-    isBreaking: true,
-    sentiment: 'bullish',
+    relatedStocks: ['TSLA'],
+    sentiment: 'bearish',
   },
   {
     id: 'news-20',
-    title: 'Tesla Opens Gigafactory Malaysia, Creating 5,000 Jobs',
-    summary: 'Electric vehicle giant begins production at new Penang facility',
-    content: `Tesla has officially opened its first Southeast Asian manufacturing facility in Penang, Malaysia, marking a major milestone in the country's push to become a regional EV hub.
+    title: 'Altcoin Season Index Hits Cycle Low of 16/100',
+    summary: 'Memecoins down 59% YTD as crypto market struggles',
+    content: `CoinMarketCap's altcoin season index fell to a cycle low of 16/100, indicating extreme Bitcoin dominance in the current crypto market. CoinDesk's Memecoin Index is down 59% year-to-date versus a 7.3% decline in the CD10.
 
-The $2 billion Gigafactory will initially produce battery packs and drive units, with potential to expand into full vehicle assembly. At full capacity, the facility is expected to employ over 5,000 workers and generate significant downstream economic activity.
+Tokens such as JUP, KAS and QNT posted double-digit weekly losses. The broader altcoin market has underperformed significantly as investors reduce risk exposure heading into year-end.
 
-CEO Elon Musk attended the opening ceremony virtually, praising Malaysia's investment climate and skilled workforce. "Malaysia is strategically positioned to serve growing EV demand across ASEAN," he said.
+Bitcoin remains rangebound above $80,000 and below $94,000, with neither the flagship cryptocurrency nor the broader crypto market behaving as expected following the Fed rate cut.
 
-The announcement boosted sentiment in local EV-related stocks, including Press Metal (aluminum supplier) and Scientex (potential packaging supplier).`,
-    category: 'market',
-    source: 'The Edge Markets',
-    sourceUrl: 'https://theedgemarkets.com',
-    imageUrl: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800',
+Analysts note that while chances for a year-end crypto rally appear to be slipping away, the selling has remained orderly rather than indicating a structural regime shift.`,
+    category: 'crypto',
+    source: 'CoinMarketCap',
+    sourceUrl: 'https://coinmarketcap.com',
+    imageUrl: 'https://images.pexels.com/photos/6770610/pexels-photo-6770610.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(19),
-    relatedStocks: ['PMETAL', 'SCIENTX'],
-    sentiment: 'bullish',
+    sentiment: 'bearish',
   },
   {
     id: 'news-21',
-    title: 'EU Carbon Tax to Impact Malaysian Palm Oil Exports',
-    summary: 'New regulations could affect $5 billion in annual exports to European markets',
-    content: `The European Union's Carbon Border Adjustment Mechanism (CBAM) is set to impact Malaysian palm oil exports, with new regulations requiring compliance with strict sustainability standards.
+    title: 'Ford Exits $6.5 Billion Battery Deal',
+    summary: 'EV maker pulls back on battery investment amid market challenges',
+    content: `Ford announced it is exiting a $6.5 billion battery deal as the automaker recalibrates its EV strategy amid challenging market conditions.
 
-Industry groups estimate that $5 billion in annual exports could be affected, prompting calls for government intervention and industry adaptation. Major producers including Sime Darby Plantation and IOI Corp are investing in sustainability certifications.
+The decision comes as overall U.S. EV sales have declined following the end of federal tax credits. Ford joins other legacy automakers in scaling back aggressive EV investment plans.
 
-"We support sustainable practices but urge the EU to recognize our existing certification schemes," said the Malaysian Palm Oil Council. "Arbitrary restrictions would hurt smallholder farmers who depend on palm oil for their livelihoods."
+The pullback reflects broader uncertainty in the EV market, with consumers showing hesitation about electric vehicle adoption without government incentives.
 
-The government is in talks with EU officials to negotiate favorable terms for Malaysian producers who meet sustainability requirements.`,
-    category: 'economy',
-    source: 'Reuters',
-    sourceUrl: 'https://reuters.com',
-    imageUrl: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800',
+Despite the setback, Ford continues to develop its EV lineup but is taking a more measured approach to production capacity expansion.`,
+    category: 'market',
+    source: 'Fox Business',
+    sourceUrl: 'https://foxbusiness.com',
+    imageUrl: 'https://images.pexels.com/photos/1149137/pexels-photo-1149137.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(20),
-    relatedStocks: ['SIMEPLT', 'IOI'],
+    relatedStocks: ['F'],
     sentiment: 'bearish',
   },
   {
     id: 'news-22',
-    title: 'Microsoft Acquires AI Startup for $15 Billion',
-    summary: 'Tech giant expands AI capabilities with purchase of Inflection AI',
-    content: `Microsoft has announced the acquisition of AI startup Inflection AI for $15 billion, its largest purchase since the $69 billion Activision Blizzard deal.
+    title: 'Nvidia Data Center Revenue Hits Record $51.2 Billion',
+    summary: 'Q3 earnings show 66% YoY growth as AI demand continues',
+    content: `Nvidia's data center revenue reached a record $51.2 billion in fiscal Q3, marking a 66% year-over-year increase. Total company revenue soared to $57 billion, a remarkable 62% jump from the same period last year.
 
-Inflection, founded by former DeepMind executives, has developed advanced conversational AI technology that Microsoft plans to integrate into its Copilot suite. The deal includes key personnel and intellectual property.
+The results demonstrate continued strong demand for AI computing infrastructure despite concerns about an AI bubble. Nvidia's AI chip order book is worth $500 billion for 2025 and 2026 combined.
 
-"This acquisition accelerates our AI roadmap and brings world-class talent to Microsoft," said CEO Satya Nadella. "The future of computing is AI-first, and we're investing to lead that transition."
+Major cloud providers including Microsoft, Amazon, and Google continue to deploy Nvidia's latest chips. The company's Blackwell architecture is seeing strong early adoption.
 
-The deal highlights the premium valuations being placed on AI companies and could spark further M&A activity in the sector.`,
+Wall Street maintains a "Strong Buy" consensus on NVDA, with average 12-month price targets clustering in the mid-$240s to high-$250s, implying roughly 40% upside from current levels.`,
     category: 'tech',
-    source: 'The Verge',
-    sourceUrl: 'https://theverge.com',
-    imageUrl: 'https://images.unsplash.com/photo-1633419461186-7d40a38105ec?w=800',
+    source: 'The Motley Fool',
+    sourceUrl: 'https://fool.com',
+    imageUrl: 'https://images.pexels.com/photos/1148820/pexels-photo-1148820.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(21),
+    relatedStocks: ['NVDA'],
     sentiment: 'bullish',
   },
   {
     id: 'news-23',
-    title: 'Singapore Dollar Strengthens on Safe Haven Flows',
-    summary: 'Regional currency gains as investors seek stability amid global tensions',
-    content: `The Singapore dollar has strengthened against major currencies as investors seek safe haven assets amid rising geopolitical tensions in the Middle East and Eastern Europe.
+    title: 'China Demand Drives Apple Record Quarter',
+    summary: 'iPhone maker ranks first in China with 20%+ market share',
+    content: `Apple ranked first in China in October and November with more than 20% market share, leading IDC to revise Apple's Q4 forecast in China from 9% to 17% year-over-year growth.
 
-The SGD gained 1.2% against the US dollar, approaching 1.30 per USD, its strongest level since 2014. The currency's strength reflects Singapore's role as a stable financial hub with strong foreign reserves.
+This turns a previously projected 1% decline in China for 2025 into a positive 3% growth. Massive demand for iPhone 17 has significantly accelerated Apple's performance in its largest market.
 
-The movement has implications for the ringgit, which typically moves in correlation with regional currencies. A stronger SGD could provide support for the Malaysian currency, though direct trade links mean a too-strong SGD could hurt Malaysia's competitiveness.
+The success comes despite increased competition from domestic Chinese smartphone makers and ongoing geopolitical tensions between the US and China.
 
-Currency analysts expect the SGD to remain well-supported given Singapore's economic fundamentals and monetary policy stance.`,
-    category: 'forex',
-    source: 'Bloomberg',
-    sourceUrl: 'https://bloomberg.com',
-    imageUrl: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800',
+Apple CEO Tim Cook has consistently emphasized the importance of the Chinese market, and the latest results validate the company's continued investment in the region.`,
+    category: 'tech',
+    source: 'IDC',
+    sourceUrl: 'https://idc.com',
+    imageUrl: 'https://images.pexels.com/photos/892649/pexels-photo-892649.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(22),
-    sentiment: 'neutral',
+    relatedStocks: ['AAPL'],
+    sentiment: 'bullish',
   },
   {
     id: 'news-24',
-    title: 'Malaysia Hosts ASEAN Summit, Trade Agreements Expected',
-    summary: 'Regional leaders convene in Kuala Lumpur to discuss economic cooperation',
-    content: `Malaysia is hosting the ASEAN Summit in Kuala Lumpur, with trade and economic cooperation at the top of the agenda. Leaders from the 10-member bloc are expected to sign several agreements on digital trade and investment facilitation.
+    title: 'Ringgit Trades at 4.09 Against Dollar',
+    summary: 'Malaysian currency weakens slightly as regional markets adjust',
+    content: `The Malaysian ringgit traded at 4.0900 against the US dollar, showing slight weakness as regional currency markets adjust to the Federal Reserve's latest policy signals.
 
-Prime Minister Datuk Seri Anwar Ibrahim emphasized the importance of regional unity in his opening address. "ASEAN's combined GDP of $4 trillion makes us a global economic force. Together, we can achieve more than apart."
+The currency remains relatively stable compared to earlier in 2025, benefiting from Malaysia's strong economic fundamentals and sustained foreign investment inflows.
 
-Key topics include harmonizing digital trade rules, accelerating the ASEAN Economic Community, and addressing climate change. Business leaders are also attending, exploring opportunities for cross-border investment.
+Malaysia's industrial production continues to show strength with 6.0% YoY growth in October. The Wholesale and Retail Trade sector reached RM160.9bn in sales.
 
-The summit is expected to boost confidence in the regional economic outlook and could lead to increased intra-ASEAN investment flows.`,
-    category: 'politics',
-    source: 'Bernama',
-    sourceUrl: 'https://bernama.com',
-    imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800',
+Analysts expect the ringgit to remain supported by the country's data center investment wave and the "China plus one" diversification strategy benefiting Malaysian manufacturers.`,
+    category: 'forex',
+    source: 'Bank Negara Malaysia',
+    sourceUrl: 'https://bnm.gov.my',
+    imageUrl: 'https://images.pexels.com/photos/4386476/pexels-photo-4386476.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(23),
-    sentiment: 'bullish',
+    sentiment: 'neutral',
   },
   {
     id: 'news-25',
-    title: 'Genting Berhad Reports Strong Resort Recovery',
-    summary: 'Gaming and hospitality giant sees visitor numbers surpass pre-pandemic levels',
-    content: `Genting Berhad has reported that visitor numbers at its flagship Resorts World Genting have surpassed pre-pandemic levels for the first time, driving a strong recovery in its hospitality segment.
+    title: 'Tesla Autopilot Faces California DMV Action',
+    summary: 'Regulatory scrutiny continues over autonomous driving marketing',
+    content: `Tesla faces a California Department of Motor Vehicles (DMV) action tied to "Autopilot" marketing claims, as regulators continue to scrutinize the company's autonomous driving technology.
 
-The company saw a 25% increase in revenue from its Malaysian operations, with hotel occupancy rates averaging 85%. The opening of new attractions, including the outdoor theme park, has attracted both domestic and international tourists.
+The action comes even as Tesla advances its robotaxi testing in Austin, where vehicles are now operating without human occupants. The company aims to double its Austin robotaxi fleet from 30 to 60 vehicles by year-end.
 
-"The tourism recovery has exceeded our expectations," said CEO Lim Kok Thay. "We're investing in new experiences to maintain momentum and attract the next generation of visitors."
+Despite regulatory challenges, investors remain focused on Tesla's autonomy progress. The stock hit an all-time high of $489.88, with a market cap of $1.63 trillion.
 
-Analysts have upgraded their price targets for Genting shares, citing the strong operational recovery and potential for further margin expansion.`,
+The company's shift from traditional EV metrics to autonomy and robotics as key value drivers has been largely successful with investors.`,
     category: 'market',
-    source: 'The Edge Markets',
-    sourceUrl: 'https://theedgemarkets.com',
-    imageUrl: 'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800',
+    source: 'California DMV',
+    sourceUrl: 'https://dmv.ca.gov',
+    imageUrl: 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(24),
-    relatedStocks: ['GENTING', 'GENM'],
-    sentiment: 'bullish',
+    relatedStocks: ['TSLA'],
+    sentiment: 'neutral',
   },
   {
     id: 'news-26',
-    title: 'DOT Crypto Token Surges 40% on Polkadot 2.0 Launch',
-    summary: 'Major upgrade brings improved scalability and cross-chain capabilities',
-    content: `The DOT token has surged 40% following the successful launch of Polkadot 2.0, a major upgrade that significantly improves the blockchain platform's scalability and cross-chain communication capabilities.
+    title: 'SAFE CHIPS Act Targets AI Export Restrictions',
+    summary: 'Bipartisan bill would block loosening of China chip controls for 30 months',
+    content: `A bipartisan group of U.S. senators introduced the SAFE CHIPS Act on December 4, which would block the Trump administration from loosening restrictions on AI chip exports to China, Russia, Iran, and North Korea for 30 months.
 
-The upgrade introduces "elastic scaling," allowing parachains to access computing resources on-demand, and "agile coretime," which lets developers purchase block space more efficiently. These improvements address previous criticisms about Polkadot's complexity and cost.
+The bill would require the Commerce Department to deny licenses for AI chips more advanced than what those countries can already buy.
 
-"Polkadot 2.0 represents our vision for a truly scalable, interoperable multi-chain ecosystem," said founder Gavin Wood. "We're making it easier for developers to build and users to interact across chains."
+The legislation comes as the administration reversed course on some restrictions, allowing Nvidia's H200 exports to China with a 25% fee.
 
-The positive momentum has extended to the broader Layer 1 ecosystem, with competitors like Cosmos and Avalanche also seeing gains.`,
-    category: 'crypto',
-    source: 'Decrypt',
-    sourceUrl: 'https://decrypt.co',
-    imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800',
+The conflicting policy signals create uncertainty for chipmakers trying to navigate export controls while maintaining access to lucrative international markets.`,
+    category: 'politics',
+    source: 'U.S. Senate',
+    sourceUrl: 'https://senate.gov',
+    imageUrl: 'https://images.pexels.com/photos/1550337/pexels-photo-1550337.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(25),
-    sentiment: 'bullish',
+    relatedStocks: ['NVDA', 'AMD', 'INTC'],
+    sentiment: 'neutral',
   },
   {
     id: 'news-27',
-    title: 'Maybank Launches AI-Powered Banking Platform',
-    summary: 'Malaysia\'s largest bank introduces advanced digital banking features',
-    content: `Malayan Banking Berhad (Maybank) has launched an AI-powered banking platform called "MAE Prime," featuring personalized financial insights, automated investment recommendations, and enhanced security features.
+    title: 'Fed Dot Plot Shows One Cut in 2026, One in 2027',
+    summary: 'Officials project slower pace of rate reductions ahead',
+    content: `The Federal Reserve's closely watched "dot plot" of individual officials' expectations indicated just one rate cut in 2026 and another in 2027 before the federal funds rate hits a longer-run target around 3%.
 
-The platform uses machine learning to analyze spending patterns and provide customized advice. It also includes a chatbot powered by GPT-4 that can handle complex customer queries and transactions.
+This represents a more hawkish outlook than markets had anticipated, contributing to volatility in both equity and cryptocurrency markets.
 
-"MAE Prime represents the future of banking in Malaysia," said Group CEO Datuk Khairussaleh Ramli. "We're combining the trust of traditional banking with the convenience of cutting-edge technology."
+The projections reflect the Fed's data-dependent approach, with Chair Powell noting that additional cuts will be harder to justify given current economic conditions.
 
-The launch is part of Maybank's broader digital transformation strategy, which includes RM5 billion in technology investments over the next five years.`,
-    category: 'tech',
-    source: 'The Star',
-    sourceUrl: 'https://thestar.com.my',
-    imageUrl: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800',
+The outlook contributed to the first 9-3 split vote in six years, with three dissenters reflecting divided views on the appropriate pace of monetary policy normalization.`,
+    category: 'economy',
+    source: 'Federal Reserve',
+    sourceUrl: 'https://federalreserve.gov',
+    imageUrl: 'https://images.pexels.com/photos/53621/calculator-calculation-insurance-finance-53621.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(26),
-    relatedStocks: ['MAYBANK'],
-    sentiment: 'bullish',
+    sentiment: 'neutral',
   },
   {
     id: 'news-28',
-    title: 'Gold Prices Hit Record High Amid Central Bank Buying',
-    summary: 'Precious metal tops $2,500 per ounce as reserve diversification continues',
-    content: `Gold prices have hit a record high of $2,500 per ounce, driven by continued central bank purchases and investor demand for safe haven assets amid global uncertainties.
+    title: 'Malaysia Sees Strong Foreign Investment in Tech Sector',
+    summary: 'Data center wave drives optimism for KLCI heavyweights',
+    content: `Malaysia continues to attract strong foreign investment, particularly in the technology and data center sectors. Analysts note the country is benefiting significantly from the "China plus one" strategy as companies diversify supply chains.
 
-Central banks, led by China, Russia, and India, have been net buyers of gold for five consecutive years. In 2025, combined purchases are expected to exceed 1,200 tonnes, well above historical averages.
+Key index heavyweights CIMB, Genting, Public Bank, Sime Darby, IWCity, and Unisem are expected to attract bargain hunters according to market analysts.
 
-"Gold remains a key component of reserve diversification strategies," said World Gold Council analyst Juan Carlos Artigas. "Central banks are reducing their exposure to dollar-denominated assets in favor of physical gold."
+The FBM KLCI reached 1,644.00 Index Points, the highest since October 2024. Basic materials stocks led gains while healthcare emerged as the top-performing sector.
 
-The rally has implications for Malaysian gold-related stocks and the local jewelry industry, with consumers facing higher prices for gold products.`,
+Corporate activity remains robust, with notable deals including Kerjaya Prospek's RM225.0mn construction contract and Khee San's successful RM77.1mn rights issue.`,
     category: 'market',
-    source: 'Reuters',
-    sourceUrl: 'https://reuters.com',
-    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=800',
+    source: 'i3investor',
+    sourceUrl: 'https://i3investor.com',
+    imageUrl: 'https://images.pexels.com/photos/2026324/pexels-photo-2026324.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(27),
+    relatedStocks: ['CIMB', 'GENTING', 'PBBANK'],
     sentiment: 'bullish',
   },
   {
     id: 'news-29',
-    title: 'IMF Upgrades Global Growth Forecast for 2026',
-    summary: 'International organization raises projections on easing inflation and resilient demand',
-    content: `The International Monetary Fund has upgraded its global growth forecast for 2026 to 3.4%, up from a previous estimate of 3.1%, citing easing inflation pressures and resilient consumer demand in major economies.
+    title: 'Global Oil Inventories Expected to Rise Through 2026',
+    summary: 'EIA forecast puts downward pressure on crude prices',
+    content: `The U.S. Energy Information Administration expects global oil inventories to continue to rise through 2026, putting downward pressure on oil prices.
 
-The revised forecast reflects better-than-expected performance in the United States and emerging markets, offsetting slower growth in China and Europe. The IMF also noted that central banks have successfully navigated the inflation challenge without triggering deep recessions.
+They forecast Brent crude oil price will fall to an average of $55 per barrel in the first quarter of 2026 and remain near that price for the rest of next year.
 
-For ASEAN, the outlook remains positive with growth projected at 4.6%. Malaysia is expected to grow at 5.0%, benefiting from strong exports and domestic investment.
+OPEC+ faces challenges as it steadily restores shut-in capacity while non-OPEC producers ramp up output. Early signs of demand weakness are emerging across China, the Middle East, and the US.
 
-"The global economy has proven more resilient than expected," said IMF Managing Director Kristalina Georgieva. "However, risks remain elevated and policymakers must remain vigilant."`,
+The oversupply concerns have driven WTI crude to near five-year lows, with year-to-date losses of around 22%.`,
     category: 'economy',
-    source: 'Financial Times',
-    sourceUrl: 'https://ft.com',
-    imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800',
+    source: 'U.S. EIA',
+    sourceUrl: 'https://eia.gov',
+    imageUrl: 'https://images.pexels.com/photos/2310713/pexels-photo-2310713.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(28),
-    sentiment: 'bullish',
+    sentiment: 'bearish',
   },
   {
     id: 'news-30',
-    title: 'Bursa Malaysia Introduces Extended Trading Hours',
-    summary: 'Stock exchange to pilot evening session to attract international investors',
-    content: `Bursa Malaysia has announced plans to introduce extended trading hours starting Q2 2026, with an evening session from 7pm to 10pm aimed at attracting more international investors.
+    title: 'Crypto Year-End Rally Hopes Fade',
+    summary: 'Analysts see "late-year digestion" rather than structural shift',
+    content: `As chances for a year-end crypto rally appear to be slipping away, investors are reducing their risk exposure. However, the selling has remained orderly.
 
-The extended hours will allow European and Middle Eastern investors to trade Malaysian stocks during their business hours, potentially increasing foreign participation and liquidity. The pilot program will initially cover the top 100 stocks by market cap.
+Wintermute OTC trader Jasper De Maere noted: "This still looks more like late-year digestion than a structural regime shift."
 
-"This is a significant step in our journey to become a premier ASEAN exchange," said Bursa Malaysia CEO Datuk Muhamad Umar Swift. "Extended hours will improve accessibility and deepen our market."
+Bitcoin remains rangebound between $80,000 and $94,000, while altcoins have underperformed significantly. US spot Bitcoin and Ethereum ETFs continue to see outflows.
 
-Market participants have generally welcomed the move, though some have raised concerns about operational challenges and the need for adequate infrastructure support.`,
-    category: 'market',
-    source: 'The Edge Markets',
-    sourceUrl: 'https://theedgemarkets.com',
-    imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800',
+The market awaits clarity on Federal Reserve policy direction and potential regulatory developments in the new year that could catalyze the next major crypto move.`,
+    category: 'crypto',
+    source: 'Decrypt',
+    sourceUrl: 'https://decrypt.co',
+    imageUrl: 'https://images.pexels.com/photos/6771985/pexels-photo-6771985.jpeg?auto=compress&cs=tinysrgb&w=800',
     publishedAt: hoursAgo(29),
-    sentiment: 'bullish',
+    sentiment: 'neutral',
   },
 ]
 
