@@ -21,17 +21,15 @@ type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['U
 // ============================================================================
 
 // Vercel Hobby has 10-second timeout - MUST stay under 8 seconds
-// EODHD only provides EOD (end-of-day) data for Malaysian stocks
-// Each stock requires individual API call, processed 10 at a time
-// Yahoo fallback adds 100ms delay per stock - main timeout risk
-// 15 stocks = ~1.5s EODHD + ~1.5s Yahoo worst case = ~3s total (very safe margin)
-// 802 stocks / 15 per call = 54 calls → All stocks updated within ~55 cron cycles
-// With 5-min interval cron, full update takes ~4.5 hours
+// EODHD API is SLOW (~1.5s per stock even with concurrency)
+// With 5 stocks at 10 concurrent = 1 batch = ~3-5s total (safe)
+// 802 stocks / 5 per call = 161 calls → Full update in ~13 hours
+// With 5-min interval cron during market hours (8h), updates ~2x per day
 
-const STOCKS_PER_RUN = 15       // Reduced to 15 for safe timeout margin
-const BATCH_SIZE = 15           // DB batch size for upserting
+const STOCKS_PER_RUN = 5        // Reduced to 5 due to slow EODHD API
+const BATCH_SIZE = 5            // DB batch size for upserting
 const PARALLEL_BATCHES = 10     // Concurrent EODHD requests (handled in eodhd-api.ts)
-const DB_BATCH_SIZE = 15        // Upsert 15 records at a time
+const DB_BATCH_SIZE = 5         // Upsert 5 records at a time
 
 interface UpdateResult {
   stocksUpdated: number
