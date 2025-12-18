@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -407,32 +408,32 @@ export default function NewsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Breaking News Ticker */}
-      {breakingNews.length > 0 && (
-        <div className="bg-red-500 text-white overflow-hidden">
-          <div className="flex items-center py-2 px-4">
-            <div className="flex items-center gap-2 flex-shrink-0 pr-4 border-r border-white/20">
-              <Zap className="h-4 w-4" />
-              <span className="font-bold text-sm">BREAKING</span>
-            </div>
-            <div className="overflow-hidden flex-1">
-              <div className="animate-marquee whitespace-nowrap">
-                {breakingNews.map((news, i) => (
-                  <span key={news.id} className="mx-8 text-sm">
-                    {news.title}
-                    {i < breakingNews.length - 1 && (
-                      <span className="mx-4 text-white/50">|</span>
-                    )}
-                  </span>
-                ))}
+    <MainLayout>
+      <div className="p-6 space-y-6">
+        {/* Breaking News Ticker */}
+        {breakingNews.length > 0 && (
+          <div className="bg-red-500 text-white overflow-hidden rounded-lg">
+            <div className="flex items-center py-2 px-4">
+              <div className="flex items-center gap-2 flex-shrink-0 pr-4 border-r border-white/20">
+                <Zap className="h-4 w-4" />
+                <span className="font-bold text-sm">BREAKING</span>
+              </div>
+              <div className="overflow-hidden flex-1">
+                <div className="animate-marquee whitespace-nowrap">
+                  {breakingNews.map((news, i) => (
+                    <span key={news.id} className="mx-8 text-sm">
+                      {news.title}
+                      {i < breakingNews.length - 1 && (
+                        <span className="mx-4 text-white/50">|</span>
+                      )}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
@@ -571,29 +572,29 @@ export default function NewsPage() {
             </Button>
           </div>
         )}
+
+        {/* News Detail Modal */}
+        <NewsDetailModal
+          news={selectedNews}
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+        />
+
+        {/* Marquee animation style */}
+        <style jsx global>{`
+          @keyframes marquee {
+            0% {
+              transform: translateX(100%);
+            }
+            100% {
+              transform: translateX(-100%);
+            }
+          }
+          .animate-marquee {
+            animation: marquee 30s linear infinite;
+          }
+        `}</style>
       </div>
-
-      {/* News Detail Modal */}
-      <NewsDetailModal
-        news={selectedNews}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
-
-      {/* Marquee animation style */}
-      <style jsx global>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(100%);
-          }
-          100% {
-            transform: translateX(-100%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-      `}</style>
-    </div>
+    </MainLayout>
   )
 }
