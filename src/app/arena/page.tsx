@@ -16,8 +16,11 @@ import {
   RefreshCw,
   Bot,
   Info,
-  Sparkles
+  Sparkles,
+  Coins,
+  ChevronRight,
 } from "lucide-react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useArenaStore } from "@/stores/arena"
 import {
@@ -294,7 +297,19 @@ export default function ArenaPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <Link href="/arena/market">
+              <Button
+                className="gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all"
+              >
+                <Trophy className="h-4 w-4" />
+                Mad2Market
+                <Badge className="bg-white/20 text-white border-0 text-xs">
+                  NEW
+                </Badge>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
@@ -376,6 +391,47 @@ export default function ArenaPage() {
                 )}
               </div>
             </div>
+
+            {/* Mad2Market Promo Card */}
+            <Link href="/arena/market" className="block">
+              <Card className="group overflow-hidden bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-red-500/10 border-amber-500/20 hover:border-amber-500/40 transition-all hover:shadow-xl hover:shadow-amber-500/10 cursor-pointer">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Trophy className="h-8 w-8 text-white" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
+                            Mad2Market
+                          </h3>
+                          <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                            NEW
+                          </Badge>
+                        </div>
+                        <p className="text-muted-foreground">
+                          Predict AI performance across Stocks, Crypto, Forex & more - Polymarket style!
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right hidden md:block">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Coins className="h-4 w-4 text-yellow-500" />
+                          RM 789,200 total pool
+                        </div>
+                        <div className="text-xs text-muted-foreground">8 active competitions</div>
+                      </div>
+                      <Button className="gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 text-white border-0">
+                        Explore Markets
+                        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
 
             {/* Recent Trades Preview */}
             <TradeHistory

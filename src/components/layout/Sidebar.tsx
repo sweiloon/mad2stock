@@ -19,6 +19,7 @@ import {
   Swords,
   Sparkles,
   Moon,
+  Newspaper,
 } from "lucide-react"
 
 // Check if Malaysian stock market is open
@@ -47,6 +48,7 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, description: "Market overview" },
   { name: "Companies", href: "/companies", icon: Building2, description: "All listings" },
   { name: "Signals", href: "/signals", icon: TrendingUp, description: "Live alerts" },
+  { name: "News", href: "/news", icon: Newspaper, description: "Market news" },
   { name: "AI Chat", href: "/chat", icon: MessageSquare, description: "Analysis assistant" },
   { name: "Content", href: "/content", icon: Megaphone, description: "Creator studio" },
 ]
