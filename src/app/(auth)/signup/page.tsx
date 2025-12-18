@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { signUp } from "@/lib/auth"
+import { signUp, signOut } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -72,8 +72,10 @@ export default function SignUpPage() {
         return
       }
 
-      // Redirect to dashboard if no confirmation required
-      router.push("/?welcome=true")
+      // Email confirmation is disabled - sign out and redirect to login
+      // This ensures user goes through proper login flow
+      await signOut()
+      router.push("/login?message=Account created successfully! Please sign in.")
       router.refresh()
     } catch {
       setError("An unexpected error occurred. Please try again.")
