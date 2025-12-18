@@ -49,6 +49,8 @@ import {
 import { cn } from "@/lib/utils"
 import { useCompanyDocuments, formatFileSize } from "@/hooks/use-documents"
 import { COMPANY_DATA, hasFinancialData, getTotalCompanyCount, getCompaniesWithData, CompanyData } from "@/lib/company-data"
+import { useAuth } from "@/components/auth/AuthProvider"
+import { BlurredContent } from "@/components/auth/BlurredContent"
 
 interface Message {
   id: string
@@ -166,6 +168,7 @@ const CATEGORY_NAMES: Record<number, string> = {
 }
 
 export default function ChatPage() {
+  const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -418,6 +421,78 @@ What would you like to explore?`
   const selectedCompanyData = COMPANY_DATA.find(c => c.code === selectedCompany)
   const allCompanies = getAllCompaniesForSelector()
   const analyzedCompanies = getCompaniesForSelector()
+
+  // Placeholder content for unauthenticated users
+  const chatPreview = (
+    <div className="h-[calc(100vh-6rem)] flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex-none flex items-center justify-between py-3 px-1">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+            <Bot className="h-5 w-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold truncate">AI Stock Analyst</h1>
+            <p className="text-xs text-muted-foreground">Market Intelligence</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Company Selector Preview */}
+      <div className="flex-none py-2 px-1">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border">
+          <div className="w-[280px] h-10 bg-background rounded-md border" />
+        </div>
+      </div>
+
+      {/* Chat Preview */}
+      <div className="flex-1 flex gap-4 min-h-0 overflow-hidden px-1 pb-2">
+        <div className="flex-1 flex flex-col min-w-0 rounded-xl border bg-card overflow-hidden">
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-4">
+              <Sparkles className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold mb-2">Ask About Any Stock</h2>
+            <p className="text-sm text-muted-foreground max-w-sm mb-6">
+              Get insights on financial performance, risks, and investment analysis.
+            </p>
+            <div className="grid gap-2 w-full max-w-md">
+              {["Which companies have the best YoY performance?", "What are the top 5 growth stocks?", "Compare property vs technology sector"].map((q, i) => (
+                <div key={i} className="flex items-center gap-2 p-2 px-3 rounded-md border bg-background text-sm text-left">
+                  <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+                  <span className="truncate">{q}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex-none p-4 border-t bg-background/50">
+            <div className="flex gap-2">
+              <div className="flex-1 h-[44px] rounded-xl border bg-background" />
+              <Button disabled className="shrink-0 rounded-xl px-4">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  // If user is not authenticated, show blurred content
+  if (!user) {
+    return (
+      <MainLayout>
+        <BlurredContent
+          title="Unlock AI Stock Analyst"
+          description="Chat with our AI to get instant insights on 800+ Malaysian stocks, financial analysis, and investment recommendations."
+          minHeight="600px"
+          icon="sparkles"
+        >
+          {chatPreview}
+        </BlurredContent>
+      </MainLayout>
+    )
+  }
 
   return (
     <MainLayout>

@@ -29,6 +29,8 @@ import {
   SignalEmptyState,
   SignalDisclaimer,
 } from "@/components/signals/SignalStats"
+import { useAuth } from "@/components/auth/AuthProvider"
+import { BlurredContent } from "@/components/auth/BlurredContent"
 
 // ============================================================================
 // TYPES
@@ -85,6 +87,7 @@ interface PaginationInfo {
 // ============================================================================
 
 export default function SignalsPage() {
+  const { user } = useAuth()
   const [signals, setSignals] = useState<Signal[]>([])
   const [stats, setStats] = useState<SignalStats | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -243,6 +246,75 @@ export default function SignalsPage() {
             ))}
           </div>
         </div>
+      </MainLayout>
+    )
+  }
+
+  // Placeholder content for unauthenticated users
+  const signalsPreview = (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
+              <Brain className="h-5 w-5 text-violet-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">AI Trading Signals</h1>
+              <p className="text-sm text-muted-foreground">
+                Expert AI analysis with full transparency on data sources
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Placeholder Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card><CardContent className="pt-6"><div className="text-2xl font-bold">12</div><p className="text-sm text-muted-foreground">Active Signals</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-green-500">8</div><p className="text-sm text-muted-foreground">Buy Signals</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="text-2xl font-bold text-red-500">3</div><p className="text-sm text-muted-foreground">Sell Signals</p></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="text-2xl font-bold">72%</div><p className="text-sm text-muted-foreground">Win Rate</p></CardContent></Card>
+      </div>
+
+      {/* Placeholder Signals */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold">MAYBANK</span>
+                  <span className="text-xs px-2 py-1 bg-green-500/10 text-green-500 rounded">BUY</span>
+                </div>
+                <span className="text-sm text-muted-foreground">85% confidence</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">Strong bullish momentum with positive earnings outlook...</p>
+              <div className="flex gap-4 text-sm">
+                <span>Entry: RM 9.50</span>
+                <span className="text-green-500">Target: RM 10.20</span>
+                <span className="text-red-500">Stop: RM 9.10</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+
+  // If user is not authenticated, show blurred content
+  if (!user) {
+    return (
+      <MainLayout>
+        <BlurredContent
+          title="Unlock AI Trading Signals"
+          description="Get expert AI-generated trading signals with entry prices, targets, and stop-loss levels for 800+ KLSE stocks."
+          minHeight="600px"
+          icon="sparkles"
+        >
+          {signalsPreview}
+        </BlurredContent>
       </MainLayout>
     )
   }

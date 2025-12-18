@@ -32,6 +32,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { COMPANY_DATA, hasFinancialData, getTotalCompanyCount, CompanyData } from "@/lib/company-data"
+import { useAuth } from "@/components/auth/AuthProvider"
+import { BlurredContent } from "@/components/auth/BlurredContent"
 
 interface GeneratedContent {
   platform: string
@@ -164,6 +166,7 @@ Worth watching! 👀
 }
 
 export default function ContentPage() {
+  const { user } = useAuth()
   const [selectedCompany, setSelectedCompany] = useState<string>("")
   const [selectedPlatform, setSelectedPlatform] = useState<string>("facebook")
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null)
@@ -195,6 +198,95 @@ export default function ContentPage() {
 
   const companies = getCompaniesForContent()
   const selectedCompanyData = COMPANY_DATA.find((c) => c.code === selectedCompany)
+
+  // Placeholder content for unauthenticated users
+  const contentPreview = (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Content Creator</h1>
+        <p className="text-muted-foreground">
+          Generate social media content for stock analysis
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left Panel Preview */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>1. Select Company</CardTitle>
+              <CardDescription>Choose a company to create content about</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-10 bg-muted rounded-md" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>2. Choose Platform</CardTitle>
+              <CardDescription>Select the social media platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-5 gap-2">
+                {PLATFORMS.map((platform) => {
+                  const Icon = platform.icon
+                  return (
+                    <div key={platform.id} className="flex flex-col items-center gap-1 p-3 border rounded-md">
+                      <Icon className={cn("h-5 w-5", platform.color)} />
+                      <span className="text-xs">{platform.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button className="w-full" size="lg" disabled>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Generate Content
+          </Button>
+        </div>
+
+        {/* Right Panel Preview */}
+        <Card className="lg:min-h-[400px]">
+          <CardHeader>
+            <CardTitle>Generated Content</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-3 rounded-lg bg-muted">
+                <p className="font-medium mb-2">🚀 MAYBANK Q4 RESULTS!</p>
+                <p className="text-sm text-muted-foreground">Strong quarterly performance with revenue growth...</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">#KLSE</Badge>
+                <Badge variant="secondary">#MAYBANK</Badge>
+                <Badge variant="secondary">#Investing</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+
+  // If user is not authenticated, show blurred content
+  if (!user) {
+    return (
+      <MainLayout>
+        <BlurredContent
+          title="Unlock Content Creator"
+          description="Generate professional social media content for Facebook, Instagram, YouTube, and more with AI assistance."
+          minHeight="600px"
+          icon="sparkles"
+        >
+          {contentPreview}
+        </BlurredContent>
+      </MainLayout>
+    )
+  }
 
   return (
     <MainLayout>

@@ -366,12 +366,10 @@ function getAuthErrorMessage(message: string): string {
 // ============================================================================
 
 /**
- * Routes that require authentication
+ * Routes that require authentication (hard redirect to login)
+ * Note: /signals, /chat, /content now show blur overlay instead of redirect
  */
 export const protectedRoutes = [
-  '/signals',
-  '/chat',
-  '/content',
   '/profile',
   '/settings',
   '/watchlist',

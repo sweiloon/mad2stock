@@ -1,8 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Routes that require authentication
-const protectedRoutes = ['/signals', '/chat', '/content', '/profile', '/settings', '/watchlist']
+// Routes that require authentication (hard redirect to login)
+// Note: /signals, /chat, /content now show blur overlay instead of redirect
+const protectedRoutes = ['/profile', '/settings', '/watchlist']
 
 // Routes that should redirect authenticated users away
 const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
