@@ -21,10 +21,14 @@ type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['U
 // ============================================================================
 
 // Vercel Hobby has 10-second timeout - MUST stay under 8 seconds
-// EODHD API is SLOW (~1.5s per stock even with concurrency)
-// Testing with 10 stocks to see if we can fit more in 10 seconds
+// EODHD API has rate limiting - 5 stocks at ~2.5s is the sweet spot
+//
+// OPTIMIZED FOR 5-HOUR CYCLE:
+// - 801 stocks / 5 per run = 161 runs needed
+// - With 2-min cron interval: 161 × 2 = 322 minutes = 5.4 hours
+// - Update cron-job.org to run every 2 minutes for faster updates
 
-const STOCKS_PER_RUN = 8        // Testing with 8 stocks
+const STOCKS_PER_RUN = 5        // Optimal: 5 stocks in ~2.5 seconds
 const BATCH_SIZE = 5            // DB batch size for upserting
 const PARALLEL_BATCHES = 10     // Concurrent EODHD requests (handled in eodhd-api.ts)
 const DB_BATCH_SIZE = 5         // Upsert 5 records at a time
