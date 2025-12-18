@@ -1,2 +1,7 @@
 {
+  "functions": {
+    "src/app/api/cron/**/*.ts": {
+      "maxDuration": 60
+    }
+  }
 }

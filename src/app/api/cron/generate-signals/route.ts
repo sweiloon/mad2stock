@@ -14,9 +14,12 @@ import {
 // CONFIGURATION
 // ============================================================================
 
-// Process 2 stocks per cron run (AI calls take ~5-8s each)
-// 2 stocks × ~8s = ~16s (safe for 30s timeout)
-const STOCKS_PER_RUN = 2
+// Vercel timeout configuration - MUST be at top level
+export const maxDuration = 60 // 60 seconds for Pro plan
+
+// Process 1 stock per cron run to stay within timeout
+// Each AI call takes ~5-10s, plus DB queries ~2-3s
+const STOCKS_PER_RUN = 1
 
 // Model selection
 const AI_MODEL = 'gpt-4o-mini'
