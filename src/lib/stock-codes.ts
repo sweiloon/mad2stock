@@ -495,7 +495,7 @@ export const STOCK_CODE_MAP: Record<string, string> = {
   "KITACON": "0169",
   "KJTS": "0293",
   "KKB": "9466",
-  "KLCC": "5235",
+  "KLCC": "5235SS",
     "KLK": "2445",
   "KLUANG": "2453",
   "KMAK": "0301",
