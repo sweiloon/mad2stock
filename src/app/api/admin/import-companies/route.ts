@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
         // 2. Upsert stock tier
         // Use hasAnalysisData to determine tier (replaces old isCore80Stock)
-        const hasAnalysis = hasAnalysisData(company.stockCode)
+        const hasAnalysis = hasAnalysisData(company)
         const tier = hasAnalysis ? 1 : 3
 
         const tierData = {
