@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/components/auth/AuthProvider"
-import { getCompanyByCode } from "@/lib/company-data"
+import { useCompanies } from "@/hooks/use-companies"
 import {
   Star,
   Plus,
@@ -20,8 +20,14 @@ import { cn } from "@/lib/utils"
 
 export default function WatchlistPage() {
   const { user, profile, isLoading, refreshProfile } = useAuth()
+  const { companies, isLoading: companiesLoading } = useCompanies()
 
-  if (isLoading) {
+  // Helper to find company by code
+  const getCompanyByCode = (code: string) => {
+    return companies.find(c => c.code === code)
+  }
+
+  if (isLoading || companiesLoading) {
     return (
       <MainLayout>
         <div className="space-y-6">

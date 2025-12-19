@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -31,7 +31,7 @@ import {
   Twitter,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { COMPANY_DATA, hasFinancialData, getTotalCompanyCount, CompanyData } from "@/lib/company-data"
+import { useCompanies, CompanyData, hasFinancialData } from "@/hooks/use-companies"
 import { useAuth } from "@/components/auth/AuthProvider"
 import { BlurredContent } from "@/components/auth/BlurredContent"
 
@@ -49,16 +49,6 @@ const PLATFORMS = [
   { id: "telegram", label: "Telegram", icon: Send, color: "text-sky-500" },
   { id: "twitter", label: "Twitter/X", icon: Twitter, color: "text-foreground" },
 ]
-
-// Get companies with financial data for content generation
-const getCompaniesForContent = (): CompanyData[] => {
-  return COMPANY_DATA.filter(hasFinancialData).sort((a, b) => {
-    // Sort by profit growth (highest first)
-    const profitA = a.profitYoY ?? 0
-    const profitB = b.profitYoY ?? 0
-    return profitB - profitA
-  })
-}
 
 const mockGeneratedContent: Record<string, GeneratedContent> = {
   facebook: {
@@ -174,6 +164,16 @@ export default function ContentPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [customPrompt, setCustomPrompt] = useState("")
 
+  // Fetch companies from database
+  const { companies: allCompaniesData, isLoading: companiesLoading } = useCompanies()
+
+  // Get companies with financial data for content generation
+  const companies = useMemo(() => {
+    return allCompaniesData
+      .filter(hasFinancialData)
+      .sort((a, b) => (b.profitYoY ?? 0) - (a.profitYoY ?? 0))
+  }, [allCompaniesData])
+
   const handleGenerate = async () => {
     if (!selectedCompany) return
 
@@ -196,8 +196,7 @@ export default function ContentPage() {
     handleGenerate()
   }
 
-  const companies = getCompaniesForContent()
-  const selectedCompanyData = COMPANY_DATA.find((c) => c.code === selectedCompany)
+  const selectedCompanyData = allCompaniesData.find((c) => c.code === selectedCompany)
 
   // Placeholder content for unauthenticated users
   const contentPreview = (

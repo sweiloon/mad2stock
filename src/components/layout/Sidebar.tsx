@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { getTotalCompanyCount, getAnalyzedCompanyCount } from "@/lib/company-data"
+import { useCompanyStats } from "@/hooks/use-companies"
 import {
   LayoutDashboard,
   Building2,
@@ -56,6 +56,7 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname()
   const [marketOpen, setMarketOpen] = useState(false)
+  const { stats } = useCompanyStats()
 
   // Check market status on mount and every minute
   useEffect(() => {
@@ -231,11 +232,11 @@ export function Sidebar() {
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="text-center p-2 rounded bg-sidebar/50">
-            <p className="text-lg font-bold text-profit tabular-nums">{getTotalCompanyCount()}</p>
+            <p className="text-lg font-bold text-profit tabular-nums">{stats?.totalCompanies || 0}</p>
             <p className="text-[10px] text-muted-foreground">Total Stocks</p>
           </div>
           <div className="text-center p-2 rounded bg-sidebar/50">
-            <p className="text-lg font-bold text-primary tabular-nums">{getAnalyzedCompanyCount()}</p>
+            <p className="text-lg font-bold text-primary tabular-nums">{stats?.analyzedCompanies || 0}</p>
             <p className="text-[10px] text-muted-foreground">Analyzed</p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,14 +35,7 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  COMPANY_DATA,
-  getCategoryCount,
-  getTopPerformers,
-  getGainersLosersCount,
-  getAllSectors,
-  getSectorStats
-} from "@/lib/company-data"
+import { useCompanyStats } from "@/hooks/use-companies"
 import { MarketOverviewCard } from "@/components/dashboard/MarketOverviewCard"
 
 // Performance Categories
@@ -115,9 +108,6 @@ const PERFORMANCE_CATEGORIES = [
   },
 ]
 
-// Sector definitions - dynamically generated
-const SECTORS = ["All Sectors", ...getAllSectors()]
-
 // Recent signals - sample data for demonstration
 const recentSignals = [
   { company: "UWC", type: "earnings", title: "Q4 Profit Surges 685%", time: "30m", strength: "strong" },
@@ -127,33 +117,30 @@ const recentSignals = [
 ]
 
 export default function DashboardPage() {
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("yoy")
   const [selectedSector, setSelectedSector] = useState("All Sectors")
   const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Compute real data from COMPANY_DATA
-  const yoyCategoryCounts = useMemo(() => getCategoryCount('yoy'), [])
-  const qoqCategoryCounts = useMemo(() => getCategoryCount('qoq'), [])
-  const yoyTopPerformers = useMemo(() => getTopPerformers('yoy', 5), [])
-  const qoqTopPerformers = useMemo(() => getTopPerformers('qoq', 5), [])
-  const gainersLosers = useMemo(() => getGainersLosersCount(), [])
-  const sectorStats = useMemo(() => getSectorStats(5), [])
+  // Fetch data from database API
+  const { stats, isLoading: loading, refetch } = useCompanyStats()
 
   // Build current data based on active tab
+  const yoyCategoryCounts = stats?.yoyCategoryCounts || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  const qoqCategoryCounts = stats?.qoqCategoryCounts || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+
   const currentCategories = activeTab === "yoy"
     ? Object.entries(yoyCategoryCounts).map(([id, count]) => ({ id: parseInt(id), count }))
     : Object.entries(qoqCategoryCounts).map(([id, count]) => ({ id: parseInt(id), count }))
 
-  const currentTopPerformers = activeTab === "yoy" ? yoyTopPerformers : qoqTopPerformers
-  const totalCompanies = COMPANY_DATA.length
+  const currentTopPerformers = activeTab === "yoy"
+    ? (stats?.topYoYPerformers || [])
+    : (stats?.topQoQPerformers || [])
+  const totalCompanies = stats?.totalCompanies || 0
+  const sectorStats = stats?.sectorStats || []
+  const sectors = ["All Sectors", ...(stats?.sectors || [])]
 
   // Market stats based on real data
+  const gainersLosers = stats?.gainersLosers || { gainers: 0, losers: 0, unchanged: 0 }
   const marketStats = {
     totalCompanies,
     gainers: gainersLosers.gainers,
@@ -271,7 +258,7 @@ export default function DashboardPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {SECTORS.map((sector) => (
+                {sectors.map((sector) => (
                   <SelectItem key={sector} value={sector} className="text-xs">{sector}</SelectItem>
                 ))}
               </SelectContent>
@@ -279,7 +266,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-9 text-xs">
+            <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => refetch()}>
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
               Refresh
             </Button>

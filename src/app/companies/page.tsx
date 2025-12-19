@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
   SelectContent,
@@ -33,9 +34,10 @@ import {
   List,
   FileSpreadsheet,
   Minus,
+  RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { COMPANY_DATA, getAllSectors, hasFinancialData, getTotalCompanyCount, CompanyData } from "@/lib/company-data"
+import { useCompanies, CompanyData, hasFinancialData } from "@/hooks/use-companies"
 
 const CATEGORIES = {
   1: { label: "Revenue UP, Profit UP", color: "bg-green-100 text-green-700" },
@@ -59,15 +61,20 @@ export default function CompaniesPage() {
   const [sortField, setSortField] = useState<string>("code")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
 
-  const sectors = useMemo(() => {
-    return getAllSectors()
-  }, [])
+  // Fetch companies from database API
+  const { companies: allCompanies, isLoading, error, refetch } = useCompanies()
 
-  const totalCount = getTotalCompanyCount()
-  const analyzedCount = COMPANY_DATA.filter(c => hasFinancialData(c)).length
+  // Extract unique sectors from fetched data
+  const sectors = useMemo(() => {
+    const sectorSet = new Set(allCompanies.map(c => c.sector).filter(Boolean))
+    return Array.from(sectorSet).sort()
+  }, [allCompanies])
+
+  const totalCount = allCompanies.length
+  const analyzedCount = allCompanies.filter(c => hasFinancialData(c)).length
 
   const filteredCompanies = useMemo(() => {
-    return COMPANY_DATA
+    return allCompanies
       .filter(company => {
         const matchesSearch = company.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
           company.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -145,6 +152,47 @@ export default function CompaniesPage() {
     )
   }
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
+            <p className="text-muted-foreground">Loading companies from database...</p>
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
+            <p className="text-red-500">Error loading companies: {error}</p>
+          </div>
+          <Button onClick={refetch} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </MainLayout>
+    )
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -156,6 +204,10 @@ export default function CompaniesPage() {
               Browse {filteredCompanies.length} of {totalCount} Malaysian listed companies ({analyzedCount} with full analysis)
             </p>
           </div>
+          <Button onClick={refetch} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
 
         {/* Filters */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -48,7 +48,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCompanyDocuments, formatFileSize } from "@/hooks/use-documents"
-import { COMPANY_DATA, hasFinancialData, getTotalCompanyCount, getCompaniesWithData, CompanyData } from "@/lib/company-data"
+import { useCompanies, CompanyData, hasFinancialData } from "@/hooks/use-companies"
 import { useAuth } from "@/components/auth/AuthProvider"
 import { BlurredContent } from "@/components/auth/BlurredContent"
 
@@ -67,21 +67,6 @@ interface CompanyReport {
   title: string
   content: string
   generatedAt: string
-}
-
-// Get companies with financial data for the selector
-const getCompaniesForSelector = (): CompanyData[] => {
-  return COMPANY_DATA.filter(hasFinancialData).sort((a, b) => {
-    // Sort by profit growth (highest first)
-    const profitA = a.profitYoY ?? 0
-    const profitB = b.profitYoY ?? 0
-    return profitB - profitA
-  })
-}
-
-// Get all companies (including those without financial data)
-const getAllCompaniesForSelector = (): CompanyData[] => {
-  return [...COMPANY_DATA].sort((a, b) => a.code.localeCompare(b.code))
 }
 
 const MOCK_REPORTS: Record<string, CompanyReport> = {
@@ -180,10 +165,25 @@ export default function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Fetch all companies from database
+  const { companies: allCompaniesData, isLoading: companiesLoading } = useCompanies()
+
   // Fetch company documents from Supabase
   const { documents: supabaseDocuments, loading: docsLoading, error: docsError } = useCompanyDocuments(
     selectedCompany !== "all" ? selectedCompany : null
   )
+
+  // Get companies with financial data for the selector
+  const analyzedCompanies = useMemo(() => {
+    return allCompaniesData
+      .filter(hasFinancialData)
+      .sort((a, b) => (b.profitYoY ?? 0) - (a.profitYoY ?? 0))
+  }, [allCompaniesData])
+
+  // Get all companies sorted by code
+  const allCompanies = useMemo(() => {
+    return [...allCompaniesData].sort((a, b) => a.code.localeCompare(b.code))
+  }, [allCompaniesData])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -216,7 +216,7 @@ export default function ChatPage() {
         "List all turnaround companies",
       ]
     }
-    const company = COMPANY_DATA.find(c => c.code === selectedCompany)
+    const company = allCompaniesData.find(c => c.code === selectedCompany)
     if (company) {
       return [
         `Analyze ${company.code}'s financial performance`,
@@ -246,7 +246,7 @@ export default function ChatPage() {
     setTimeout(() => {
       let response = ""
       const lowerInput = userMessage.content.toLowerCase()
-      const company = COMPANY_DATA.find(c => c.code === selectedCompany)
+      const company = allCompaniesData.find(c => c.code === selectedCompany)
 
       if (selectedCompany !== "all" && company) {
         const revenueYoY = company.revenueYoY ?? 0
@@ -308,19 +308,19 @@ Would you like me to dive deeper into any specific aspect?`
 How can I help you with ${company.code}?`
         }
       } else {
-        // Get dynamic data for responses
-        const analyzedCompanies = COMPANY_DATA.filter(hasFinancialData)
-        const totalCompanies = getTotalCompanyCount()
-        const analyzedCount = getCompaniesWithData().length
+        // Get dynamic data for responses from database
+        const companiesWithData = allCompaniesData.filter(hasFinancialData)
+        const totalCompaniesCount = allCompaniesData.length
+        const analyzedCount = companiesWithData.length
 
         // Get top performers
-        const topPerformers = analyzedCompanies
+        const topPerformers = companiesWithData
           .filter(c => c.yoyCategory === 1)
           .sort((a, b) => (b.profitYoY ?? 0) - (a.profitYoY ?? 0))
           .slice(0, 5)
 
         // Count by category
-        const categoryCounts = analyzedCompanies.reduce((acc, c) => {
+        const categoryCounts = companiesWithData.reduce((acc, c) => {
           const cat = c.yoyCategory ?? 0
           acc[cat] = (acc[cat] || 0) + 1
           return acc
@@ -342,7 +342,7 @@ ${topTable}
 These are the top ${topPerformers.length} performers out of ${categoryCounts[1] || 0} Category 1 companies.`
         } else if (lowerInput.includes("sector")) {
           // Group by sector
-          const sectorPerformance = analyzedCompanies.reduce((acc, c) => {
+          const sectorPerformance = companiesWithData.reduce((acc, c) => {
             if (!acc[c.sector]) {
               acc[c.sector] = { total: 0, positive: 0, bestProfit: 0, bestCompany: '' }
             }
@@ -368,7 +368,7 @@ ${topSectors.map(([sector, data], i) =>
 
 Total sectors tracked: ${Object.keys(sectorPerformance).length}`
         } else if (lowerInput.includes("turnaround")) {
-          const turnarounds = analyzedCompanies.filter(c => c.yoyCategory === 5)
+          const turnarounds = companiesWithData.filter(c => c.yoyCategory === 5)
           response = `## Turnaround Companies (Category 5)
 
 ${turnarounds.length > 0 ? turnarounds.map(c =>
@@ -379,7 +379,7 @@ These companies have turned from loss to profit.`
         } else {
           response = `## Market Intelligence
 
-Data available on **${totalCompanies} Malaysian listed companies**.
+Data available on **${totalCompaniesCount} Malaysian listed companies**.
 Financial analysis completed for **${analyzedCount} companies**.
 
 ### Quick Stats by Category
@@ -418,9 +418,7 @@ What would you like to explore?`
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const selectedCompanyData = COMPANY_DATA.find(c => c.code === selectedCompany)
-  const allCompanies = getAllCompaniesForSelector()
-  const analyzedCompanies = getCompaniesForSelector()
+  const selectedCompanyData = allCompaniesData.find(c => c.code === selectedCompany)
 
   // Placeholder content for unauthenticated users
   const chatPreview = (
@@ -545,7 +543,7 @@ What would you like to explore?`
                 <SelectItem value="all">
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4" />
-                    All Companies ({getTotalCompanyCount()} stocks)
+                    All Companies ({allCompaniesData.length} stocks)
                   </div>
                 </SelectItem>
                 <Separator className="my-1" />
