@@ -35,7 +35,7 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useCompanyStats } from "@/hooks/use-companies"
+import { useCompanyStatsContext } from "@/contexts/CompanyStatsContext"
 import { MarketOverviewCard } from "@/components/dashboard/MarketOverviewCard"
 
 // Performance Categories
@@ -121,8 +121,8 @@ export default function DashboardPage() {
   const [selectedSector, setSelectedSector] = useState("All Sectors")
   const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
 
-  // Fetch data from database API
-  const { stats, isLoading: loading, refetch } = useCompanyStats()
+  // Get data from shared context (single fetch, shared across Header, Sidebar, Dashboard)
+  const { stats, isLoading: loading, refetch } = useCompanyStatsContext()
 
   // Build current data based on active tab
   const yoyCategoryCounts = stats?.yoyCategoryCounts || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }

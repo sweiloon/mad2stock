@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Bell, Search, Menu, Moon, Sun, TrendingUp, Star, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useCompanyStats } from "@/hooks/use-companies"
+import { useCompanyStatsContext } from "@/contexts/CompanyStatsContext"
 import { UserMenu } from "@/components/auth/UserMenu"
 import { useAuth } from "@/components/auth/AuthProvider"
 
@@ -22,7 +22,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const { theme, setTheme } = useTheme()
   const { user } = useAuth()
-  const { stats } = useCompanyStats()
+  const { stats } = useCompanyStatsContext()
 
   // Get top strong buy companies (Category 1 with highest profit growth) from database
   const strongBuyCompanies = useMemo(() => {

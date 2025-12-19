@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 60 // Cache for 60 seconds
 
 /**
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '1000')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Build the query
+    // Build the query - Note: 'market' field doesn't exist in database
     let query = supabase
       .from('companies')
       .select(`
@@ -36,7 +37,6 @@ export async function GET(request: NextRequest) {
         name,
         numeric_code,
         sector,
-        market,
         market_cap,
         current_price,
         yoy_analysis (
@@ -59,9 +59,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('sector', sector)
     }
 
-    if (market && market !== 'all') {
-      query = query.eq('market', market)
-    }
+    // Note: 'market' filter removed - field doesn't exist in database
 
     if (search) {
       query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%`)
@@ -92,7 +90,7 @@ export async function GET(request: NextRequest) {
         name: company.name,
         stockCode: company.numeric_code,
         sector: company.sector || 'Other',
-        market: company.market || 'Main',
+        market: 'Main', // Default value since field doesn't exist in DB
         marketCap: company.market_cap ? company.market_cap / 1000000 : undefined, // Convert to millions
         currentPrice: company.current_price,
         yoyCategory: yoy?.category || undefined,

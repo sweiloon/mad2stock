@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { useCompanyStats } from "@/hooks/use-companies"
+import { useCompanyStatsContext } from "@/contexts/CompanyStatsContext"
 import {
   LayoutDashboard,
   Building2,
@@ -56,7 +56,7 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname()
   const [marketOpen, setMarketOpen] = useState(false)
-  const { stats } = useCompanyStats()
+  const { stats } = useCompanyStatsContext()
 
   // Check market status on mount and every minute
   useEffect(() => {
