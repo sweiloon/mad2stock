@@ -172,8 +172,6 @@ export function useCompanyStats(): UseCompanyStatsResult {
   const [stats, setStats] = useState<CompanyStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
-  const isMountedRef = useRef(true)
 
   const fetchStats = useCallback(async (skipCache = false) => {
     const cacheKey = 'stats'
@@ -188,19 +186,11 @@ export function useCompanyStats(): UseCompanyStatsResult {
       }
     }
 
-    // Cancel any ongoing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-    abortControllerRef.current = new AbortController()
-
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await fetch('/api/companies/stats', {
-        signal: abortControllerRef.current.signal,
-      })
+      const response = await fetch('/api/companies/stats')
 
       if (!response.ok) {
         throw new Error('Failed to fetch statistics')
@@ -208,39 +198,63 @@ export function useCompanyStats(): UseCompanyStatsResult {
 
       const data = await response.json()
 
-      // Only update state if component is still mounted
-      if (isMountedRef.current) {
-        // Update cache
-        setCache(cacheKey, data)
-        setStats(data)
-        setIsLoading(false)
-      }
+      // Update cache and state
+      setCache(cacheKey, data)
+      setStats(data)
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        return // Ignore abort errors
-      }
-      if (isMountedRef.current) {
-        setError(err instanceof Error ? err.message : 'Unknown error')
-        setStats(null)
-        setIsLoading(false)
-      }
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      setStats(null)
+    } finally {
+      setIsLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    isMountedRef.current = true
-    fetchStats()
+    let cancelled = false
 
-    return () => {
-      isMountedRef.current = false
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
+    const doFetch = async () => {
+      const cacheKey = 'stats'
+
+      // Check cache first
+      const cached = getCached<CompanyStats>(cacheKey)
+      if (cached) {
+        setStats(cached)
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch('/api/companies/stats')
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch statistics')
+        }
+
+        const data = await response.json()
+
+        if (!cancelled) {
+          setCache(cacheKey, data)
+          setStats(data)
+          setIsLoading(false)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Unknown error')
+          setStats(null)
+          setIsLoading(false)
+        }
       }
     }
-  }, [fetchStats])
+
+    doFetch()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const refetch = useCallback(() => {
-    fetchStats(true) // Skip cache on manual refetch
+    fetchStats(true)
   }, [fetchStats])
 
   return { stats, isLoading, error, refetch }

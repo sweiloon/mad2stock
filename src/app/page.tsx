@@ -78,6 +78,23 @@ function MarketOverviewSkeleton() {
   )
 }
 
+// Loading skeleton for the full dashboard
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-4 p-1">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-20 rounded-lg" />
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Skeleton className="h-80 lg:col-span-2 rounded-lg" />
+        <Skeleton className="h-80 rounded-lg" />
+      </div>
+    </div>
+  )
+}
+
 // Performance Categories
 const PERFORMANCE_CATEGORIES = [
   {
@@ -156,7 +173,8 @@ const recentSignals = [
   { company: "PRKCORP", type: "volume", title: "Unusual Volume Spike", time: "5h", strength: "watch" },
 ]
 
-export default function DashboardPage() {
+// Dashboard content component - must be rendered inside MainLayout/CompanyStatsProvider
+function DashboardContent() {
   const [activeTab, setActiveTab] = useState("yoy")
   const [selectedSector, setSelectedSector] = useState("All Sectors")
   const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
@@ -191,25 +209,10 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return (
-      <MainLayout>
-        <div className="space-y-4 p-1">
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-20 rounded-lg" />
-            ))}
-          </div>
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Skeleton className="h-80 lg:col-span-2 rounded-lg" />
-            <Skeleton className="h-80 rounded-lg" />
-          </div>
-        </div>
-      </MainLayout>
-    )
+    return <DashboardSkeleton />
   }
 
   return (
-    <MainLayout>
       <div className="space-y-4 p-1">
         {/* Market Overview Stats - Compact Row */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -697,6 +700,14 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+  )
+}
+
+// Main page component - wraps content in MainLayout which provides the context
+export default function DashboardPage() {
+  return (
+    <MainLayout>
+      <DashboardContent />
     </MainLayout>
   )
 }
