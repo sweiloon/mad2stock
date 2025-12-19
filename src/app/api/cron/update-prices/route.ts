@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getAllStockCodes } from '@/lib/stock-codes'
-import { hasAnalysisData } from '@/lib/company-data'
+import { getCompanyByCode } from '@/lib/company-data'
 import { fetchHybridBatchQuotes } from '@/lib/hybrid-stock-api'
 import { checkEODHDStatus } from '@/lib/eodhd-api'
 import {
@@ -83,10 +83,11 @@ function getAllStocksSorted(): { code: string; tier: 1 | 3 }[] {
   const stocks: { code: string; tier: 1 | 3 }[] = []
 
   for (const code of allCodes) {
-    // Use hasAnalysisData to determine tier (replaces old isCore80Stock)
+    // Use getCompanyByCode to determine tier (replaces old isCore80Stock)
     // Stocks with analysis data → Tier 1 (higher priority, more frequent updates)
     // Other stocks → Tier 3 (lower priority)
-    const hasAnalysis = hasAnalysisData(code)
+    const company = getCompanyByCode(code)
+    const hasAnalysis = company?.hasAnalysis === true
     stocks.push({ code, tier: hasAnalysis ? TIER_1 : TIER_3 })
   }
 

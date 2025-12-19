@@ -77,7 +77,8 @@ export default function CompaniesPage() {
     return allCompanies
       .filter(company => {
         const matchesSearch = company.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          company.name.toLowerCase().includes(searchQuery.toLowerCase())
+          company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (company.stockCode && company.stockCode.includes(searchQuery))
 
         // Data availability filter
         const hasData = hasFinancialData(company)
@@ -110,6 +111,14 @@ export default function CompaniesPage() {
           case "latestRevenue":
             aVal = a.latestRevenue ?? -999999
             bVal = b.latestRevenue ?? -999999
+            break
+          case "price":
+            aVal = a.currentPrice ?? -999999
+            bVal = b.currentPrice ?? -999999
+            break
+          case "stockCode":
+            aVal = a.stockCode ?? ""
+            bVal = b.stockCode ?? ""
             break
           default:
             aVal = a.code
@@ -218,7 +227,7 @@ export default function CompaniesPage() {
                 <div className="relative flex-1 max-w-sm">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search companies..."
+                    placeholder="Search by code, name, or stock number..."
                     className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -328,7 +337,23 @@ export default function CompaniesPage() {
                         Code <ArrowUpDown className="h-3 w-3" />
                       </div>
                     </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[80px]"
+                      onClick={() => handleSort("stockCode")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Stock # <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
                     <TableHead className="min-w-[180px]">Name</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[100px]"
+                      onClick={() => handleSort("price")}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Price <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
                     <TableHead className="w-[120px]">Sector</TableHead>
                     <TableHead className="w-[100px]">Category</TableHead>
                     <TableHead
@@ -372,7 +397,15 @@ export default function CompaniesPage() {
                             {company.code}
                           </Link>
                         </TableCell>
+                        <TableCell className="text-muted-foreground font-mono text-sm">
+                          {company.stockCode || "—"}
+                        </TableCell>
                         <TableCell className="truncate max-w-[180px]">{company.name}</TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {company.currentPrice !== undefined && company.currentPrice !== null
+                            ? `RM ${company.currentPrice.toFixed(2)}`
+                            : "—"}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{company.sector}</Badge>
                         </TableCell>
@@ -420,14 +453,24 @@ export default function CompaniesPage() {
                   <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{company.code}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">{company.code}</CardTitle>
+                          <span className="text-xs font-mono text-muted-foreground">{company.stockCode}</span>
+                        </div>
                         {catInfo ? (
                           <Badge className={catInfo.color}>Cat {category}</Badge>
                         ) : (
                           <Badge variant="secondary" className="bg-gray-100 text-gray-500">Pending</Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">{company.name}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground truncate flex-1">{company.name}</p>
+                        {company.currentPrice !== undefined && company.currentPrice !== null && (
+                          <span className="text-sm font-semibold text-green-600 ml-2">
+                            RM {company.currentPrice.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between text-sm">
@@ -460,7 +503,9 @@ export default function CompaniesPage() {
                 <thead className="sticky top-0 bg-card z-10">
                   <tr className="bg-muted">
                     <th className="border px-3 py-2 text-left font-medium">Code</th>
+                    <th className="border px-3 py-2 text-left font-medium">Stock #</th>
                     <th className="border px-3 py-2 text-left font-medium">Name</th>
+                    <th className="border px-3 py-2 text-right font-medium">Price (RM)</th>
                     <th className="border px-3 py-2 text-left font-medium">Sector</th>
                     <th className="border px-3 py-2 text-center font-medium">YoY Cat</th>
                     <th className="border px-3 py-2 text-center font-medium">QoQ Cat</th>
@@ -479,7 +524,13 @@ export default function CompaniesPage() {
                           {company.code}
                         </Link>
                       </td>
+                      <td className="border px-3 py-2 font-mono text-muted-foreground">{company.stockCode || "—"}</td>
                       <td className="border px-3 py-2">{company.name}</td>
+                      <td className="border px-3 py-2 text-right tabular-nums">
+                        {company.currentPrice !== undefined && company.currentPrice !== null
+                          ? company.currentPrice.toFixed(2)
+                          : "—"}
+                      </td>
                       <td className="border px-3 py-2">{company.sector}</td>
                       <td className="border px-3 py-2 text-center">{company.yoyCategory ?? "—"}</td>
                       <td className="border px-3 py-2 text-center">{company.qoqCategory ?? "—"}</td>

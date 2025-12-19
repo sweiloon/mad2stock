@@ -13,7 +13,7 @@
  * Total Daily API Calls: ~450 (well under 2000/hour limit)
  */
 
-import { COMPANY_DATA, hasAnalysisData, getAnalyzedStockCodes } from './company-data'
+import { COMPANY_DATA, getAnalyzedStockCodes, getCompanyByCode } from './company-data'
 
 // Tier constants
 export const TIER_1 = 1
@@ -55,7 +55,8 @@ export function getCoreStockCodes(): string[] {
  */
 export function isCore80(stockCode: string): boolean {
   const cleanCode = stockCode.replace(/\.(KL|KLS|KLSE)$/i, '').toUpperCase()
-  return hasAnalysisData(cleanCode)
+  const company = getCompanyByCode(cleanCode)
+  return company?.hasAnalysis === true
 }
 
 /**
