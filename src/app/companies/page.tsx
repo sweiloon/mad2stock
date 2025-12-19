@@ -120,7 +120,7 @@ export default function CompaniesPage() {
         }
         return aVal < bVal ? 1 : -1
       })
-  }, [searchQuery, categoryFilter, sectorFilter, boardFilter, dataFilter, analysisType, sortField, sortDirection])
+  }, [allCompanies, searchQuery, categoryFilter, sectorFilter, boardFilter, dataFilter, analysisType, sortField, sortDirection])
 
   const handleSort = (field: string) => {
     if (sortField === field) {
