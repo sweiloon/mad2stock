@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, lazy, Suspense } from "react"
 import Link from "next/link"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -36,7 +36,47 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCompanyStatsContext } from "@/contexts/CompanyStatsContext"
-import { MarketOverviewCard } from "@/components/dashboard/MarketOverviewCard"
+
+// Lazy load MarketOverviewCard - it makes its own API call and is below the fold
+const MarketOverviewCard = lazy(() =>
+  import("@/components/dashboard/MarketOverviewCard").then(mod => ({ default: mod.MarketOverviewCard }))
+)
+
+// Loading skeleton for MarketOverviewCard
+function MarketOverviewSkeleton() {
+  return (
+    <Card className="trading-card">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-8 rounded-lg" />
+          <div>
+            <Skeleton className="h-5 w-32 mb-1" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-8 w-8 rounded" />
+                <div>
+                  <Skeleton className="h-4 w-20 mb-1" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+              <div className="text-right">
+                <Skeleton className="h-4 w-16 mb-1" />
+                <Skeleton className="h-3 w-12 ml-auto" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 // Performance Categories
 const PERFORMANCE_CATEGORIES = [
@@ -610,8 +650,10 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Market Overview */}
-        <MarketOverviewCard />
+        {/* Market Overview - Lazy loaded */}
+        <Suspense fallback={<MarketOverviewSkeleton />}>
+          <MarketOverviewCard />
+        </Suspense>
 
         {/* Quick Actions */}
         <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">

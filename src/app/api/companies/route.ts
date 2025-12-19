@@ -2,33 +2,52 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 60 // Cache for 60 seconds
+
+// In-memory cache for companies (2 minute TTL)
+let companiesCache: { data: unknown[]; timestamp: number } | null = null
+const CACHE_TTL = 2 * 60 * 1000 // 2 minutes
 
 /**
  * GET /api/companies
  * Fetch all companies with their YoY/QoQ analysis data from database
+ * Optimized with in-memory caching for base queries
  *
  * Query params:
  * - sector: Filter by sector
  * - category: Filter by YoY category (1-5)
- * - market: Filter by market (Main, ACE, LEAP)
  * - search: Search by code or name
  * - limit: Limit results
  * - offset: Offset for pagination
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
     const { searchParams } = new URL(request.url)
 
     const sector = searchParams.get('sector')
     const category = searchParams.get('category')
-    const market = searchParams.get('market')
     const search = searchParams.get('search')
     const limit = parseInt(searchParams.get('limit') || '1000')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Build the query - Note: 'market' field doesn't exist in database
+    // Check if we can use cache (no filters applied)
+    const isBaseQuery = !sector && !category && !search && offset === 0 && limit >= 1000
+
+    if (isBaseQuery && companiesCache && Date.now() - companiesCache.timestamp < CACHE_TTL) {
+      return NextResponse.json({
+        companies: companiesCache.data,
+        total: companiesCache.data.length,
+        hasMore: false
+      }, {
+        headers: {
+          'X-Cache': 'HIT',
+          'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+        },
+      })
+    }
+
+    const supabase = await createClient()
+
+    // Build the query
     let query = supabase
       .from('companies')
       .select(`
@@ -58,8 +77,6 @@ export async function GET(request: NextRequest) {
     if (sector && sector !== 'all') {
       query = query.eq('sector', sector)
     }
-
-    // Note: 'market' filter removed - field doesn't exist in database
 
     if (search) {
       query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%`)
@@ -91,7 +108,7 @@ export async function GET(request: NextRequest) {
         stockCode: company.numeric_code,
         sector: company.sector || 'Other',
         market: 'Main', // Default value since field doesn't exist in DB
-        marketCap: company.market_cap ? company.market_cap / 1000000 : undefined, // Convert to millions
+        marketCap: company.market_cap ? company.market_cap / 1000000 : undefined,
         currentPrice: company.current_price,
         yoyCategory: yoy?.category || undefined,
         qoqCategory: qoq?.category || undefined,
@@ -99,8 +116,8 @@ export async function GET(request: NextRequest) {
         profitYoY: yoy?.profit_change_pct || undefined,
         revenueQoQ: qoq?.revenue_change_pct || undefined,
         profitQoQ: qoq?.profit_change_pct || undefined,
-        latestRevenue: yoy?.revenue_current ? yoy.revenue_current / 1000000 : undefined, // Convert to millions
-        latestProfit: yoy?.profit_current ? yoy.profit_current / 1000000 : undefined, // Convert to millions
+        latestRevenue: yoy?.revenue_current ? yoy.revenue_current / 1000000 : undefined,
+        latestProfit: yoy?.profit_current ? yoy.profit_current / 1000000 : undefined,
         hasAnalysis: yoy?.category !== undefined || qoq?.category !== undefined
       }
     }) || []
@@ -112,10 +129,23 @@ export async function GET(request: NextRequest) {
       filteredData = transformedData.filter(c => c.yoyCategory === categoryNum)
     }
 
+    // Update cache if this is a base query
+    if (isBaseQuery) {
+      companiesCache = {
+        data: filteredData,
+        timestamp: Date.now()
+      }
+    }
+
     return NextResponse.json({
       companies: filteredData,
       total: filteredData.length,
       hasMore: companies?.length === limit
+    }, {
+      headers: {
+        'X-Cache': 'MISS',
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+      },
     })
 
   } catch (error) {

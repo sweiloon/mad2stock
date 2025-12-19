@@ -2,76 +2,124 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 300 // Cache for 5 minutes
+
+// In-memory cache for stats (5 minute TTL)
+let statsCache: { data: unknown; timestamp: number } | null = null
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 /**
  * GET /api/companies/stats
  * Fetch aggregated statistics for dashboard
+ * Optimized with parallel queries and in-memory caching
  */
 export async function GET() {
   try {
+    // Check cache first
+    if (statsCache && Date.now() - statsCache.timestamp < CACHE_TTL) {
+      return NextResponse.json(statsCache.data, {
+        headers: {
+          'X-Cache': 'HIT',
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      })
+    }
+
     const supabase = await createClient()
 
-    // Get total company count
-    const { count: totalCompanies } = await supabase
-      .from('companies')
-      .select('*', { count: 'exact', head: true })
+    // Run all queries in parallel for maximum speed
+    const [
+      companiesResult,
+      yoyCountsResult,
+      qoqCountsResult,
+      sectorDataResult,
+      topPerformersResult,
+    ] = await Promise.all([
+      // Query 1: Get total company count
+      supabase
+        .from('companies')
+        .select('*', { count: 'exact', head: true }),
 
-    // Get YoY category counts
-    const { data: yoyCounts } = await supabase
-      .from('yoy_analysis')
-      .select('category')
+      // Query 2: Get YoY categories and profit data in one query
+      supabase
+        .from('yoy_analysis')
+        .select('category, profit_change_pct'),
 
+      // Query 3: Get QoQ categories
+      supabase
+        .from('qoq_analysis')
+        .select('category'),
+
+      // Query 4: Get sector stats with yoy_analysis
+      supabase
+        .from('companies')
+        .select(`
+          sector,
+          yoy_analysis (
+            profit_change_pct
+          )
+        `),
+
+      // Query 5: Get top performers (limit to reduce data transfer)
+      supabase
+        .from('companies')
+        .select(`
+          code,
+          name,
+          numeric_code,
+          sector,
+          yoy_analysis (
+            category,
+            profit_change_pct,
+            revenue_change_pct,
+            revenue_current,
+            profit_current
+          ),
+          qoq_analysis (
+            category,
+            profit_change_pct,
+            revenue_change_pct
+          )
+        `)
+        .limit(300), // Reduced from 500
+    ])
+
+    const totalCompanies = companiesResult.count || 0
+    const yoyCounts = yoyCountsResult.data as { category: number; profit_change_pct: number }[] || []
+    const qoqCounts = qoqCountsResult.data as { category: number }[] || []
+    const sectorData = sectorDataResult.data as { sector: string; yoy_analysis: { profit_change_pct: number }[] | { profit_change_pct: number } }[] || []
+    const topPerformersData = topPerformersResult.data || []
+
+    // Process YoY category counts and gainers/losers from same data
     const yoyCategoryCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(yoyCounts as any[])?.forEach((row: any) => {
-      if (row.category >= 1 && row.category <= 5) {
-        yoyCategoryCounts[row.category]++
-      }
-    })
-
-    // Get QoQ category counts
-    const { data: qoqCounts } = await supabase
-      .from('qoq_analysis')
-      .select('category')
-
-    const qoqCategoryCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(qoqCounts as any[])?.forEach((row: any) => {
-      if (row.category >= 1 && row.category <= 5) {
-        qoqCategoryCounts[row.category]++
-      }
-    })
-
-    // Get gainers/losers count based on profit change
-    const { data: profitData } = await supabase
-      .from('yoy_analysis')
-      .select('profit_change_pct')
-
     let gainers = 0
     let losers = 0
     let unchanged = 0
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(profitData as any[])?.forEach((row: any) => {
+
+    yoyCounts.forEach((row) => {
+      if (row.category >= 1 && row.category <= 5) {
+        yoyCategoryCounts[row.category]++
+      }
       if (row.profit_change_pct > 0) gainers++
       else if (row.profit_change_pct < 0) losers++
       else unchanged++
     })
 
-    // Get sector statistics
-    const { data: sectorData } = await supabase
-      .from('companies')
-      .select(`
-        sector,
-        yoy_analysis (
-          profit_change_pct
-        )
-      `)
+    // Process QoQ category counts
+    const qoqCategoryCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    qoqCounts.forEach((row) => {
+      if (row.category >= 1 && row.category <= 5) {
+        qoqCategoryCounts[row.category]++
+      }
+    })
 
+    // Process sector statistics
     const sectorStats: Record<string, { count: number; gainers: number; totalProfit: number }> = {}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(sectorData as any[])?.forEach((company: any) => {
+    const sectorsSet = new Set<string>()
+
+    sectorData.forEach((company) => {
       const sector = company.sector || 'Other'
+      sectorsSet.add(sector)
+
       if (!sectorStats[sector]) {
         sectorStats[sector] = { count: 0, gainers: 0, totalProfit: 0 }
       }
@@ -97,34 +145,12 @@ export async function GET() {
       }))
       .filter(s => s.count > 0)
       .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
 
-    // Get top performers (YoY category 1, sorted by profit)
-    const { data: topPerformersData } = await supabase
-      .from('companies')
-      .select(`
-        code,
-        name,
-        numeric_code,
-        sector,
-        yoy_analysis (
-          category,
-          profit_change_pct,
-          revenue_change_pct,
-          revenue_current,
-          profit_current
-        ),
-        qoq_analysis (
-          category,
-          profit_change_pct,
-          revenue_change_pct
-        )
-      `)
-      .order('code')
-      .limit(500)
-
+    // Process top performers
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const topYoYPerformers = (topPerformersData as any[])
-      ?.filter((c: any) => {
+      .filter((c) => {
         const yoy = Array.isArray(c.yoy_analysis) ? c.yoy_analysis[0] : c.yoy_analysis
         return yoy?.category === 1
       })
@@ -149,11 +175,11 @@ export async function GET() {
           latestRevenue: yoy?.revenue_current ? yoy.revenue_current / 1000000 : undefined,
           latestProfit: yoy?.profit_current ? yoy.profit_current / 1000000 : undefined
         }
-      }) || []
+      })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const topQoQPerformers = (topPerformersData as any[])
-      ?.filter((c: any) => {
+      .filter((c) => {
         const qoq = Array.isArray(c.qoq_analysis) ? c.qoq_analysis[0] : c.qoq_analysis
         return qoq?.category === 1
       })
@@ -176,26 +202,33 @@ export async function GET() {
           profitQoQ: qoq?.profit_change_pct,
           revenueQoQ: qoq?.revenue_change_pct
         }
-      }) || []
+      })
 
-    // Get all unique sectors
-    const { data: sectorsData } = await supabase
-      .from('companies')
-      .select('sector')
+    const sectors = Array.from(sectorsSet).filter(Boolean).sort()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sectors = [...new Set((sectorsData as any[])?.map((c: any) => c.sector).filter(Boolean))].sort()
-
-    return NextResponse.json({
-      totalCompanies: totalCompanies || 0,
-      analyzedCompanies: yoyCounts?.length || 0,
+    const responseData = {
+      totalCompanies,
+      analyzedCompanies: yoyCounts.length,
       yoyCategoryCounts,
       qoqCategoryCounts,
       gainersLosers: { gainers, losers, unchanged },
-      sectorStats: sectorStatsArray.slice(0, 10),
+      sectorStats: sectorStatsArray,
       topYoYPerformers,
       topQoQPerformers,
       sectors
+    }
+
+    // Update cache
+    statsCache = {
+      data: responseData,
+      timestamp: Date.now()
+    }
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'X-Cache': 'MISS',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
     })
 
   } catch (error) {
