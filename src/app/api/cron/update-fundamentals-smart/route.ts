@@ -223,10 +223,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const url = new URL(request.url)
+  const forceUpdate = url.searchParams.get('force') === 'true'
+
   const supabase = createAdminClient()
 
-  // Get stale stocks that need updating
-  const staleStocks = await getStaleStocks(supabase, STOCKS_PER_RUN)
+  // Get stale stocks that need updating (or any 5 stocks if force=true)
+  let staleStocks: { stock_code: string; updated_at: string | null }[]
+
+  if (forceUpdate) {
+    // Force mode: get any 5 stocks that don't have fundamentals data
+    const { data } = await supabase
+      .from('stock_prices')
+      .select('stock_code, updated_at')
+      .is('market_cap', null)
+      .limit(STOCKS_PER_RUN)
+    staleStocks = data || []
+  } else {
+    staleStocks = await getStaleStocks(supabase, STOCKS_PER_RUN)
+  }
 
   if (staleStocks.length === 0) {
     const stats = await getUpdateStats(supabase)

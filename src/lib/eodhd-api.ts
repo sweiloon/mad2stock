@@ -411,38 +411,53 @@ export interface EODHDFundamentals {
 
 /**
  * Fetch fundamentals data for a single stock from EODHD
- * Uses the fundamentals endpoint which provides market cap, P/E, EPS, etc.
+ * Uses 1-year historical data to calculate 52-week high/low
+ * Note: Market cap, P/E, EPS, dividend yield require paid plan (fundamentals endpoint)
  */
 async function fetchSingleFundamentals(stockCode: string): Promise<EODHDFundamentals | null> {
   try {
     const symbol = toEODHDSymbol(stockCode)
-    const url = `${EODHD_BASE_URL}/fundamentals/${symbol}?api_token=${EODHD_API_KEY}&fmt=json`
+
+    // Calculate date range for 52 weeks (1 year) of data
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setFullYear(startDate.getFullYear() - 1)
+
+    const url = `${EODHD_BASE_URL}/eod/${symbol}?api_token=${EODHD_API_KEY}&fmt=json&from=${startDate.toISOString().split('T')[0]}&to=${endDate.toISOString().split('T')[0]}`
 
     const response = await fetchWithTimeout(url, {
       headers: { 'Accept': 'application/json' },
       cache: 'no-store',
-    }, 15000) // 15 second timeout for fundamentals
+    }, 15000)
 
     if (!response.ok) {
       console.error(`[EODHD Fundamentals] Error for ${stockCode}: ${response.status}`)
       return null
     }
 
-    const data = await response.json()
+    const data: EODHDHistoricalData[] = await response.json()
 
-    // EODHD returns nested structure, extract the values we need
-    // Highlights: MarketCapitalization, PERatio, EarningsShare, DividendYield
-    // Technicals: 52WeekHigh, 52WeekLow
-    const highlights = data.Highlights || {}
-    const technicals = data.Technicals || {}
+    if (!Array.isArray(data) || data.length === 0) {
+      console.error(`[EODHD Fundamentals] No data for ${stockCode}`)
+      return null
+    }
+
+    // Calculate 52-week high and low from historical data
+    let week52High = -Infinity
+    let week52Low = Infinity
+
+    for (const day of data) {
+      if (day.high > week52High) week52High = day.high
+      if (day.low < week52Low) week52Low = day.low
+    }
 
     return {
-      marketCap: highlights.MarketCapitalization || null,
-      peRatio: highlights.PERatio || null,
-      eps: highlights.EarningsShare || null,
-      dividendYield: highlights.DividendYield ? highlights.DividendYield * 100 : null, // Convert to percentage
-      week52High: technicals['52WeekHigh'] || null,
-      week52Low: technicals['52WeekLow'] || null,
+      marketCap: null, // Requires paid fundamentals endpoint
+      peRatio: null,   // Requires paid fundamentals endpoint
+      eps: null,       // Requires paid fundamentals endpoint
+      dividendYield: null, // Requires paid fundamentals endpoint
+      week52High: week52High !== -Infinity ? week52High : null,
+      week52Low: week52Low !== Infinity ? week52Low : null,
     }
   } catch (error) {
     console.error(`[EODHD Fundamentals] Error fetching ${stockCode}:`, error)
