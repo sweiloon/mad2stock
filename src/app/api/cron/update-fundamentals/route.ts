@@ -14,13 +14,12 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 //
 // PURPOSE: Fetch and update fundamental data (Market Cap, P/E, EPS, etc.)
 //
-// STRATEGY: Same 16-slice parallel pattern as price cron for timeout safety
-// - Each slice processes ~48 stocks (763 / 16)
-// - 10 stocks per batch within each slice
-// - Yahoo API uses 3 parallel requests with 500ms delay (fast mode)
-// - Each slice completes in ~30-40 seconds (well under 60s Vercel limit)
-// - All 16 slices run in parallel via cronjob.org
-// - Completes in ~1-2 minutes total
+// STRATEGY: Rotating offset pattern to handle Yahoo's strict rate limiting
+// - Yahoo quoteSummary is heavily rate-limited (~2s per request minimum)
+// - Each cron call only processes 5 stocks from its slice
+// - Uses day-of-week offset to cycle through all stocks over time
+// - 16 slices × 5 stocks = 80 stocks per cron cycle
+// - All 763 stocks updated over ~10 workdays
 //
 // SCHEDULE: Controlled by cronjob.org (set to Asia/Kuala_Lumpur timezone)
 // - User schedule: 0 6 * * 1-5 (6am MYT Monday-Friday)
@@ -30,51 +29,46 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 //
 // ============================================================================
 
-const TOTAL_SLICES = 16          // Number of parallel cron jobs (same as price cron)
-const STOCKS_PER_BATCH = 5       // Stocks per Yahoo API call (reduced for faster processing)
+const TOTAL_SLICES = 16          // Number of parallel cron jobs
+const STOCKS_PER_CALL = 5        // Stocks to process per cron call (safe for 60s limit)
 
 // ============================================================================
 // SECURITY VALIDATION
 // ============================================================================
 
 function validateRequest(request: NextRequest): boolean {
-  // Vercel cron header
   const vercelCronHeader = request.headers.get('x-vercel-cron')
   if (vercelCronHeader) return true
 
-  // Bearer token
   const authHeader = request.headers.get('authorization')
   if (authHeader) {
     const token = authHeader.replace('Bearer ', '')
     return token === process.env.CRON_SECRET
   }
 
-  // Query param secret
   const url = new URL(request.url)
   const secret = url.searchParams.get('secret')
   if (secret && secret === process.env.CRON_SECRET) return true
 
-  // Development mode
   if (process.env.NODE_ENV === 'development') return true
 
   return false
 }
 
 // ============================================================================
-// MALAYSIA TIMEZONE HELPER (for logging only)
+// MALAYSIA TIMEZONE HELPER
 // ============================================================================
 
 function getMalaysiaTime(): Date {
-  // Get current time in Malaysia timezone (UTC+8)
   const now = new Date()
-  const malaysiaOffset = 8 * 60 // UTC+8 in minutes
-  const utcOffset = now.getTimezoneOffset() // Local offset from UTC
+  const malaysiaOffset = 8 * 60
+  const utcOffset = now.getTimezoneOffset()
   const malaysiaTime = new Date(now.getTime() + (malaysiaOffset + utcOffset) * 60 * 1000)
   return malaysiaTime
 }
 
 // ============================================================================
-// STOCK SLICING (Same logic as price cron)
+// STOCK SLICING WITH ROTATING OFFSET
 // ============================================================================
 
 function getAllStocksSorted(): { code: string; tier: 1 | 3 }[] {
@@ -87,12 +81,11 @@ function getAllStocksSorted(): { code: string; tier: 1 | 3 }[] {
     stocks.push({ code, tier: hasAnalysis ? TIER_1 : TIER_3 })
   }
 
-  // Sort: Tier 1 first, then Tier 3
   stocks.sort((a, b) => a.tier - b.tier)
   return stocks
 }
 
-function getSliceStocks(sliceIndex: number): { code: string; tier: 1 | 3 }[] {
+function getSliceInfo(sliceIndex: number): { code: string; tier: 1 | 3 }[] {
   const allStocks = getAllStocksSorted()
   const totalStocks = allStocks.length
   const stocksPerSlice = Math.ceil(totalStocks / TOTAL_SLICES)
@@ -103,11 +96,51 @@ function getSliceStocks(sliceIndex: number): { code: string; tier: 1 | 3 }[] {
   return allStocks.slice(sliceStartIdx, sliceEndIdx)
 }
 
+/**
+ * Get stocks for this cron call using rotating offset.
+ * Each call processes only STOCKS_PER_CALL stocks, cycling through over multiple days.
+ */
+function getStocksForThisCall(
+  sliceIndex: number,
+  currentTime: Date
+): {
+  stocks: { code: string; tier: 1 | 3 }[]
+  offset: number
+  totalInSlice: number
+  cycleInfo: string
+} {
+  const allSliceStocks = getSliceInfo(sliceIndex)
+  const totalInSlice = allSliceStocks.length
+
+  if (totalInSlice === 0) {
+    return { stocks: [], offset: 0, totalInSlice: 0, cycleInfo: 'empty slice' }
+  }
+
+  // Calculate offset based on day - changes daily
+  // Uses day of year to cycle through stocks
+  const startOfYear = new Date(currentTime.getFullYear(), 0, 0)
+  const diff = currentTime.getTime() - startOfYear.getTime()
+  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  const cyclesNeeded = Math.ceil(totalInSlice / STOCKS_PER_CALL)
+  const offsetIndex = dayOfYear % cyclesNeeded
+  const offset = offsetIndex * STOCKS_PER_CALL
+
+  const stocks = allSliceStocks.slice(offset, offset + STOCKS_PER_CALL)
+
+  return {
+    stocks,
+    offset,
+    totalInSlice,
+    cycleInfo: `day ${dayOfYear}, offset ${offset}/${totalInSlice}, cycle ${offsetIndex + 1}/${cyclesNeeded}`
+  }
+}
+
 // ============================================================================
-// UPDATE FUNDAMENTALS FOR SLICE
+// UPDATE FUNDAMENTALS
 // ============================================================================
 
-async function updateSliceFundamentals(
+async function updateFundamentals(
   stocks: { code: string; tier: 1 | 3 }[],
   supabase: ReturnType<typeof createAdminClient>
 ): Promise<{
@@ -121,72 +154,57 @@ async function updateSliceFundamentals(
   let totalFailed = 0
   const allFailedCodes: string[] = []
 
-  // Process in batches of STOCKS_PER_BATCH
-  for (let i = 0; i < stocks.length; i += STOCKS_PER_BATCH) {
-    const batchStocks = stocks.slice(i, i + STOCKS_PER_BATCH)
-    const batchCodes = batchStocks.map(s => s.code)
-    const batchNum = Math.floor(i / STOCKS_PER_BATCH) + 1
-    const totalBatches = Math.ceil(stocks.length / STOCKS_PER_BATCH)
+  const stockCodes = stocks.map(s => s.code)
+  console.log(`[Fundamentals] Fetching ${stockCodes.length} stocks: ${stockCodes.join(', ')}`)
 
-    console.log(`[Fundamentals] Batch ${batchNum}/${totalBatches}: ${batchCodes.length} stocks`)
+  try {
+    const result = await fetchBatchFundamentals(stockCodes)
 
-    try {
-      // Fetch fundamentals from Yahoo Finance
-      const result = await fetchBatchFundamentals(batchCodes)
-
-      // Prepare update records
-      const updates: { stockCode: string; update: StockPriceUpdate }[] = []
-
-      for (const [code, fundamentals] of result.success) {
-        updates.push({
-          stockCode: code,
-          update: {
-            market_cap: fundamentals.marketCap,
-            pe_ratio: fundamentals.peRatio,
-            eps: fundamentals.eps,
-            dividend_yield: fundamentals.dividendYield,
-            week_52_high: fundamentals.week52High,
-            week_52_low: fundamentals.week52Low,
-            updated_at: new Date().toISOString(),
-          }
-        })
-      }
-
-      // Update each stock in the database
-      for (const { stockCode, update } of updates) {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { error } = await (supabase.from('stock_prices') as any)
-            .update(update)
-            .eq('stock_code', stockCode)
-
-          if (error) {
-            console.error(`[Fundamentals] DB error for ${stockCode}:`, error)
-            totalFailed++
-            allFailedCodes.push(stockCode)
-          } else {
-            totalUpdated++
-          }
-        } catch (err) {
-          console.error(`[Fundamentals] Error updating ${stockCode}:`, err)
-          totalFailed++
-          allFailedCodes.push(stockCode)
+    // Update database for successful fetches
+    for (const [code, fundamentals] of result.success) {
+      try {
+        const update: StockPriceUpdate = {
+          market_cap: fundamentals.marketCap,
+          pe_ratio: fundamentals.peRatio,
+          eps: fundamentals.eps,
+          dividend_yield: fundamentals.dividendYield,
+          week_52_high: fundamentals.week52High,
+          week_52_low: fundamentals.week52Low,
+          updated_at: new Date().toISOString(),
         }
-      }
 
-      // Track API failures
-      for (const failedCode of result.failed) {
-        if (!allFailedCodes.includes(failedCode)) {
-          allFailedCodes.push(failedCode)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('stock_prices') as any)
+          .update(update)
+          .eq('stock_code', code)
+
+        if (error) {
+          console.error(`[Fundamentals] DB error for ${code}:`, error)
           totalFailed++
+          allFailedCodes.push(code)
+        } else {
+          console.log(`[Fundamentals] Updated ${code}: MC=${fundamentals.marketCap}, PE=${fundamentals.peRatio}`)
+          totalUpdated++
         }
+      } catch (err) {
+        console.error(`[Fundamentals] Error updating ${code}:`, err)
+        totalFailed++
+        allFailedCodes.push(code)
       }
-
-    } catch (error) {
-      console.error(`[Fundamentals] Batch ${batchNum} error:`, error)
-      totalFailed += batchCodes.length
-      allFailedCodes.push(...batchCodes)
     }
+
+    // Track API failures
+    for (const failedCode of result.failed) {
+      if (!allFailedCodes.includes(failedCode)) {
+        allFailedCodes.push(failedCode)
+        totalFailed++
+      }
+    }
+
+  } catch (error) {
+    console.error(`[Fundamentals] Batch error:`, error)
+    totalFailed += stockCodes.length
+    allFailedCodes.push(...stockCodes)
   }
 
   return {
@@ -204,7 +222,6 @@ async function updateSliceFundamentals(
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
-  // Validate request
   if (!validateRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -212,13 +229,12 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const sliceParam = url.searchParams.get('slice')
 
-  // Validate slice parameter
   if (!sliceParam) {
     return NextResponse.json({
       error: 'Missing slice parameter',
       usage: 'Add ?slice=0 through ?slice=15 to specify which slice to process',
       totalSlices: TOTAL_SLICES,
-      schedule: 'Controlled by cronjob.org (6am MYT Monday-Friday)',
+      stocksPerCall: STOCKS_PER_CALL,
     }, { status: 400 })
   }
 
@@ -234,22 +250,23 @@ export async function GET(request: NextRequest) {
 
   console.log(`[Fundamentals] Running at ${malaysiaTime.toISOString()} MYT`)
 
-  // Get stocks for this slice
-  const sliceStocks = getSliceStocks(sliceIndex)
+  // Get stocks for this specific cron call using rotating offset
+  const { stocks, offset, totalInSlice, cycleInfo } = getStocksForThisCall(sliceIndex, malaysiaTime)
   const allStocks = getAllStocksSorted()
 
-  console.log(`[Fundamentals Slice ${sliceIndex}] Processing ${sliceStocks.length} stocks...`)
+  console.log(`[Fundamentals Slice ${sliceIndex}] ${cycleInfo}`)
 
-  if (sliceStocks.length === 0) {
+  if (stocks.length === 0) {
     return NextResponse.json({
       success: true,
       slice: sliceIndex,
-      message: 'No stocks in this slice',
+      message: 'No stocks for this cycle',
+      cycleInfo,
     })
   }
 
   try {
-    const result = await updateSliceFundamentals(sliceStocks, supabase)
+    const result = await updateFundamentals(stocks, supabase)
     const executionTime = Date.now() - startTime
 
     console.log(`[Fundamentals Slice ${sliceIndex}] Completed: ${result.updated} updated, ${result.failed} failed in ${executionTime}ms`)
@@ -259,23 +276,26 @@ export async function GET(request: NextRequest) {
       slice: sliceIndex,
       totalSlices: TOTAL_SLICES,
       sliceInfo: {
-        stocksInSlice: sliceStocks.length,
-        batchSize: STOCKS_PER_BATCH,
-        totalBatches: Math.ceil(sliceStocks.length / STOCKS_PER_BATCH),
+        stocksProcessed: stocks.length,
+        stocksPerCall: STOCKS_PER_CALL,
+        offset,
+        totalInSlice,
+        cycleInfo,
       },
       totalStocks: allStocks.length,
       result: {
         updated: result.updated,
         failed: result.failed,
-        failedCodes: result.failedCodes.slice(0, 10),
+        failedCodes: result.failedCodes,
       },
       timing: {
         executionTimeMs: executionTime,
         fetchTimeMs: result.totalTime,
       },
       schedule: {
-        description: 'Controlled by cronjob.org (Asia/Kuala_Lumpur timezone)',
+        description: 'Rotating offset - updates ~80 stocks per day across all slices',
         cronPattern: '0 6 * * 1-5 (6am MYT Monday-Friday)',
+        fullCycleTime: `~${Math.ceil(allStocks.length / (TOTAL_SLICES * STOCKS_PER_CALL))} workdays`,
       },
     })
   } catch (error) {

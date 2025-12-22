@@ -21,12 +21,12 @@ const BATCH_DELAY_MS = 0  // No batch delay since sequential
 const MAX_RETRIES = 2
 const INITIAL_RETRY_DELAY = 10000  // 10s wait after rate limit
 
-// Faster settings for fundamentals (runs once daily, less likely to hit rate limits)
-const FUNDAMENTALS_CONCURRENT = 5  // 5 parallel requests for fundamentals
-const FUNDAMENTALS_DELAY_MS = 100  // 100ms between batches
-const FUNDAMENTALS_RETRY_DELAY = 1000  // 1s retry (instead of 10s)
-const FUNDAMENTALS_MAX_RETRIES = 0  // No retries - skip failed stocks
-const FUNDAMENTALS_TIMEOUT = 5000  // 5s timeout per request
+// Conservative settings for fundamentals (Yahoo quoteSummary is heavily rate-limited)
+const FUNDAMENTALS_CONCURRENT = 1  // Sequential only - no parallel requests
+const FUNDAMENTALS_DELAY_MS = 2000  // 2 seconds between requests to avoid rate limiting
+const FUNDAMENTALS_RETRY_DELAY = 5000  // 5s retry delay
+const FUNDAMENTALS_MAX_RETRIES = 1  // 1 retry for failed stocks
+const FUNDAMENTALS_TIMEOUT = 8000  // 8s timeout per request
 
 export interface YahooQuoteResult {
   symbol: string
