@@ -22,6 +22,7 @@ import {
   DollarSign,
   ExternalLink,
   Clock,
+  Wifi,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCompanyDocuments, formatFileSize } from "@/hooks/use-documents"
@@ -130,7 +131,7 @@ function NotFound({ code }: { code: string }) {
   )
 }
 
-function PriceCard({ stock, loading, error }: {
+function PriceCard({ stock, loading, error, isRealtimeConnected }: {
   stock: {
     price: number | null
     change: number | null
@@ -141,6 +142,7 @@ function PriceCard({ stock, loading, error }: {
   } | null
   loading: boolean
   error: string | null
+  isRealtimeConnected?: boolean
 }) {
   const isPositive = (stock?.change ?? 0) >= 0
   const hasPrice = stock && stock.price !== null
@@ -149,7 +151,15 @@ function PriceCard({ stock, loading, error }: {
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-muted-foreground">Current Price</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Current Price</span>
+            {isRealtimeConnected && (
+              <div className="flex items-center gap-1 text-green-600">
+                <Wifi className="h-3 w-3" />
+                <span className="text-[10px] font-medium">LIVE</span>
+              </div>
+            )}
+          </div>
           {stock && (
             <LastUpdatedDot staleness={stock.staleness} />
           )}
@@ -330,9 +340,9 @@ export default function CompanyProfilePage() {
   }
   const hasData = companyData ? hasFinancialData(companyData) : false
 
-  // Fetch cached stock price from database
+  // Fetch cached stock price from database with real-time updates
   const stockCode = getStockCode(code)
-  const { data: cachedPrice, loading: stockLoading, error: stockError } = useCachedStockPrice(stockCode)
+  const { data: cachedPrice, loading: stockLoading, error: stockError, isRealtimeConnected } = useCachedStockPrice(stockCode)
 
   // Transform cached price to stock data format
   const stockData = cachedPrice ? {
@@ -393,7 +403,7 @@ export default function CompanyProfilePage() {
 
         {/* Key Metrics Grid */}
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <PriceCard stock={stockData} loading={stockLoading} error={stockError} />
+          <PriceCard stock={stockData} loading={stockLoading} error={stockError} isRealtimeConnected={isRealtimeConnected} />
           <MetricCard title="Volume" value={stockData?.volume ? (stockData.volume / 1000000).toFixed(2) : "--"} suffix="M" icon={Activity} />
           <MetricCard title="Day Range" value={stockData && stockData.dayLow && stockData.dayHigh ? `${stockData.dayLow.toFixed(2)} - ${stockData.dayHigh.toFixed(2)}` : "--"} icon={BarChart3} />
           <MetricCard title="Prev Close" value={stockData?.previousClose?.toFixed(2) || "--"} icon={DollarSign} />

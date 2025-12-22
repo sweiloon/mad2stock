@@ -17,21 +17,31 @@ type PriceUpdateLogInsert = Database['public']['Tables']['price_update_logs']['I
 type PriceUpdateLogUpdate = Database['public']['Tables']['price_update_logs']['Update']
 
 // ============================================================================
-// CONFIGURATION - Optimized for EODHD EOD Endpoint
+// CONFIGURATION - Optimized for 3-Hour Update Cycle with Parallel Batches
 // ============================================================================
 
-// Vercel Hobby has 10-second timeout - MUST stay under 8 seconds
-// EODHD API has rate limiting - 5 stocks at ~2.5s is the sweet spot
+// STRATEGY: Run multiple independent batches in parallel
+// Each batch is 5 stocks (proven safe), but we run multiple batches concurrently
 //
-// OPTIMIZED FOR 5-HOUR CYCLE:
-// - 801 stocks / 5 per run = 161 runs needed
-// - With 2-min cron interval: 161 × 2 = 322 minutes = 5.4 hours
-// - Update cron-job.org to run every 2 minutes for faster updates
+// KEY INSIGHT:
+// - Individual 5-stock batches work reliably (~2.5s each)
+// - Vercel cron has 60s timeout (configured in vercel.json)
+// - Running 8 parallel batches = 40 stocks per cron run
+// - 763 stocks / 40 = 19 runs × 15 min = ~5 hours per cycle
+//
+// For 3-hour cycle with 15-min intervals:
+// - 180 min / 15 min = 12 runs available
+// - 763 / 12 = 64 stocks per run needed
+// - 64 / 5 = 13 parallel batches of 5 stocks each
+//
+// SAFETY: Each parallel batch runs independently, doesn't share timeout
 
-const STOCKS_PER_RUN = 5        // Optimal: 5 stocks in ~2.5 seconds
-const BATCH_SIZE = 5            // DB batch size for upserting
-const PARALLEL_BATCHES = 10     // Concurrent EODHD requests (handled in eodhd-api.ts)
-const DB_BATCH_SIZE = 5         // Upsert 5 records at a time
+const STOCKS_PER_BATCH = 5       // Each batch: 5 stocks (proven safe, ~2.5s)
+const PARALLEL_BATCH_COUNT = 12  // Run 12 batches in parallel = 60 stocks/run
+const STOCKS_PER_RUN = STOCKS_PER_BATCH * PARALLEL_BATCH_COUNT // 60 stocks total
+const BATCH_SIZE = 5             // DB batch size for upserting
+const PARALLEL_BATCHES = 10      // Concurrent EODHD requests (handled in eodhd-api.ts)
+const DB_BATCH_SIZE = 10         // Upsert 10 records at a time
 
 interface UpdateResult {
   stocksUpdated: number

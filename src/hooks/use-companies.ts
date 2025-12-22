@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface CompanyData {
   code: string
@@ -56,6 +58,8 @@ interface UseCompaniesOptions {
   search?: string
   limit?: number
   offset?: number
+  /** Enable real-time stock price updates via Supabase */
+  realtime?: boolean
 }
 
 interface UseCompaniesResult {
@@ -65,11 +69,16 @@ interface UseCompaniesResult {
   total: number
   hasMore: boolean
   refetch: () => void
+  /** Whether real-time subscription is active */
+  isRealtimeConnected: boolean
+  /** Last real-time price update timestamp */
+  lastPriceUpdate: Date | null
 }
 
 /**
  * Hook to fetch companies from the database API
  * Includes client-side caching for better performance
+ * Supports real-time stock price updates via Supabase when realtime=true
  */
 export function useCompanies(options: UseCompaniesOptions = {}): UseCompaniesResult {
   const [companies, setCompanies] = useState<CompanyData[]>([])
@@ -77,7 +86,10 @@ export function useCompanies(options: UseCompaniesOptions = {}): UseCompaniesRes
   const [error, setError] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
   const [hasMore, setHasMore] = useState(false)
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
+  const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const realtimeChannelRef = useRef<RealtimeChannel | null>(null)
 
   const fetchCompanies = useCallback(async (skipCache = false) => {
     // Create cache key from options
@@ -150,11 +162,66 @@ export function useCompanies(options: UseCompaniesOptions = {}): UseCompaniesRes
     }
   }, [fetchCompanies])
 
+  // Real-time subscription for stock price updates
+  useEffect(() => {
+    if (!options.realtime) {
+      return
+    }
+
+    const supabase = createClient()
+
+    // Subscribe to all stock_prices changes
+    const channel = supabase
+      .channel('companies-stock-prices')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stock_prices',
+        },
+        (payload: { eventType: string; new: Record<string, unknown> | null; old: Record<string, unknown> | null }) => {
+          const stockCode = payload.new?.stock_code as string | undefined
+          const newPrice = payload.new?.price as number | undefined
+
+          if (!stockCode || newPrice === undefined) return
+
+          // Update the matching company's price
+          setCompanies((prev) =>
+            prev.map((company) => {
+              if (company.stockCode === stockCode) {
+                console.log(`[Realtime] Updated ${company.code} price: ${newPrice}`)
+                return { ...company, currentPrice: newPrice }
+              }
+              return company
+            })
+          )
+
+          setLastPriceUpdate(new Date())
+        }
+      )
+      .subscribe((status: string) => {
+        console.log('[Realtime] Companies price subscription:', status)
+        setIsRealtimeConnected(status === 'SUBSCRIBED')
+      })
+
+    realtimeChannelRef.current = channel
+
+    return () => {
+      if (realtimeChannelRef.current) {
+        console.log('[Realtime] Unsubscribing from companies prices')
+        supabase.removeChannel(realtimeChannelRef.current)
+        realtimeChannelRef.current = null
+        setIsRealtimeConnected(false)
+      }
+    }
+  }, [options.realtime])
+
   const refetch = useCallback(() => {
     fetchCompanies(true) // Skip cache on manual refetch
   }, [fetchCompanies])
 
-  return { companies, isLoading, error, total, hasMore, refetch }
+  return { companies, isLoading, error, total, hasMore, refetch, isRealtimeConnected, lastPriceUpdate }
 }
 
 interface UseCompanyStatsResult {

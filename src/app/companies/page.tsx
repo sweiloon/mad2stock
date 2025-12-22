@@ -35,6 +35,8 @@ import {
   FileSpreadsheet,
   Minus,
   RefreshCw,
+  Wifi,
+  WifiOff,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCompanies, CompanyData, hasFinancialData } from "@/hooks/use-companies"
@@ -61,8 +63,8 @@ export default function CompaniesPage() {
   const [sortField, setSortField] = useState<string>("code")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
 
-  // Fetch companies from database API
-  const { companies: allCompanies, isLoading, error, refetch } = useCompanies()
+  // Fetch companies from database API with real-time price updates
+  const { companies: allCompanies, isLoading, error, refetch, isRealtimeConnected, lastPriceUpdate } = useCompanies({ realtime: true })
 
   // Extract unique sectors from fetched data
   const sectors = useMemo(() => {
@@ -213,10 +215,31 @@ export default function CompaniesPage() {
               Browse {filteredCompanies.length} of {totalCount} Malaysian listed companies ({analyzedCount} with full analysis)
             </p>
           </div>
-          <Button onClick={refetch} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* Real-time status indicator */}
+            <div className="flex items-center gap-2 text-sm">
+              {isRealtimeConnected ? (
+                <div className="flex items-center gap-1.5 text-green-600">
+                  <Wifi className="h-4 w-4" />
+                  <span className="hidden sm:inline">Live</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <WifiOff className="h-4 w-4" />
+                  <span className="hidden sm:inline">Connecting...</span>
+                </div>
+              )}
+              {lastPriceUpdate && (
+                <span className="text-xs text-muted-foreground hidden md:inline">
+                  Updated {lastPriceUpdate.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
+            <Button onClick={refetch} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

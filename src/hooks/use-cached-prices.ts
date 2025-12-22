@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface CachedStockPrice {
   stockCode: string
@@ -80,11 +81,19 @@ async function fetchLivePrice(stockCode: string): Promise<CachedStockPrice | nul
   }
 }
 
-export function useCachedStockPrice(stockCode: string | undefined) {
+interface UseCachedStockPriceOptions {
+  /** Enable real-time price updates via Supabase (default: true) */
+  realtime?: boolean
+}
+
+export function useCachedStockPrice(stockCode: string | undefined, options: UseCachedStockPriceOptions = {}) {
+  const { realtime = true } = options
   const [data, setData] = useState<CachedStockPrice | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
   const mountedRef = useRef(true)
+  const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
     mountedRef.current = true
@@ -179,7 +188,75 @@ export function useCachedStockPrice(stockCode: string | undefined) {
     return () => clearTimeout(timer)
   }, [fetchPrice])
 
-  return { data, loading, error, refetch: fetchPrice }
+  // Real-time subscription for price updates
+  useEffect(() => {
+    if (!stockCode || !realtime) {
+      return
+    }
+
+    const supabase = createClient()
+    const channelName = `stock-price-${stockCode}`
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stock_prices',
+          filter: `stock_code=eq.${stockCode}`,
+        },
+        (payload: { eventType: string; new: Record<string, unknown> | null; old: Record<string, unknown> | null }) => {
+          if (payload.eventType === 'DELETE') {
+            setData(null)
+            return
+          }
+
+          const priceData = payload.new as Record<string, unknown>
+          if (!priceData) return
+
+          const updatedAt = priceData.updated_at ? new Date(priceData.updated_at as string) : new Date()
+          const { isStale, staleness } = calculateStaleness(updatedAt)
+
+          console.log(`[Realtime] Price update for ${stockCode}:`, priceData.price)
+
+          setData({
+            stockCode: priceData.stock_code as string,
+            price: priceData.price as number | null,
+            change: priceData.change as number | null,
+            changePercent: priceData.change_percent as number | null,
+            previousClose: priceData.previous_close as number | null,
+            dayOpen: priceData.day_open as number | null,
+            dayHigh: priceData.day_high as number | null,
+            dayLow: priceData.day_low as number | null,
+            volume: priceData.volume as number | null,
+            dataSource: priceData.data_source as 'klsescreener' | 'yahoo' | null,
+            scrapeStatus: priceData.scrape_status as 'success' | 'failed' | null,
+            updatedAt,
+            isStale,
+            staleness,
+          })
+        }
+      )
+      .subscribe((status: string) => {
+        console.log(`[Realtime] Stock ${stockCode} subscription:`, status)
+        setIsRealtimeConnected(status === 'SUBSCRIBED')
+      })
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        console.log(`[Realtime] Unsubscribing from ${stockCode}`)
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+        setIsRealtimeConnected(false)
+      }
+    }
+  }, [stockCode, realtime])
+
+  return { data, loading, error, refetch: fetchPrice, isRealtimeConnected }
 }
 
 // Hook to fetch multiple cached prices at once
