@@ -21,6 +21,10 @@ const BATCH_DELAY_MS = 0  // No batch delay since sequential
 const MAX_RETRIES = 2
 const INITIAL_RETRY_DELAY = 10000  // 10s wait after rate limit
 
+// Faster settings for fundamentals (runs once daily, less likely to hit rate limits)
+const FUNDAMENTALS_CONCURRENT = 3  // 3 parallel requests for fundamentals
+const FUNDAMENTALS_DELAY_MS = 500  // 500ms between batches
+
 export interface YahooQuoteResult {
   symbol: string
   shortName: string
@@ -345,7 +349,7 @@ async function fetchSingleFundamentals(symbol: string, retries = MAX_RETRIES): P
 
 /**
  * Batch fetch fundamentals for multiple stocks
- * Uses same rate limiting strategy as quote fetching
+ * Uses faster parallel processing (3 concurrent) since fundamentals only run once daily
  */
 export async function fetchBatchFundamentals(
   stockCodes: string[],
@@ -359,28 +363,36 @@ export async function fetchBatchFundamentals(
   const results = new Map<string, YahooFundamentalsResult>()
   const failedCodes: string[] = []
 
-  console.log(`[Yahoo Fundamentals] Fetching fundamentals for ${stockCodes.length} stocks...`)
+  console.log(`[Yahoo Fundamentals] Fetching fundamentals for ${stockCodes.length} stocks (${FUNDAMENTALS_CONCURRENT} parallel)...`)
 
-  for (let i = 0; i < stockCodes.length; i++) {
-    const code = stockCodes[i]
-    const symbol = toYahooSymbol(code)
+  // Process in parallel batches for speed
+  for (let i = 0; i < stockCodes.length; i += FUNDAMENTALS_CONCURRENT) {
+    const batch = stockCodes.slice(i, i + FUNDAMENTALS_CONCURRENT)
 
-    const result = await fetchSingleFundamentals(symbol)
+    const promises = batch.map(async (code) => {
+      const symbol = toYahooSymbol(code)
+      const result = await fetchSingleFundamentals(symbol)
+      return { code: code.toUpperCase(), result }
+    })
 
-    if (result) {
-      results.set(code.toUpperCase(), result)
-    } else {
-      failedCodes.push(code.toUpperCase())
+    const batchResults = await Promise.all(promises)
+
+    for (const { code, result } of batchResults) {
+      if (result) {
+        results.set(code, result)
+      } else {
+        failedCodes.push(code)
+      }
     }
 
     // Progress callback
-    if (onProgress && (i + 1) % 10 === 0) {
-      onProgress(i + 1, stockCodes.length)
+    if (onProgress) {
+      onProgress(Math.min(i + FUNDAMENTALS_CONCURRENT, stockCodes.length), stockCodes.length)
     }
 
-    // Rate limiting delay between requests
-    if (i < stockCodes.length - 1) {
-      await delay(addJitter(REQUEST_DELAY_MS))
+    // Short delay between parallel batches to avoid rate limiting
+    if (i + FUNDAMENTALS_CONCURRENT < stockCodes.length) {
+      await delay(addJitter(FUNDAMENTALS_DELAY_MS))
     }
   }
 

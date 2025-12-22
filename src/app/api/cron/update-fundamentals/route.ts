@@ -16,9 +16,11 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 //
 // STRATEGY: Same 16-slice parallel pattern as price cron for timeout safety
 // - Each slice processes ~48 stocks (763 / 16)
-// - 10 stocks per batch within each slice (safe, ~10s per batch)
+// - 10 stocks per batch within each slice
+// - Yahoo API uses 3 parallel requests with 500ms delay (fast mode)
+// - Each slice completes in ~30-40 seconds (well under 60s Vercel limit)
 // - All 16 slices run in parallel via cronjob.org
-// - Completes in ~2-3 minutes total
+// - Completes in ~1-2 minutes total
 //
 // SCHEDULE: Controlled by cronjob.org (set to Asia/Kuala_Lumpur timezone)
 // - User schedule: 0 6 * * 1-5 (6am MYT Monday-Friday)
@@ -29,7 +31,7 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 // ============================================================================
 
 const TOTAL_SLICES = 16          // Number of parallel cron jobs (same as price cron)
-const STOCKS_PER_BATCH = 10      // Stocks per Yahoo API call (10 is safe, ~10s)
+const STOCKS_PER_BATCH = 10      // Stocks per Yahoo API call
 
 // ============================================================================
 // SECURITY VALIDATION
