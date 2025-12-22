@@ -396,6 +396,109 @@ export async function fetchAllKLSEQuotes(
   return allResults
 }
 
+// ============================================================================
+// FUNDAMENTALS DATA (Market Cap, P/E, EPS, Dividend Yield, 52-Week Range)
+// ============================================================================
+
+export interface EODHDFundamentals {
+  marketCap: number | null
+  peRatio: number | null
+  eps: number | null
+  dividendYield: number | null
+  week52High: number | null
+  week52Low: number | null
+}
+
+/**
+ * Fetch fundamentals data for a single stock from EODHD
+ * Uses the fundamentals endpoint which provides market cap, P/E, EPS, etc.
+ */
+async function fetchSingleFundamentals(stockCode: string): Promise<EODHDFundamentals | null> {
+  try {
+    const symbol = toEODHDSymbol(stockCode)
+    const url = `${EODHD_BASE_URL}/fundamentals/${symbol}?api_token=${EODHD_API_KEY}&fmt=json`
+
+    const response = await fetchWithTimeout(url, {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store',
+    }, 15000) // 15 second timeout for fundamentals
+
+    if (!response.ok) {
+      console.error(`[EODHD Fundamentals] Error for ${stockCode}: ${response.status}`)
+      return null
+    }
+
+    const data = await response.json()
+
+    // EODHD returns nested structure, extract the values we need
+    // Highlights: MarketCapitalization, PERatio, EarningsShare, DividendYield
+    // Technicals: 52WeekHigh, 52WeekLow
+    const highlights = data.Highlights || {}
+    const technicals = data.Technicals || {}
+
+    return {
+      marketCap: highlights.MarketCapitalization || null,
+      peRatio: highlights.PERatio || null,
+      eps: highlights.EarningsShare || null,
+      dividendYield: highlights.DividendYield ? highlights.DividendYield * 100 : null, // Convert to percentage
+      week52High: technicals['52WeekHigh'] || null,
+      week52Low: technicals['52WeekLow'] || null,
+    }
+  } catch (error) {
+    console.error(`[EODHD Fundamentals] Error fetching ${stockCode}:`, error)
+    return null
+  }
+}
+
+/**
+ * Fetch fundamentals for multiple stocks in batch
+ * Returns Map of stock_code -> fundamentals data
+ */
+export async function fetchEODHDBatchFundamentals(stockCodes: string[]): Promise<{
+  success: Map<string, EODHDFundamentals>
+  failed: string[]
+}> {
+  const success = new Map<string, EODHDFundamentals>()
+  const failed: string[] = []
+
+  if (!EODHD_API_KEY) {
+    console.error('[EODHD Fundamentals] API key not configured')
+    return { success, failed: stockCodes }
+  }
+
+  console.log(`[EODHD Fundamentals] Fetching ${stockCodes.length} stocks: ${stockCodes.join(', ')}`)
+
+  // Process with limited concurrency to avoid rate limiting
+  const CONCURRENT_LIMIT = 3 // Lower limit for fundamentals (heavier endpoint)
+
+  for (let i = 0; i < stockCodes.length; i += CONCURRENT_LIMIT) {
+    const batch = stockCodes.slice(i, i + CONCURRENT_LIMIT)
+
+    const promises = batch.map(code => fetchSingleFundamentals(code))
+    const batchResults = await Promise.all(promises)
+
+    for (let j = 0; j < batch.length; j++) {
+      const code = batch[j]
+      const fundamentals = batchResults[j]
+
+      if (fundamentals) {
+        success.set(code.toUpperCase(), fundamentals)
+        console.log(`[EODHD Fundamentals] ${code}: MC=${fundamentals.marketCap}, PE=${fundamentals.peRatio}, 52wH=${fundamentals.week52High}`)
+      } else {
+        failed.push(code)
+      }
+    }
+
+    // Delay between batches
+    if (i + CONCURRENT_LIMIT < stockCodes.length) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  }
+
+  console.log(`[EODHD Fundamentals] Success: ${success.size}, Failed: ${failed.length}`)
+  return { success, failed }
+}
+
 /**
  * Check API status and remaining quota
  */

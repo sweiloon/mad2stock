@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { fetchBatchFundamentals } from '@/lib/yahoo-finance'
+import { fetchEODHDBatchFundamentals } from '@/lib/eodhd-api'
 import type { Database } from '@/types/database'
 
 type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 
 // ============================================================================
-// SMART FUNDAMENTALS UPDATE - Self-Managing Single Cron Job
+// SMART FUNDAMENTALS UPDATE - Self-Managing Single Cron Job (EODHD API)
 // ============================================================================
 //
 // PURPOSE: Update fundamental data for ALL 763 companies daily using
 //          a single cron job that self-manages which stocks to process.
 //
+// DATA SOURCE: EODHD API (100K calls/day free)
+// - Market Cap, P/E Ratio, EPS, Dividend Yield, 52-Week High/Low
+//
 // HOW IT WORKS:
 // 1. Query database for stocks not updated in last 20 hours
 // 2. Pick the 5 oldest stocks
-// 3. Fetch and update their fundamentals
+// 3. Fetch and update their fundamentals from EODHD
 // 4. Next cron run automatically picks the next 5
 //
 // VERCEL HOBBY PLAN:
@@ -142,10 +145,11 @@ async function updateFundamentals(
   let totalFailed = 0
   const allFailedCodes: string[] = []
 
-  console.log(`[Smart Fundamentals] Fetching ${stockCodes.length} stocks: ${stockCodes.join(', ')}`)
+  console.log(`[Smart Fundamentals] Fetching ${stockCodes.length} stocks via EODHD: ${stockCodes.join(', ')}`)
 
   try {
-    const result = await fetchBatchFundamentals(stockCodes)
+    // Use EODHD API for complete fundamentals data
+    const result = await fetchEODHDBatchFundamentals(stockCodes)
 
     // Update database for successful fetches
     for (const [code, fundamentals] of result.success) {
@@ -170,7 +174,7 @@ async function updateFundamentals(
           totalFailed++
           allFailedCodes.push(code)
         } else {
-          console.log(`[Smart Fundamentals] Updated ${code}: 52wH=${fundamentals.week52High}, 52wL=${fundamentals.week52Low}`)
+          console.log(`[Smart Fundamentals] Updated ${code}: MC=${fundamentals.marketCap}, PE=${fundamentals.peRatio}, 52wH=${fundamentals.week52High}`)
           totalUpdated++
         }
       } catch (err) {
@@ -269,6 +273,7 @@ export async function GET(request: NextRequest) {
         avgPerStock: stockCodes.length > 0 ? Math.round(result.totalTime / stockCodes.length) : 0,
       },
       config: {
+        dataSource: 'EODHD API',
         stocksPerRun: STOCKS_PER_RUN,
         staleThresholdHours: STALE_HOURS,
         runsNeeded: Math.ceil(stats.stale / STOCKS_PER_RUN),
