@@ -15,23 +15,23 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 // PURPOSE: Fetch and update fundamental data (52-week high/low, etc.)
 //          for ALL 763 companies in a single daily cycle.
 //
-// STRATEGY: 77 batch jobs optimized for Vercel Hobby plan (60s timeout)
-// - Each job processes ~10 stocks sequentially
-// - 10 stocks × 4s per stock = ~40 seconds (safe under 60s limit)
+// STRATEGY: 153 batch jobs optimized for Vercel Hobby plan (60s timeout)
+// - Each job processes 5 stocks sequentially
+// - 5 stocks × 3s per stock = ~15 seconds (very safe under 60s limit)
 // - Run batches with gaps to avoid Yahoo rate limiting
 //
 // VERCEL HOBBY PLAN:
 // - Max timeout: 60 seconds
-// - This code processes 10 stocks in ~40 seconds (safe margin)
+// - This code processes 5 stocks in ~15 seconds (safe margin)
 //
-// CRONJOB.ORG SETUP (77 jobs):
-// - URL: /api/cron/update-fundamentals-v2?batch=0&secret=xxx (through batch=76)
-// - Schedule: Stagger across the night, e.g., every 5 minutes from 9pm-9am
+// CRONJOB.ORG SETUP (153 jobs):
+// - URL: /api/cron/update-fundamentals-v2?batch=0&secret=xxx (through batch=152)
+// - Schedule: Stagger across the night
 //
 // ============================================================================
 
-const TOTAL_BATCHES = 77  // Number of batch jobs
-const STOCKS_PER_BATCH = 10  // Stocks per batch (fits in 60s timeout)
+const TOTAL_BATCHES = 153  // Number of batch jobs
+const STOCKS_PER_BATCH = 5  // Stocks per batch (proven safe from other endpoints)
 
 // ============================================================================
 // SECURITY VALIDATION
@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
       totalStocks: allStocks.length,
       vercelPlan: 'Hobby (60s timeout)',
       schedule: {
-        description: `${actualBatches} batch jobs, each processing ${STOCKS_PER_BATCH} stocks in ~40 seconds`,
+        description: `${actualBatches} batch jobs, each processing ${STOCKS_PER_BATCH} stocks in ~15 seconds`,
         example: 'Run batches every 5 minutes: batch=0 at 9:00pm, batch=1 at 9:05pm, etc.',
       },
     }, { status: 400 })
