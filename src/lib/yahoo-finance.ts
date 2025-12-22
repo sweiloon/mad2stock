@@ -22,11 +22,12 @@ const MAX_RETRIES = 2
 const INITIAL_RETRY_DELAY = 10000  // 10s wait after rate limit
 
 // Conservative settings for fundamentals (Yahoo quoteSummary is heavily rate-limited)
+// Optimized for 12 hourly staggered cron jobs processing ~64 stocks each
 const FUNDAMENTALS_CONCURRENT = 1  // Sequential only - no parallel requests
-const FUNDAMENTALS_DELAY_MS = 2000  // 2 seconds between requests to avoid rate limiting
+const FUNDAMENTALS_DELAY_MS = 2500  // 2.5s between requests for reliable rate limiting avoidance
 const FUNDAMENTALS_RETRY_DELAY = 5000  // 5s retry delay
-const FUNDAMENTALS_MAX_RETRIES = 1  // 1 retry for failed stocks
-const FUNDAMENTALS_TIMEOUT = 8000  // 8s timeout per request
+const FUNDAMENTALS_MAX_RETRIES = 2  // 2 retries for failed stocks (increased from 1)
+const FUNDAMENTALS_TIMEOUT = 10000  // 10s timeout per request (increased from 8s)
 
 export interface YahooQuoteResult {
   symbol: string
