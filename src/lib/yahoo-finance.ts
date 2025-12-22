@@ -22,8 +22,11 @@ const MAX_RETRIES = 2
 const INITIAL_RETRY_DELAY = 10000  // 10s wait after rate limit
 
 // Faster settings for fundamentals (runs once daily, less likely to hit rate limits)
-const FUNDAMENTALS_CONCURRENT = 3  // 3 parallel requests for fundamentals
-const FUNDAMENTALS_DELAY_MS = 500  // 500ms between batches
+const FUNDAMENTALS_CONCURRENT = 5  // 5 parallel requests for fundamentals
+const FUNDAMENTALS_DELAY_MS = 100  // 100ms between batches
+const FUNDAMENTALS_RETRY_DELAY = 1000  // 1s retry (instead of 10s)
+const FUNDAMENTALS_MAX_RETRIES = 0  // No retries - skip failed stocks
+const FUNDAMENTALS_TIMEOUT = 5000  // 5s timeout per request
 
 export interface YahooQuoteResult {
   symbol: string
@@ -283,21 +286,29 @@ const YAHOO_QUOTE_SUMMARY_URL = 'https://query1.finance.yahoo.com/v10/finance/qu
 /**
  * Fetch fundamentals for a single stock using quoteSummary API
  * Returns: marketCap, peRatio, eps, dividendYield, week52High, week52Low
+ * Uses faster retry settings since fundamentals run once daily
  */
-async function fetchSingleFundamentals(symbol: string, retries = MAX_RETRIES): Promise<YahooFundamentalsResult | null> {
+async function fetchSingleFundamentals(symbol: string, retries = FUNDAMENTALS_MAX_RETRIES): Promise<YahooFundamentalsResult | null> {
   const modules = 'summaryDetail,defaultKeyStatistics,price'
   const url = `${YAHOO_QUOTE_SUMMARY_URL}/${symbol}?modules=${modules}`
 
   try {
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), FUNDAMENTALS_TIMEOUT)
+
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/json',
       },
+      signal: controller.signal,
     })
 
+    clearTimeout(timeoutId)
+
     if (response.status === 429 && retries > 0) {
-      const waitTime = addJitter(INITIAL_RETRY_DELAY)
+      const waitTime = addJitter(FUNDAMENTALS_RETRY_DELAY)
       console.warn(`[Yahoo Fundamentals] Rate limited for ${symbol}, waiting ${waitTime}ms`)
       await delay(waitTime)
       return fetchSingleFundamentals(symbol, retries - 1)
@@ -339,7 +350,7 @@ async function fetchSingleFundamentals(symbol: string, retries = MAX_RETRIES): P
     }
   } catch (error) {
     if (retries > 0) {
-      await delay(addJitter(INITIAL_RETRY_DELAY))
+      await delay(addJitter(FUNDAMENTALS_RETRY_DELAY))
       return fetchSingleFundamentals(symbol, retries - 1)
     }
     console.error(`[Yahoo Fundamentals] Error fetching ${symbol}:`, error)
@@ -363,7 +374,7 @@ export async function fetchBatchFundamentals(
   const results = new Map<string, YahooFundamentalsResult>()
   const failedCodes: string[] = []
 
-  console.log(`[Yahoo Fundamentals] Fetching fundamentals for ${stockCodes.length} stocks (${FUNDAMENTALS_CONCURRENT} parallel)...`)
+  console.log(`[Yahoo Fundamentals] Fetching ${stockCodes.length} stocks (${FUNDAMENTALS_CONCURRENT} parallel, ${FUNDAMENTALS_TIMEOUT}ms timeout)...`)
 
   // Process in parallel batches for speed
   for (let i = 0; i < stockCodes.length; i += FUNDAMENTALS_CONCURRENT) {

@@ -31,7 +31,7 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 // ============================================================================
 
 const TOTAL_SLICES = 16          // Number of parallel cron jobs (same as price cron)
-const STOCKS_PER_BATCH = 10      // Stocks per Yahoo API call
+const STOCKS_PER_BATCH = 5       // Stocks per Yahoo API call (reduced for faster processing)
 
 // ============================================================================
 // SECURITY VALIDATION
