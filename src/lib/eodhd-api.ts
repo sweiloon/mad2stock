@@ -124,6 +124,24 @@ export async function fetchEODHDQuote(stockCode: string): Promise<StockQuoteData
 }
 
 /**
+ * Fetch with timeout helper
+ */
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 10000): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    })
+    return response
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+/**
  * Fetch EOD (End-of-Day) quote for a single stock
  * EODHD does NOT support real-time quotes for Malaysian stocks
  * This uses the EOD endpoint to get the latest closing price
@@ -138,10 +156,10 @@ async function fetchSingleEODQuote(stockCode: string): Promise<StockQuoteData | 
 
     const url = `${EODHD_BASE_URL}/eod/${symbol}?api_token=${EODHD_API_KEY}&fmt=json&from=${fromDate.toISOString().split('T')[0]}&order=d`
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: { 'Accept': 'application/json' },
       cache: 'no-store',
-    })
+    }, 10000) // 10 second timeout
 
     if (!response.ok) return null
 

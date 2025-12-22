@@ -277,6 +277,15 @@ export async function GET(request: NextRequest) {
     })
   }
 
+  // Stagger delay based on slice number to avoid rate limiting
+  // When all 16 cron jobs trigger at same time, this spreads requests over ~32 seconds
+  // Slice 0 = 0s, Slice 1 = 2s, Slice 2 = 4s, ..., Slice 15 = 30s
+  const staggerDelayMs = sliceIndex * 2000
+  if (staggerDelayMs > 0) {
+    console.log(`[Parallel Slice ${sliceIndex}] Stagger delay: ${staggerDelayMs}ms`)
+    await new Promise(resolve => setTimeout(resolve, staggerDelayMs))
+  }
+
   // Get stocks for this specific cron call (uses rotating offset)
   const { stocks: stocksToUpdate, offset, totalInSlice, cycleInfo } = getStocksForThisCall(sliceIndex, now)
   const allStocks = getAllStocksSorted()
