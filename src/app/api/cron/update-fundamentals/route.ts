@@ -13,7 +13,6 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 // ============================================================================
 //
 // PURPOSE: Fetch and update fundamental data (Market Cap, P/E, EPS, etc.)
-// This runs ONCE DAILY at 6am MYT (before 9am market open)
 //
 // STRATEGY: Same 16-slice parallel pattern as price cron for timeout safety
 // - Each slice processes ~48 stocks (763 / 16)
@@ -21,9 +20,10 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 // - All 16 slices run in parallel via cronjob.org
 // - Completes in ~2-3 minutes total
 //
-// SCHEDULE: 0 22 * * 0-4 (10pm UTC Sunday-Thursday = 6am MYT Monday-Friday)
+// SCHEDULE: Controlled by cronjob.org (set to Asia/Kuala_Lumpur timezone)
+// - User schedule: 0 6 * * 1-5 (6am MYT Monday-Friday)
 //
-// CRONJOB.ORG SETUP (16 jobs, all run at 10pm UTC / 6am MYT):
+// CRONJOB.ORG SETUP (16 jobs):
 // /api/cron/update-fundamentals?slice=0&secret=xxx  (through slice=15)
 //
 // ============================================================================
@@ -59,7 +59,7 @@ function validateRequest(request: NextRequest): boolean {
 }
 
 // ============================================================================
-// MALAYSIA TIMEZONE HELPERS
+// MALAYSIA TIMEZONE HELPER (for logging only)
 // ============================================================================
 
 function getMalaysiaTime(): Date {
@@ -69,19 +69,6 @@ function getMalaysiaTime(): Date {
   const utcOffset = now.getTimezoneOffset() // Local offset from UTC
   const malaysiaTime = new Date(now.getTime() + (malaysiaOffset + utcOffset) * 60 * 1000)
   return malaysiaTime
-}
-
-function isFundamentalsUpdateTime(now: Date): boolean {
-  const malaysiaTime = getMalaysiaTime()
-  const hour = malaysiaTime.getHours()
-  const day = malaysiaTime.getDay() // 0=Sunday, 1=Monday, ..., 6=Saturday
-
-  // Run on weekdays (Monday-Friday) from 5am-8am MYT (before market open)
-  // This gives flexibility for the cron to run anytime in this window
-  const isWeekday = day >= 1 && day <= 5
-  const isUpdateWindow = hour >= 5 && hour < 8
-
-  return isWeekday && isUpdateWindow
 }
 
 // ============================================================================
@@ -222,7 +209,6 @@ export async function GET(request: NextRequest) {
 
   const url = new URL(request.url)
   const sliceParam = url.searchParams.get('slice')
-  const forceUpdate = url.searchParams.get('force') === 'true'
 
   // Validate slice parameter
   if (!sliceParam) {
@@ -230,7 +216,7 @@ export async function GET(request: NextRequest) {
       error: 'Missing slice parameter',
       usage: 'Add ?slice=0 through ?slice=15 to specify which slice to process',
       totalSlices: TOTAL_SLICES,
-      schedule: '10pm UTC (6am MYT) daily on weekdays',
+      schedule: 'Controlled by cronjob.org (6am MYT Monday-Friday)',
     }, { status: 400 })
   }
 
@@ -242,19 +228,9 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const now = new Date()
   const malaysiaTime = getMalaysiaTime()
 
-  // Check if we're in the update window (skip if force=true)
-  if (!forceUpdate && !isFundamentalsUpdateTime(now)) {
-    return NextResponse.json({
-      success: true,
-      message: 'Outside fundamentals update window (5am-8am MYT, Mon-Fri)',
-      updateWindow: false,
-      slice: sliceIndex,
-      malaysiaTime: malaysiaTime.toISOString(),
-    })
-  }
+  console.log(`[Fundamentals] Running at ${malaysiaTime.toISOString()} MYT`)
 
   // Get stocks for this slice
   const sliceStocks = getSliceStocks(sliceIndex)
@@ -296,8 +272,8 @@ export async function GET(request: NextRequest) {
         fetchTimeMs: result.totalTime,
       },
       schedule: {
-        description: 'Daily at 6am MYT (10pm UTC previous day), weekdays only',
-        cronPattern: '0 22 * * 0-4',
+        description: 'Controlled by cronjob.org (Asia/Kuala_Lumpur timezone)',
+        cronPattern: '0 6 * * 1-5 (6am MYT Monday-Friday)',
       },
     })
   } catch (error) {
