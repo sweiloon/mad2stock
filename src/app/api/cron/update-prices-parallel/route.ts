@@ -175,6 +175,11 @@ async function updateSlice(
 
         const nextUpdateTime = calculateNextUpdate(stock.tier, now)
 
+        // Calculate trading value (price × volume)
+        const tradingValue = quote.price && quote.volume
+          ? quote.price * quote.volume
+          : null
+
         dbRecords.push({
           stock_code: stock.code,
           price: quote.price,
@@ -185,6 +190,7 @@ async function updateSlice(
           day_high: quote.high,
           day_low: quote.low,
           volume: quote.volume,
+          trading_value: tradingValue,
           data_source: quote.dataSource,
           tier: stock.tier,
           next_update_at: nextUpdateTime.toISOString(),

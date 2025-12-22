@@ -14,7 +14,16 @@ export interface CachedStockPrice {
   dayHigh: number | null
   dayLow: number | null
   volume: number | null
-  dataSource: 'klsescreener' | 'yahoo' | 'live' | null
+  // Fundamentals (updated daily)
+  marketCap: number | null
+  peRatio: number | null
+  eps: number | null
+  dividendYield: number | null
+  week52High: number | null
+  week52Low: number | null
+  tradingValue: number | null
+  // Metadata
+  dataSource: 'klsescreener' | 'yahoo' | 'eodhd' | 'live' | null
   scrapeStatus: 'success' | 'failed' | null
   updatedAt: Date | null
   isStale: boolean // true if data is older than 35 minutes
@@ -67,6 +76,13 @@ async function fetchLivePrice(stockCode: string): Promise<CachedStockPrice | nul
         dayHigh: result.quote.dayHigh || null,
         dayLow: result.quote.dayLow || null,
         volume: result.quote.volume || null,
+        marketCap: null,
+        peRatio: null,
+        eps: null,
+        dividendYield: null,
+        week52High: null,
+        week52Low: null,
+        tradingValue: null,
         dataSource: 'live',
         scrapeStatus: 'success',
         updatedAt: new Date(),
@@ -138,7 +154,14 @@ export function useCachedStockPrice(stockCode: string | undefined, options: UseC
             dayHigh: priceData.day_high,
             dayLow: priceData.day_low,
             volume: priceData.volume,
-            dataSource: priceData.data_source as 'klsescreener' | 'yahoo' | null,
+            marketCap: priceData.market_cap,
+            peRatio: priceData.pe_ratio,
+            eps: priceData.eps,
+            dividendYield: priceData.dividend_yield,
+            week52High: priceData.week_52_high,
+            week52Low: priceData.week_52_low,
+            tradingValue: priceData.trading_value,
+            dataSource: priceData.data_source as 'klsescreener' | 'yahoo' | 'eodhd' | null,
             scrapeStatus: priceData.scrape_status as 'success' | 'failed' | null,
             updatedAt,
             isStale,
@@ -231,7 +254,14 @@ export function useCachedStockPrice(stockCode: string | undefined, options: UseC
             dayHigh: priceData.day_high as number | null,
             dayLow: priceData.day_low as number | null,
             volume: priceData.volume as number | null,
-            dataSource: priceData.data_source as 'klsescreener' | 'yahoo' | null,
+            marketCap: priceData.market_cap as number | null,
+            peRatio: priceData.pe_ratio as number | null,
+            eps: priceData.eps as number | null,
+            dividendYield: priceData.dividend_yield as number | null,
+            week52High: priceData.week_52_high as number | null,
+            week52Low: priceData.week_52_low as number | null,
+            tradingValue: priceData.trading_value as number | null,
+            dataSource: priceData.data_source as 'klsescreener' | 'yahoo' | 'eodhd' | null,
             scrapeStatus: priceData.scrape_status as 'success' | 'failed' | null,
             updatedAt,
             isStale,
@@ -314,7 +344,14 @@ export function useCachedStockPrices(stockCodes: string[]) {
               dayHigh: priceData.day_high,
               dayLow: priceData.day_low,
               volume: priceData.volume,
-              dataSource: priceData.data_source as 'klsescreener' | 'yahoo' | null,
+              marketCap: priceData.market_cap,
+              peRatio: priceData.pe_ratio,
+              eps: priceData.eps,
+              dividendYield: priceData.dividend_yield,
+              week52High: priceData.week_52_high,
+              week52Low: priceData.week_52_low,
+              tradingValue: priceData.trading_value,
+              dataSource: priceData.data_source as 'klsescreener' | 'yahoo' | 'eodhd' | null,
               scrapeStatus: priceData.scrape_status as 'success' | 'failed' | null,
               updatedAt,
               isStale,

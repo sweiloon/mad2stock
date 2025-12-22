@@ -37,7 +37,19 @@ export interface YahooQuoteResult {
   fiftyTwoWeekLow?: number
   marketCap?: number
   trailingPE?: number
+  trailingEps?: number
+  dividendYield?: number
   currency: string
+}
+
+export interface YahooFundamentalsResult {
+  stockCode: string
+  marketCap: number | null
+  peRatio: number | null
+  eps: number | null
+  dividendYield: number | null
+  week52High: number | null
+  week52Low: number | null
 }
 
 export interface BatchFetchResult {
@@ -256,4 +268,143 @@ export async function checkApiHealth(): Promise<boolean> {
 export function estimateFetchTime(stockCount: number): number {
   const batches = Math.ceil(stockCount / MAX_CONCURRENT_REQUESTS)
   return batches * (REQUEST_DELAY_MS * MAX_CONCURRENT_REQUESTS + BATCH_DELAY_MS)
+}
+
+// ============================================================================
+// FUNDAMENTALS API (using quoteSummary endpoint)
+// ============================================================================
+
+const YAHOO_QUOTE_SUMMARY_URL = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary'
+
+/**
+ * Fetch fundamentals for a single stock using quoteSummary API
+ * Returns: marketCap, peRatio, eps, dividendYield, week52High, week52Low
+ */
+async function fetchSingleFundamentals(symbol: string, retries = MAX_RETRIES): Promise<YahooFundamentalsResult | null> {
+  const modules = 'summaryDetail,defaultKeyStatistics,price'
+  const url = `${YAHOO_QUOTE_SUMMARY_URL}/${symbol}?modules=${modules}`
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+      },
+    })
+
+    if (response.status === 429 && retries > 0) {
+      const waitTime = addJitter(INITIAL_RETRY_DELAY)
+      console.warn(`[Yahoo Fundamentals] Rate limited for ${symbol}, waiting ${waitTime}ms`)
+      await delay(waitTime)
+      return fetchSingleFundamentals(symbol, retries - 1)
+    }
+
+    if (!response.ok) {
+      console.error(`[Yahoo Fundamentals] Failed to fetch ${symbol}: ${response.status}`)
+      return null
+    }
+
+    const data = await response.json()
+    const result = data?.quoteSummary?.result?.[0]
+
+    if (!result) {
+      console.warn(`[Yahoo Fundamentals] No data for ${symbol}`)
+      return null
+    }
+
+    const summaryDetail = result.summaryDetail || {}
+    const keyStats = result.defaultKeyStatistics || {}
+    const price = result.price || {}
+
+    // Extract raw values from Yahoo's nested structure
+    const marketCap = price.marketCap?.raw || summaryDetail.marketCap?.raw || null
+    const peRatio = summaryDetail.trailingPE?.raw || keyStats.trailingPE?.raw || null
+    const eps = keyStats.trailingEps?.raw || null
+    const dividendYield = summaryDetail.dividendYield?.raw || null // Already as decimal (0.05 = 5%)
+    const week52High = summaryDetail.fiftyTwoWeekHigh?.raw || null
+    const week52Low = summaryDetail.fiftyTwoWeekLow?.raw || null
+
+    return {
+      stockCode: fromYahooSymbol(symbol),
+      marketCap,
+      peRatio,
+      eps,
+      dividendYield,
+      week52High,
+      week52Low,
+    }
+  } catch (error) {
+    if (retries > 0) {
+      await delay(addJitter(INITIAL_RETRY_DELAY))
+      return fetchSingleFundamentals(symbol, retries - 1)
+    }
+    console.error(`[Yahoo Fundamentals] Error fetching ${symbol}:`, error)
+    return null
+  }
+}
+
+/**
+ * Batch fetch fundamentals for multiple stocks
+ * Uses same rate limiting strategy as quote fetching
+ */
+export async function fetchBatchFundamentals(
+  stockCodes: string[],
+  onProgress?: (completed: number, total: number) => void
+): Promise<{
+  success: Map<string, YahooFundamentalsResult>
+  failed: string[]
+  totalTime: number
+}> {
+  const startTime = Date.now()
+  const results = new Map<string, YahooFundamentalsResult>()
+  const failedCodes: string[] = []
+
+  console.log(`[Yahoo Fundamentals] Fetching fundamentals for ${stockCodes.length} stocks...`)
+
+  for (let i = 0; i < stockCodes.length; i++) {
+    const code = stockCodes[i]
+    const symbol = toYahooSymbol(code)
+
+    const result = await fetchSingleFundamentals(symbol)
+
+    if (result) {
+      results.set(code.toUpperCase(), result)
+    } else {
+      failedCodes.push(code.toUpperCase())
+    }
+
+    // Progress callback
+    if (onProgress && (i + 1) % 10 === 0) {
+      onProgress(i + 1, stockCodes.length)
+    }
+
+    // Rate limiting delay between requests
+    if (i < stockCodes.length - 1) {
+      await delay(addJitter(REQUEST_DELAY_MS))
+    }
+  }
+
+  const totalTime = Date.now() - startTime
+
+  console.log(`[Yahoo Fundamentals] Completed: ${results.size}/${stockCodes.length} in ${totalTime}ms`)
+
+  if (failedCodes.length > 0 && failedCodes.length <= 10) {
+    console.warn(`[Yahoo Fundamentals] Failed:`, failedCodes)
+  } else if (failedCodes.length > 10) {
+    console.warn(`[Yahoo Fundamentals] Failed ${failedCodes.length} stocks`)
+  }
+
+  return {
+    success: results,
+    failed: failedCodes,
+    totalTime,
+  }
+}
+
+/**
+ * Fetch fundamentals for a single stock
+ */
+export async function fetchSingleStockFundamentals(stockCode: string): Promise<YahooFundamentalsResult | null> {
+  const symbol = toYahooSymbol(stockCode)
+  return fetchSingleFundamentals(symbol)
 }

@@ -76,10 +76,10 @@ export async function GET(request: NextRequest) {
         .order('code')
         .range(offset, offset + limit - 1),
 
-      // Query 2: Get all stock prices
+      // Query 2: Get all stock prices with fundamentals
       supabase
         .from('stock_prices')
-        .select('stock_code, price, change_percent, volume')
+        .select('stock_code, price, change_percent, volume, market_cap, pe_ratio, eps, dividend_yield, week_52_high, week_52_low, trading_value')
     ])
 
     if (companiesResult.error) {
@@ -88,7 +88,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Build a map of stock prices by numeric code for fast lookup
-    const priceMap = new Map<string, { price: number; changePercent: number; volume: number }>()
+    const priceMap = new Map<string, {
+      price: number
+      changePercent: number
+      volume: number
+      marketCap: number | null
+      peRatio: number | null
+      eps: number | null
+      dividendYield: number | null
+      week52High: number | null
+      week52Low: number | null
+      tradingValue: number | null
+    }>()
     if (stockPricesResult.data) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const sp of stockPricesResult.data as any[]) {
@@ -96,7 +107,14 @@ export async function GET(request: NextRequest) {
           priceMap.set(sp.stock_code, {
             price: parseFloat(sp.price),
             changePercent: sp.change_percent ?? 0,
-            volume: sp.volume ?? 0
+            volume: sp.volume ?? 0,
+            marketCap: sp.market_cap ?? null,
+            peRatio: sp.pe_ratio ?? null,
+            eps: sp.eps ?? null,
+            dividendYield: sp.dividend_yield ?? null,
+            week52High: sp.week_52_high ?? null,
+            week52Low: sp.week_52_low ?? null,
+            tradingValue: sp.trading_value ?? null,
           })
         }
       }
@@ -129,7 +147,7 @@ export async function GET(request: NextRequest) {
         ? company.qoq_analysis[0]
         : company.qoq_analysis
 
-      // Get price from stock_prices map using numeric_code
+      // Get price and fundamentals from stock_prices map using numeric_code
       const stockPrice = company.numeric_code ? priceMap.get(company.numeric_code) : null
       const currentPrice = stockPrice?.price ?? company.current_price ?? null
       const changePercent = stockPrice?.changePercent ?? null
@@ -140,9 +158,19 @@ export async function GET(request: NextRequest) {
         stockCode: company.numeric_code,
         sector: company.sector || 'Other',
         market: 'Main', // Default value since field doesn't exist in DB
-        marketCap: company.market_cap ? company.market_cap / 1000000 : undefined,
+        // Use market cap from stock_prices (updated daily) if available, fallback to company record
+        marketCap: stockPrice?.marketCap ?? (company.market_cap ? company.market_cap / 1000000 : undefined),
         currentPrice: currentPrice,
         changePercent: changePercent,
+        volume: stockPrice?.volume ?? undefined,
+        // Fundamentals from stock_prices table (updated daily by fundamentals cron)
+        peRatio: stockPrice?.peRatio ?? undefined,
+        eps: stockPrice?.eps ?? undefined,
+        dividendYield: stockPrice?.dividendYield ? stockPrice.dividendYield * 100 : undefined, // Convert to percentage
+        week52High: stockPrice?.week52High ?? undefined,
+        week52Low: stockPrice?.week52Low ?? undefined,
+        tradingValue: stockPrice?.tradingValue ?? undefined,
+        // Analysis data
         yoyCategory: yoy?.category || undefined,
         qoqCategory: qoq?.category || undefined,
         revenueYoY: yoy?.revenue_change_pct || undefined,

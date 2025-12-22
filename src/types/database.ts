@@ -408,6 +408,11 @@ export interface Database {
           volume: number | null
           market_cap: number | null
           pe_ratio: number | null
+          eps: number | null
+          dividend_yield: number | null
+          week_52_high: number | null
+          week_52_low: number | null
+          trading_value: number | null
           tier: number | null
           next_update_at: string | null
           data_source: string | null
@@ -430,6 +435,11 @@ export interface Database {
           volume?: number | null
           market_cap?: number | null
           pe_ratio?: number | null
+          eps?: number | null
+          dividend_yield?: number | null
+          week_52_high?: number | null
+          week_52_low?: number | null
+          trading_value?: number | null
           tier?: number | null
           next_update_at?: string | null
           data_source?: string | null
@@ -452,6 +462,11 @@ export interface Database {
           volume?: number | null
           market_cap?: number | null
           pe_ratio?: number | null
+          eps?: number | null
+          dividend_yield?: number | null
+          week_52_high?: number | null
+          week_52_low?: number | null
+          trading_value?: number | null
           tier?: number | null
           next_update_at?: string | null
           data_source?: string | null

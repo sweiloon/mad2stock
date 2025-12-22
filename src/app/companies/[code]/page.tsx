@@ -23,6 +23,9 @@ import {
   ExternalLink,
   Clock,
   Wifi,
+  Calculator,
+  Percent,
+  Target,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCompanyDocuments, formatFileSize } from "@/hooks/use-documents"
@@ -138,7 +141,7 @@ function PriceCard({ stock, loading, error, isRealtimeConnected }: {
     changePercent: number | null
     updatedAt: Date | null
     staleness: 'fresh' | 'stale' | 'very-stale'
-    dataSource: 'klsescreener' | 'yahoo' | 'live' | null
+    dataSource: 'klsescreener' | 'yahoo' | 'eodhd' | 'live' | null
   } | null
   loading: boolean
   error: string | null
@@ -181,7 +184,7 @@ function PriceCard({ stock, loading, error, isRealtimeConnected }: {
               {formatLastUpdated(stock.updatedAt)}
               {stock.dataSource && (
                 <Badge variant="outline" className="text-[10px] h-4 px-1">
-                  {stock.dataSource === 'klsescreener' ? 'Screener' : stock.dataSource === 'yahoo' ? 'Yahoo' : 'Live'}
+                  {stock.dataSource === 'klsescreener' ? 'Screener' : stock.dataSource === 'yahoo' ? 'Yahoo' : stock.dataSource === 'eodhd' ? 'EODHD' : 'Live'}
                 </Badge>
               )}
             </div>
@@ -220,6 +223,112 @@ function MetricCard({ title, value, suffix, icon: Icon, trend }: {
             <Icon className="h-5 w-5 text-primary" />
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function formatMarketCap(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "—"
+  if (value >= 1000000000) {
+    return `RM ${(value / 1000000000).toFixed(2)}B`
+  } else if (value >= 1000000) {
+    return `RM ${(value / 1000000).toFixed(0)}M`
+  } else if (value >= 1000) {
+    return `RM ${(value / 1000).toFixed(0)}K`
+  }
+  return `RM ${value.toFixed(0)}`
+}
+
+function FundamentalCard({ title, value, icon: Icon, subtitle }: {
+  title: string
+  value: string
+  icon: React.ElementType
+  subtitle?: string
+}) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">{title}</p>
+            <p className="text-xl font-bold tabular-nums mt-1">{value}</p>
+            {subtitle && (
+              <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+            )}
+          </div>
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function Week52RangeCard({ low, high, current }: {
+  low: number | null | undefined
+  high: number | null | undefined
+  current: number | null | undefined
+}) {
+  const hasData = low !== null && low !== undefined && high !== null && high !== undefined
+  const hasCurrent = current !== null && current !== undefined
+
+  // Calculate position percentage (0-100) of current price within the range
+  const position = hasData && hasCurrent && high > low
+    ? Math.max(0, Math.min(100, ((current - low) / (high - low)) * 100))
+    : 50
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">52-Week Range</p>
+          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Target className="h-4 w-4 text-primary" />
+          </div>
+        </div>
+
+        {hasData ? (
+          <>
+            {/* Range bar with current price indicator */}
+            <div className="relative mt-2">
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 rounded-full"
+                  style={{ width: '100%' }}
+                />
+              </div>
+              {/* Current price indicator */}
+              {hasCurrent && (
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary border-2 border-background rounded-full shadow-sm"
+                  style={{ left: `calc(${position}% - 6px)` }}
+                />
+              )}
+            </div>
+
+            {/* Range labels */}
+            <div className="flex justify-between mt-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Low</p>
+                <p className="text-sm font-medium tabular-nums">RM {low.toFixed(2)}</p>
+              </div>
+              {hasCurrent && (
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Current</p>
+                  <p className="text-sm font-bold tabular-nums text-primary">RM {current.toFixed(2)}</p>
+                </div>
+              )}
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">High</p>
+                <p className="text-sm font-medium tabular-nums">RM {high.toFixed(2)}</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-xl font-bold text-muted-foreground">—</p>
+        )}
       </CardContent>
     </Card>
   )
@@ -353,6 +462,14 @@ export default function CompanyProfilePage() {
     dayHigh: cachedPrice.dayHigh,
     dayLow: cachedPrice.dayLow,
     previousClose: cachedPrice.previousClose,
+    // Fundamentals
+    marketCap: cachedPrice.marketCap,
+    peRatio: cachedPrice.peRatio,
+    eps: cachedPrice.eps,
+    dividendYield: cachedPrice.dividendYield,
+    week52High: cachedPrice.week52High,
+    week52Low: cachedPrice.week52Low,
+    tradingValue: cachedPrice.tradingValue,
     updatedAt: cachedPrice.updatedAt,
     staleness: cachedPrice.staleness,
     dataSource: cachedPrice.dataSource,
@@ -407,6 +524,36 @@ export default function CompanyProfilePage() {
           <MetricCard title="Volume" value={stockData?.volume ? (stockData.volume / 1000000).toFixed(2) : "--"} suffix="M" icon={Activity} />
           <MetricCard title="Day Range" value={stockData && stockData.dayLow && stockData.dayHigh ? `${stockData.dayLow.toFixed(2)} - ${stockData.dayHigh.toFixed(2)}` : "--"} icon={BarChart3} />
           <MetricCard title="Prev Close" value={stockData?.previousClose?.toFixed(2) || "--"} icon={DollarSign} />
+        </div>
+
+        {/* Fundamentals Grid */}
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+          <FundamentalCard
+            title="Market Cap"
+            value={formatMarketCap(stockData?.marketCap)}
+            icon={Building2}
+          />
+          <FundamentalCard
+            title="P/E Ratio"
+            value={stockData?.peRatio !== null && stockData?.peRatio !== undefined ? stockData.peRatio.toFixed(2) : "—"}
+            icon={Calculator}
+            subtitle={stockData?.peRatio !== null && stockData?.peRatio !== undefined ? (stockData.peRatio < 15 ? "Undervalued" : stockData.peRatio > 25 ? "Growth" : "Fair") : undefined}
+          />
+          <FundamentalCard
+            title="EPS"
+            value={stockData?.eps !== null && stockData?.eps !== undefined ? `RM ${stockData.eps.toFixed(2)}` : "—"}
+            icon={TrendingUp}
+          />
+          <FundamentalCard
+            title="Dividend Yield"
+            value={stockData?.dividendYield !== null && stockData?.dividendYield !== undefined ? `${(stockData.dividendYield * 100).toFixed(2)}%` : "—"}
+            icon={Percent}
+          />
+          <Week52RangeCard
+            low={stockData?.week52Low}
+            high={stockData?.week52High}
+            current={stockData?.price}
+          />
         </div>
 
         {/* Main Content Tabs */}

@@ -122,6 +122,18 @@ export default function CompaniesPage() {
             aVal = a.stockCode ?? ""
             bVal = b.stockCode ?? ""
             break
+          case "marketCap":
+            aVal = a.marketCap ?? -999999
+            bVal = b.marketCap ?? -999999
+            break
+          case "peRatio":
+            aVal = a.peRatio ?? -999999
+            bVal = b.peRatio ?? -999999
+            break
+          case "dividendYield":
+            aVal = a.dividendYield ?? -999999
+            bVal = b.dividendYield ?? -999999
+            break
           default:
             aVal = a.code
             bVal = b.code
@@ -161,6 +173,19 @@ export default function CompaniesPage() {
         {isPositive ? "+" : ""}{value.toFixed(1)}%
       </div>
     )
+  }
+
+  // Format market cap: RM 1.2B or RM 450M
+  const formatMarketCap = (value: number | undefined) => {
+    if (value === undefined || value === null) return "—"
+    if (value >= 1000000000) {
+      return `RM ${(value / 1000000000).toFixed(1)}B`
+    } else if (value >= 1000000) {
+      return `RM ${(value / 1000000).toFixed(0)}M`
+    } else if (value >= 1000) {
+      return `RM ${(value / 1000).toFixed(0)}K`
+    }
+    return `RM ${value.toFixed(0)}`
   }
 
   // Loading state
@@ -377,6 +402,30 @@ export default function CompaniesPage() {
                         Price <ArrowUpDown className="h-3 w-3" />
                       </div>
                     </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[100px]"
+                      onClick={() => handleSort("marketCap")}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Mkt Cap <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[70px]"
+                      onClick={() => handleSort("peRatio")}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        P/E <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted w-[70px]"
+                      onClick={() => handleSort("dividendYield")}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Div% <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </TableHead>
                     <TableHead className="w-[120px]">Sector</TableHead>
                     <TableHead className="w-[100px]">Category</TableHead>
                     <TableHead
@@ -427,6 +476,19 @@ export default function CompaniesPage() {
                         <TableCell className="text-right font-medium tabular-nums">
                           {company.currentPrice !== undefined && company.currentPrice !== null
                             ? `RM ${company.currentPrice.toFixed(2)}`
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums text-muted-foreground">
+                          {formatMarketCap(company.marketCap)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {company.peRatio !== undefined && company.peRatio !== null
+                            ? company.peRatio.toFixed(1)
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-medium tabular-nums">
+                          {company.dividendYield !== undefined && company.dividendYield !== null
+                            ? `${company.dividendYield.toFixed(1)}%`
                             : "—"}
                         </TableCell>
                         <TableCell>
@@ -529,6 +591,9 @@ export default function CompaniesPage() {
                     <th className="border px-3 py-2 text-left font-medium">Stock #</th>
                     <th className="border px-3 py-2 text-left font-medium">Name</th>
                     <th className="border px-3 py-2 text-right font-medium">Price (RM)</th>
+                    <th className="border px-3 py-2 text-right font-medium">Mkt Cap</th>
+                    <th className="border px-3 py-2 text-right font-medium">P/E</th>
+                    <th className="border px-3 py-2 text-right font-medium">Div%</th>
                     <th className="border px-3 py-2 text-left font-medium">Sector</th>
                     <th className="border px-3 py-2 text-center font-medium">YoY Cat</th>
                     <th className="border px-3 py-2 text-center font-medium">QoQ Cat</th>
@@ -552,6 +617,19 @@ export default function CompaniesPage() {
                       <td className="border px-3 py-2 text-right tabular-nums">
                         {company.currentPrice !== undefined && company.currentPrice !== null
                           ? company.currentPrice.toFixed(2)
+                          : "—"}
+                      </td>
+                      <td className="border px-3 py-2 text-right tabular-nums text-muted-foreground">
+                        {formatMarketCap(company.marketCap)}
+                      </td>
+                      <td className="border px-3 py-2 text-right tabular-nums">
+                        {company.peRatio !== undefined && company.peRatio !== null
+                          ? company.peRatio.toFixed(1)
+                          : "—"}
+                      </td>
+                      <td className="border px-3 py-2 text-right tabular-nums">
+                        {company.dividendYield !== undefined && company.dividendYield !== null
+                          ? `${company.dividendYield.toFixed(1)}%`
                           : "—"}
                       </td>
                       <td className="border px-3 py-2">{company.sector}</td>

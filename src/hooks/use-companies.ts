@@ -18,8 +18,18 @@ export interface CompanyData {
   profitQoQ?: number
   latestRevenue?: number
   latestProfit?: number
-  marketCap?: number
+  // Price data (updated every 10 min by price cron)
   currentPrice?: number
+  changePercent?: number
+  volume?: number
+  tradingValue?: number
+  // Fundamentals (updated daily by fundamentals cron)
+  marketCap?: number
+  peRatio?: number
+  eps?: number
+  dividendYield?: number
+  week52High?: number
+  week52Low?: number
   hasAnalysis?: boolean
 }
 
