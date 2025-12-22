@@ -24,10 +24,10 @@ const INITIAL_RETRY_DELAY = 10000  // 10s wait after rate limit
 // Conservative settings for fundamentals (Yahoo quoteSummary is heavily rate-limited)
 // Optimized for 12 hourly staggered cron jobs processing ~64 stocks each
 const FUNDAMENTALS_CONCURRENT = 1  // Sequential only - no parallel requests
-const FUNDAMENTALS_DELAY_MS = 2500  // 2.5s between requests for reliable rate limiting avoidance
+const FUNDAMENTALS_DELAY_MS = 1500  // 1.5s between requests (chart API is more tolerant)
 const FUNDAMENTALS_RETRY_DELAY = 5000  // 5s retry delay
 const FUNDAMENTALS_MAX_RETRIES = 2  // 2 retries for failed stocks (increased from 1)
-const FUNDAMENTALS_TIMEOUT = 10000  // 10s timeout per request (increased from 8s)
+const FUNDAMENTALS_TIMEOUT = 5000  // 5s timeout per request (chart API is fast)
 
 export interface YahooQuoteResult {
   symbol: string
@@ -410,61 +410,14 @@ async function fetchFundamentalsFromChart(symbol: string, retries = FUNDAMENTALS
 
 /**
  * Fetch fundamentals for a single stock
- * Strategy: Try quoteSummary with crumb auth first, fallback to chart API
+ * Strategy: Use chart API directly (fast, reliable, but limited data: 52-week high/low only)
+ *
+ * NOTE: quoteSummary with crumb auth was too slow/unreliable for Vercel Hobby plan.
+ * Chart API completes in ~1-2s per stock vs 5-10s for quoteSummary.
  */
 async function fetchSingleFundamentals(symbol: string, retries = FUNDAMENTALS_MAX_RETRIES): Promise<YahooFundamentalsResult | null> {
-  // Try quoteSummary with crumb authentication first (has full fundamentals)
-  const auth = await getYahooCrumb()
-
-  if (auth) {
-    const modules = 'summaryDetail,defaultKeyStatistics,price'
-    const url = `${YAHOO_QUOTE_SUMMARY_URL}/${symbol}?modules=${modules}&crumb=${encodeURIComponent(auth.crumb)}`
-
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), FUNDAMENTALS_TIMEOUT)
-
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json',
-          'Cookie': auth.cookies,
-        },
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeoutId)
-
-      if (response.status === 401) {
-        // Crumb expired, clear cache
-        console.warn(`[Yahoo Fundamentals] Crumb expired for ${symbol}`)
-        cachedCrumb = null
-      } else if (response.ok) {
-        const data = await response.json()
-        const result = data?.quoteSummary?.result?.[0]
-
-        if (result) {
-          const summaryDetail = result.summaryDetail || {}
-          const keyStats = result.defaultKeyStatistics || {}
-          const price = result.price || {}
-
-          return {
-            stockCode: fromYahooSymbol(symbol),
-            marketCap: price.marketCap?.raw || summaryDetail.marketCap?.raw || null,
-            peRatio: summaryDetail.trailingPE?.raw || keyStats.trailingPE?.raw || null,
-            eps: keyStats.trailingEps?.raw || null,
-            dividendYield: summaryDetail.dividendYield?.raw || null,
-            week52High: summaryDetail.fiftyTwoWeekHigh?.raw || null,
-            week52Low: summaryDetail.fiftyTwoWeekLow?.raw || null,
-          }
-        }
-      }
-    } catch {
-      // Fall through to chart fallback
-    }
-  }
-
-  // Fallback to chart API (always works, but limited data)
+  // Use chart API directly - fast and reliable (no auth needed)
+  // This gives us 52-week high/low only, but completes quickly
   return fetchFundamentalsFromChart(symbol, retries)
 }
 
