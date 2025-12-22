@@ -279,22 +279,83 @@ export function estimateFetchTime(stockCount: number): number {
 }
 
 // ============================================================================
-// FUNDAMENTALS API (using quoteSummary endpoint)
+// FUNDAMENTALS API (using quoteSummary endpoint with crumb authentication)
 // ============================================================================
 
 const YAHOO_QUOTE_SUMMARY_URL = 'https://query1.finance.yahoo.com/v10/finance/quoteSummary'
 
+// Cache for Yahoo crumb authentication
+let cachedCrumb: { crumb: string; cookies: string; timestamp: number } | null = null
+const CRUMB_CACHE_TTL = 30 * 60 * 1000 // 30 minutes
+
 /**
- * Fetch fundamentals for a single stock using quoteSummary API
- * Returns: marketCap, peRatio, eps, dividendYield, week52High, week52Low
- * Uses faster retry settings since fundamentals run once daily
+ * Get Yahoo Finance crumb for authenticated requests
+ * Yahoo now requires a crumb token for quoteSummary API
  */
-async function fetchSingleFundamentals(symbol: string, retries = FUNDAMENTALS_MAX_RETRIES): Promise<YahooFundamentalsResult | null> {
-  const modules = 'summaryDetail,defaultKeyStatistics,price'
-  const url = `${YAHOO_QUOTE_SUMMARY_URL}/${symbol}?modules=${modules}`
+async function getYahooCrumb(): Promise<{ crumb: string; cookies: string } | null> {
+  // Check cache
+  if (cachedCrumb && Date.now() - cachedCrumb.timestamp < CRUMB_CACHE_TTL) {
+    return { crumb: cachedCrumb.crumb, cookies: cachedCrumb.cookies }
+  }
 
   try {
-    // Add timeout to prevent hanging requests
+    // Step 1: Get initial cookies from Yahoo Finance
+    const initResponse = await fetch('https://finance.yahoo.com/quote/AAPL', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      },
+    })
+
+    if (!initResponse.ok) {
+      console.error('[Yahoo Crumb] Failed to fetch initial page:', initResponse.status)
+      return null
+    }
+
+    // Get cookies from response
+    const setCookies = initResponse.headers.get('set-cookie') || ''
+    const cookies = setCookies.split(',').map(c => c.split(';')[0].trim()).join('; ')
+
+    // Step 2: Get crumb from crumb API
+    const crumbResponse = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Cookie': cookies,
+      },
+    })
+
+    if (!crumbResponse.ok) {
+      console.error('[Yahoo Crumb] Failed to fetch crumb:', crumbResponse.status)
+      return null
+    }
+
+    const crumb = await crumbResponse.text()
+
+    if (!crumb || crumb.includes('error')) {
+      console.error('[Yahoo Crumb] Invalid crumb received:', crumb)
+      return null
+    }
+
+    // Cache the result
+    cachedCrumb = { crumb, cookies, timestamp: Date.now() }
+    console.log('[Yahoo Crumb] Successfully obtained crumb')
+
+    return { crumb, cookies }
+  } catch (error) {
+    console.error('[Yahoo Crumb] Error getting crumb:', error)
+    return null
+  }
+}
+
+/**
+ * Fetch fundamentals using chart API (no auth required)
+ * This provides: 52-week high/low only
+ * Market cap, PE, EPS, dividend yield not available via chart API
+ */
+async function fetchFundamentalsFromChart(symbol: string, retries = FUNDAMENTALS_MAX_RETRIES): Promise<YahooFundamentalsResult | null> {
+  const url = `${YAHOO_CHART_URL}/${symbol}?interval=1d&range=1d`
+
+  try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), FUNDAMENTALS_TIMEOUT)
 
@@ -310,53 +371,101 @@ async function fetchSingleFundamentals(symbol: string, retries = FUNDAMENTALS_MA
 
     if (response.status === 429 && retries > 0) {
       const waitTime = addJitter(FUNDAMENTALS_RETRY_DELAY)
-      console.warn(`[Yahoo Fundamentals] Rate limited for ${symbol}, waiting ${waitTime}ms`)
+      console.warn(`[Yahoo Chart Fundamentals] Rate limited for ${symbol}, waiting ${waitTime}ms`)
       await delay(waitTime)
-      return fetchSingleFundamentals(symbol, retries - 1)
+      return fetchFundamentalsFromChart(symbol, retries - 1)
     }
 
     if (!response.ok) {
-      console.error(`[Yahoo Fundamentals] Failed to fetch ${symbol}: ${response.status}`)
+      console.error(`[Yahoo Chart Fundamentals] Failed to fetch ${symbol}: ${response.status}`)
       return null
     }
 
     const data = await response.json()
-    const result = data?.quoteSummary?.result?.[0]
+    const meta = data?.chart?.result?.[0]?.meta
 
-    if (!result) {
-      console.warn(`[Yahoo Fundamentals] No data for ${symbol}`)
+    if (!meta) {
+      console.warn(`[Yahoo Chart Fundamentals] No data for ${symbol}`)
       return null
     }
 
-    const summaryDetail = result.summaryDetail || {}
-    const keyStats = result.defaultKeyStatistics || {}
-    const price = result.price || {}
-
-    // Extract raw values from Yahoo's nested structure
-    const marketCap = price.marketCap?.raw || summaryDetail.marketCap?.raw || null
-    const peRatio = summaryDetail.trailingPE?.raw || keyStats.trailingPE?.raw || null
-    const eps = keyStats.trailingEps?.raw || null
-    const dividendYield = summaryDetail.dividendYield?.raw || null // Already as decimal (0.05 = 5%)
-    const week52High = summaryDetail.fiftyTwoWeekHigh?.raw || null
-    const week52Low = summaryDetail.fiftyTwoWeekLow?.raw || null
-
     return {
       stockCode: fromYahooSymbol(symbol),
-      marketCap,
-      peRatio,
-      eps,
-      dividendYield,
-      week52High,
-      week52Low,
+      marketCap: null, // Not available via chart API
+      peRatio: null, // Not available via chart API
+      eps: null, // Not available via chart API
+      dividendYield: null, // Not available via chart API
+      week52High: meta.fiftyTwoWeekHigh || null,
+      week52Low: meta.fiftyTwoWeekLow || null,
     }
   } catch (error) {
     if (retries > 0) {
       await delay(addJitter(FUNDAMENTALS_RETRY_DELAY))
-      return fetchSingleFundamentals(symbol, retries - 1)
+      return fetchFundamentalsFromChart(symbol, retries - 1)
     }
-    console.error(`[Yahoo Fundamentals] Error fetching ${symbol}:`, error)
+    console.error(`[Yahoo Chart Fundamentals] Error fetching ${symbol}:`, error)
     return null
   }
+}
+
+/**
+ * Fetch fundamentals for a single stock
+ * Strategy: Try quoteSummary with crumb auth first, fallback to chart API
+ */
+async function fetchSingleFundamentals(symbol: string, retries = FUNDAMENTALS_MAX_RETRIES): Promise<YahooFundamentalsResult | null> {
+  // Try quoteSummary with crumb authentication first (has full fundamentals)
+  const auth = await getYahooCrumb()
+
+  if (auth) {
+    const modules = 'summaryDetail,defaultKeyStatistics,price'
+    const url = `${YAHOO_QUOTE_SUMMARY_URL}/${symbol}?modules=${modules}&crumb=${encodeURIComponent(auth.crumb)}`
+
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), FUNDAMENTALS_TIMEOUT)
+
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
+          'Cookie': auth.cookies,
+        },
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (response.status === 401) {
+        // Crumb expired, clear cache
+        console.warn(`[Yahoo Fundamentals] Crumb expired for ${symbol}`)
+        cachedCrumb = null
+      } else if (response.ok) {
+        const data = await response.json()
+        const result = data?.quoteSummary?.result?.[0]
+
+        if (result) {
+          const summaryDetail = result.summaryDetail || {}
+          const keyStats = result.defaultKeyStatistics || {}
+          const price = result.price || {}
+
+          return {
+            stockCode: fromYahooSymbol(symbol),
+            marketCap: price.marketCap?.raw || summaryDetail.marketCap?.raw || null,
+            peRatio: summaryDetail.trailingPE?.raw || keyStats.trailingPE?.raw || null,
+            eps: keyStats.trailingEps?.raw || null,
+            dividendYield: summaryDetail.dividendYield?.raw || null,
+            week52High: summaryDetail.fiftyTwoWeekHigh?.raw || null,
+            week52Low: summaryDetail.fiftyTwoWeekLow?.raw || null,
+          }
+        }
+      }
+    } catch {
+      // Fall through to chart fallback
+    }
+  }
+
+  // Fallback to chart API (always works, but limited data)
+  return fetchFundamentalsFromChart(symbol, retries)
 }
 
 /**
