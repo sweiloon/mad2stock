@@ -20,29 +20,22 @@ type StockPriceInsert = Database['public']['Tables']['stock_prices']['Insert']
 // STRATEGY: Each slice only processes a few stocks per cron call (not all)
 // Uses rotating offset to cycle through the slice over multiple calls.
 //
-// SETUP ON CRONJOB.ORG (8 jobs, all run every 10 min):
-// 1. /api/cron/update-prices-parallel?slice=0&secret=xxx
-// 2. /api/cron/update-prices-parallel?slice=1&secret=xxx
-// 3. /api/cron/update-prices-parallel?slice=2&secret=xxx
-// 4. /api/cron/update-prices-parallel?slice=3&secret=xxx
-// 5. /api/cron/update-prices-parallel?slice=4&secret=xxx
-// 6. /api/cron/update-prices-parallel?slice=5&secret=xxx
-// 7. /api/cron/update-prices-parallel?slice=6&secret=xxx
-// 8. /api/cron/update-prices-parallel?slice=7&secret=xxx
+// SETUP ON CRONJOB.ORG (16 jobs, all run every 10 min):
+// /api/cron/update-prices-parallel?slice=0&secret=xxx  (through slice=15)
 //
-// CALCULATION FOR 3-HOUR CYCLE:
+// CALCULATION FOR 1.5-HOUR CYCLE:
 // - 763 stocks total
-// - 3 hours = 180 min
-// - At 10-min cron interval: 18 cron runs in 3 hours
-// - 763 ÷ 18 = 42 stocks per cron run needed
-// - 8 parallel slices: 42 ÷ 8 = ~5 stocks per slice per run ✓
+// - 1.5 hours = 90 min
+// - At 10-min cron interval: 9 cron runs in 1.5 hours
+// - 763 ÷ 9 = 85 stocks per cron run needed
+// - 16 parallel slices: 85 ÷ 16 = ~5 stocks per slice per run ✓
 //
 // RESULT:
 // - Each cron call processes 5 stocks per slice (safe, ~3s)
-// - 8 slices × 5 stocks = 40 stocks per 10-min cron cycle
-// - 763 ÷ 40 = 19 cycles × 10 min = 190 min ≈ 3.2 hours ✓
+// - 16 slices × 5 stocks = 80 stocks per 10-min cron cycle
+// - 763 ÷ 80 = 9.5 cycles × 10 min = 95 min ≈ 1.5 hours ✓
 
-const TOTAL_SLICES = 8           // Number of parallel cron jobs
+const TOTAL_SLICES = 16          // Number of parallel cron jobs
 const STOCKS_PER_CALL = 5        // Stocks each slice processes per cron call
 const STOCKS_PER_INTERNAL_BATCH = 5  // Same as above for compatibility
 const DB_BATCH_SIZE = 5          // Upsert batch size
