@@ -9,40 +9,30 @@ import type { Database } from '@/types/database'
 type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 
 // ============================================================================
-// DAILY FUNDAMENTALS UPDATE V2 - Staggered Hourly Jobs
+// DAILY FUNDAMENTALS UPDATE V2 - Batch Jobs (Hobby Plan Compatible)
 // ============================================================================
 //
-// PURPOSE: Fetch and update fundamental data (Market Cap, P/E, EPS, etc.)
+// PURPOSE: Fetch and update fundamental data (52-week high/low, etc.)
 //          for ALL 763 companies in a single daily cycle.
 //
-// STRATEGY: 12 staggered hourly cron jobs (9pm to 8am MYT)
-// - Each job processes ~64 stocks sequentially
-// - 1-hour gaps between jobs = zero parallel requests to Yahoo
-// - Eliminates rate limiting (429 errors) completely
-// - All stocks updated by 8:30 AM MYT
+// STRATEGY: 51 batch jobs optimized for Vercel Hobby plan (60s timeout)
+// - Each job processes ~15 stocks sequentially
+// - 15 stocks × 3s per stock = ~45 seconds (safe under 60s limit)
+// - Run batches with gaps to avoid Yahoo rate limiting
 //
-// MATH:
-// - 763 stocks / 12 hours = ~64 stocks per hour
-// - 64 stocks × 4s per stock = ~256 seconds (~4.3 minutes)
-// - Well under 300s Vercel timeout limit
+// VERCEL HOBBY PLAN:
+// - Max timeout: 60 seconds
+// - This code processes 15 stocks in ~45 seconds (safe margin)
 //
-// CRONJOB.ORG SETUP (12 jobs, Asia/Kuala_Lumpur timezone):
-// Hour 0:  0 21 * * *   (9 PM)   → /api/cron/update-fundamentals-v2?hour=0&secret=xxx
-// Hour 1:  0 22 * * *   (10 PM)  → /api/cron/update-fundamentals-v2?hour=1&secret=xxx
-// Hour 2:  0 23 * * *   (11 PM)  → /api/cron/update-fundamentals-v2?hour=2&secret=xxx
-// Hour 3:  0 0 * * *    (12 AM)  → /api/cron/update-fundamentals-v2?hour=3&secret=xxx
-// Hour 4:  0 1 * * *    (1 AM)   → /api/cron/update-fundamentals-v2?hour=4&secret=xxx
-// Hour 5:  0 2 * * *    (2 AM)   → /api/cron/update-fundamentals-v2?hour=5&secret=xxx
-// Hour 6:  0 3 * * *    (3 AM)   → /api/cron/update-fundamentals-v2?hour=6&secret=xxx
-// Hour 7:  0 4 * * *    (4 AM)   → /api/cron/update-fundamentals-v2?hour=7&secret=xxx
-// Hour 8:  0 5 * * *    (5 AM)   → /api/cron/update-fundamentals-v2?hour=8&secret=xxx
-// Hour 9:  0 6 * * *    (6 AM)   → /api/cron/update-fundamentals-v2?hour=9&secret=xxx
-// Hour 10: 0 7 * * *    (7 AM)   → /api/cron/update-fundamentals-v2?hour=10&secret=xxx
-// Hour 11: 0 8 * * *    (8 AM)   → /api/cron/update-fundamentals-v2?hour=11&secret=xxx
+// CRONJOB.ORG SETUP (51 jobs):
+// - URL: /api/cron/update-fundamentals-v2?batch=0&secret=xxx (through batch=50)
+// - Schedule: Stagger across the night, e.g., every 15 minutes from 9pm-9am
+// - Or run multiple batches per hour with 5-minute gaps
 //
 // ============================================================================
 
-const TOTAL_HOURS = 12  // Number of hourly cron jobs
+const TOTAL_BATCHES = 51  // Number of batch jobs
+const STOCKS_PER_BATCH = 15  // Stocks per batch (fits in 60s timeout)
 
 // ============================================================================
 // SECURITY VALIDATION
@@ -87,10 +77,10 @@ function getAllStocksSorted(): { code: string; tier: 1 | 3 }[] {
 }
 
 /**
- * Get stocks for a specific hour slot.
- * Divides all stocks evenly across 12 hours.
+ * Get stocks for a specific batch.
+ * Divides all stocks into batches of STOCKS_PER_BATCH.
  */
-function getStocksForHour(hour: number): {
+function getStocksForBatch(batch: number): {
   stocks: { code: string; tier: 1 | 3 }[]
   startIdx: number
   endIdx: number
@@ -98,10 +88,9 @@ function getStocksForHour(hour: number): {
 } {
   const allStocks = getAllStocksSorted()
   const totalStocks = allStocks.length
-  const stocksPerHour = Math.ceil(totalStocks / TOTAL_HOURS)
 
-  const startIdx = hour * stocksPerHour
-  const endIdx = Math.min(startIdx + stocksPerHour, totalStocks)
+  const startIdx = batch * STOCKS_PER_BATCH
+  const endIdx = Math.min(startIdx + STOCKS_PER_BATCH, totalStocks)
 
   return {
     stocks: allStocks.slice(startIdx, endIdx),
@@ -201,44 +190,49 @@ export async function GET(request: NextRequest) {
   }
 
   const url = new URL(request.url)
-  const hourParam = url.searchParams.get('hour')
+  const batchParam = url.searchParams.get('batch')
 
-  if (hourParam === null) {
+  if (batchParam === null) {
+    const allStocks = getAllStocksSorted()
+    const actualBatches = Math.ceil(allStocks.length / STOCKS_PER_BATCH)
+
     return NextResponse.json({
-      error: 'Missing hour parameter',
-      usage: 'Add ?hour=0 through ?hour=11 to specify which hour slot to process',
-      totalHours: TOTAL_HOURS,
+      error: 'Missing batch parameter',
+      usage: `Add ?batch=0 through ?batch=${actualBatches - 1} to specify which batch to process`,
+      totalBatches: actualBatches,
+      stocksPerBatch: STOCKS_PER_BATCH,
+      totalStocks: allStocks.length,
+      vercelPlan: 'Hobby (60s timeout)',
       schedule: {
-        description: '12 staggered hourly jobs from 9pm to 8am MYT',
-        hours: Array.from({ length: TOTAL_HOURS }, (_, i) => ({
-          hour: i,
-          cronSchedule: i < 3 ? `0 ${21 + i} * * *` : `0 ${i - 3} * * *`,
-          time: i < 3 ? `${9 + i} PM` : `${i - 3 === 0 ? 12 : i - 3} AM`,
-        })),
+        description: `${actualBatches} batch jobs, each processing ${STOCKS_PER_BATCH} stocks in ~45 seconds`,
+        example: 'Run batches every 5 minutes: batch=0 at 9:00pm, batch=1 at 9:05pm, etc.',
       },
     }, { status: 400 })
   }
 
-  const hour = parseInt(hourParam)
-  if (isNaN(hour) || hour < 0 || hour >= TOTAL_HOURS) {
+  const batch = parseInt(batchParam)
+  const allStocks = getAllStocksSorted()
+  const actualBatches = Math.ceil(allStocks.length / STOCKS_PER_BATCH)
+
+  if (isNaN(batch) || batch < 0 || batch >= actualBatches) {
     return NextResponse.json({
-      error: `Invalid hour: ${hourParam}. Must be 0-${TOTAL_HOURS - 1}`,
+      error: `Invalid batch: ${batchParam}. Must be 0-${actualBatches - 1}`,
     }, { status: 400 })
   }
 
   const supabase = createAdminClient()
 
-  // Get stocks for this hour slot
-  const { stocks, startIdx, endIdx, totalStocks } = getStocksForHour(hour)
+  // Get stocks for this batch
+  const { stocks, startIdx, endIdx, totalStocks } = getStocksForBatch(batch)
 
-  console.log(`[Fundamentals V2 Hour ${hour}] Processing stocks ${startIdx}-${endIdx - 1} of ${totalStocks}`)
+  console.log(`[Fundamentals V2 Batch ${batch}] Processing stocks ${startIdx}-${endIdx - 1} of ${totalStocks}`)
 
   if (stocks.length === 0) {
     return NextResponse.json({
       success: true,
-      hour,
-      totalHours: TOTAL_HOURS,
-      message: 'No stocks for this hour slot',
+      batch,
+      totalBatches: actualBatches,
+      message: 'No stocks for this batch',
     })
   }
 
@@ -246,13 +240,13 @@ export async function GET(request: NextRequest) {
     const result = await updateFundamentals(stocks, supabase)
     const executionTime = Date.now() - startTime
 
-    console.log(`[Fundamentals V2 Hour ${hour}] Completed: ${result.updated} updated, ${result.failed} failed in ${executionTime}ms`)
+    console.log(`[Fundamentals V2 Batch ${batch}] Completed: ${result.updated} updated, ${result.failed} failed in ${executionTime}ms`)
 
     return NextResponse.json({
       success: true,
-      hour,
-      totalHours: TOTAL_HOURS,
-      slotInfo: {
+      batch,
+      totalBatches: actualBatches,
+      batchInfo: {
         stocksProcessed: stocks.length,
         startIdx,
         endIdx,
@@ -261,28 +255,27 @@ export async function GET(request: NextRequest) {
       result: {
         updated: result.updated,
         failed: result.failed,
-        failedCodes: result.failedCodes.slice(0, 20), // Limit to first 20 for response size
+        failedCodes: result.failedCodes.slice(0, 10),
         failedTotal: result.failedCodes.length,
       },
       timing: {
         executionTimeMs: executionTime,
         executionTimeSec: Math.round(executionTime / 1000),
         fetchTimeMs: result.totalTime,
-        avgPerStock: Math.round(result.totalTime / stocks.length),
+        avgPerStock: stocks.length > 0 ? Math.round(result.totalTime / stocks.length) : 0,
       },
       schedule: {
-        description: 'Daily 9pm-8am MYT, all 763 stocks across 12 hourly jobs',
-        thisJob: `Hour ${hour}: ${hour < 3 ? `${9 + hour} PM` : `${hour - 3 === 0 ? 12 : hour - 3} AM`} MYT`,
-        nextJob: hour < 11 ? `Hour ${hour + 1}` : 'Complete - restart tomorrow',
+        description: `Batch ${batch + 1} of ${actualBatches} - processing ${stocks.length} stocks`,
+        nextBatch: batch < actualBatches - 1 ? `batch=${batch + 1}` : 'All batches complete',
       },
     })
   } catch (error) {
     const executionTime = Date.now() - startTime
-    console.error(`[Fundamentals V2 Hour ${hour}] Failed:`, error)
+    console.error(`[Fundamentals V2 Batch ${batch}] Failed:`, error)
 
     return NextResponse.json({
       success: false,
-      hour,
+      batch,
       error: error instanceof Error ? error.message : 'Unknown error',
       executionTimeMs: executionTime,
     }, { status: 500 })
