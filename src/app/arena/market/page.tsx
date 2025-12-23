@@ -31,13 +31,15 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 
-// AI Models
+// AI Models - All 7 AI models
 const AI_MODELS = [
-  { id: "deepseek", name: "DeepSeek", logo: "/images/deepseek-logo.png", color: "#3B82F6" },
-  { id: "claude", name: "Claude", logo: "/images/claude-logo.webp", color: "#D97706" },
-  { id: "chatgpt", name: "ChatGPT", logo: "/images/openai-logo.png", color: "#10B981" },
-  { id: "grok", name: "Grok", logo: "/images/Grok-logo.png", color: "#1a1a1a" },
-  { id: "gemini", name: "Gemini", logo: "/images/gemini-logo.png", color: "#8B5CF6" },
+  { id: "claude", name: "Claude", logo: "/images/claude-logo.webp", color: "#FF6B35" },
+  { id: "chatgpt", name: "ChatGPT", logo: "/images/openai-logo.png", color: "#10A37F" },
+  { id: "deepseek", name: "DeepSeek", logo: "/images/deepseek-logo.png", color: "#5865F2" },
+  { id: "gemini", name: "Gemini", logo: "/images/gemini-logo.png", color: "#4285F4" },
+  { id: "grok", name: "Grok", logo: "/images/Grok-logo.png", color: "#1DA1F2" },
+  { id: "kimi", name: "Kimi", logo: "/images/kimi-logo.jpg", color: "#9B59B6" },
+  { id: "qwen", name: "Qwen", logo: "/images/qwen-logo.jpg", color: "#FF7000" },
 ]
 
 // Market interface

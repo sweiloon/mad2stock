@@ -18,22 +18,26 @@ import {
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 
-// AI Logo mapping
+// AI Logo mapping - All 7 AI models
 const AI_LOGOS: Record<string, string> = {
-  'DeepSeek': '/images/deepseek-logo.png',
-  'Grok': '/images/Grok-logo.png',
   'Claude': '/images/claude-logo.webp',
   'ChatGPT': '/images/openai-logo.png',
+  'DeepSeek': '/images/deepseek-logo.png',
   'Gemini': '/images/gemini-logo.png',
+  'Grok': '/images/Grok-logo.png',
+  'Kimi': '/images/kimi-logo.jpg',
+  'Qwen': '/images/qwen-logo.jpg',
 }
 
-// AI Colors matching the arena theme
+// AI Colors matching the arena theme - All 7 AI models
 const AI_COLORS: Record<string, string> = {
-  'DeepSeek': '#3B82F6',  // Blue
-  'Grok': '#000000',      // Black
-  'Claude': '#D97706',    // Orange/Amber
-  'ChatGPT': '#10B981',   // Green
-  'Gemini': '#8B5CF6',    // Purple
+  'Claude': '#FF6B35',    // Orange (Anthropic)
+  'ChatGPT': '#10A37F',   // Green (OpenAI)
+  'DeepSeek': '#5865F2',  // Blue (DeepSeek)
+  'Gemini': '#4285F4',    // Google Blue
+  'Grok': '#1DA1F2',      // Twitter Blue (xAI)
+  'Kimi': '#9B59B6',      // Purple (Moonshot)
+  'Qwen': '#FF7000',      // Orange (Alibaba)
 }
 
 interface AIPerformanceData {

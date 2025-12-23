@@ -7,13 +7,15 @@ import { cn } from "@/lib/utils"
 import Image from "next/image"
 import type { LeaderboardEntry } from "@/lib/arena/types"
 
-// AI Logo mapping
+// AI Logo mapping - All 7 AI models
 const AI_LOGOS: Record<string, string> = {
-  'DeepSeek': '/images/deepseek-logo.png',
-  'Grok': '/images/Grok-logo.png',
   'Claude': '/images/claude-logo.webp',
   'ChatGPT': '/images/openai-logo.png',
+  'DeepSeek': '/images/deepseek-logo.png',
   'Gemini': '/images/gemini-logo.png',
+  'Grok': '/images/Grok-logo.png',
+  'Kimi': '/images/kimi-logo.jpg',
+  'Qwen': '/images/qwen-logo.jpg',
 }
 
 interface LeaderboardProps {
