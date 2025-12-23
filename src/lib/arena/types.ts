@@ -143,9 +143,38 @@ export interface AIModelConfig {
   model: string
   maxTokens: number
   temperature: number
+  displayColor: string // For UI consistency
+  estimatedCostPer1K: number // Cost per 1000 API calls in USD
 }
 
+/**
+ * 7 AI Models for Mad2Arena Competition
+ * Budget: $5/day = 4 sessions × 7 models = 28 calls/day
+ * Cost-optimized model selection per provider
+ */
 export const AI_MODELS: AIModelConfig[] = [
+  {
+    id: 'claude',
+    name: 'Claude',
+    provider: 'Anthropic',
+    apiKeyEnvVar: 'ANTHROPIC_API_KEY',
+    model: 'claude-opus-4-5-20251101', // BEST - Opus 4.5
+    maxTokens: 4096,
+    temperature: 0.7,
+    displayColor: '#FF6B35',
+    estimatedCostPer1K: 27.50 // $5/1M input + $25/1M output (67% cheaper than Opus 4.1!)
+  },
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    provider: 'OpenAI',
+    apiKeyEnvVar: 'OPENAI_API_KEY',
+    model: 'gpt-4o',
+    maxTokens: 4096,
+    temperature: 0.7,
+    displayColor: '#10A37F',
+    estimatedCostPer1K: 11.00 // $2.50/1M input + $10/1M output
+  },
   {
     id: 'deepseek',
     name: 'DeepSeek',
@@ -154,7 +183,20 @@ export const AI_MODELS: AIModelConfig[] = [
     endpoint: 'https://api.deepseek.com/v1',
     model: 'deepseek-chat',
     maxTokens: 4096,
-    temperature: 0.7
+    temperature: 0.7,
+    displayColor: '#5865F2',
+    estimatedCostPer1K: 0.14
+  },
+  {
+    id: 'gemini',
+    name: 'Gemini',
+    provider: 'Google',
+    apiKeyEnvVar: 'GOOGLE_API_KEY',
+    model: 'gemini-2.0-flash',
+    maxTokens: 4096,
+    temperature: 0.7,
+    displayColor: '#4285F4',
+    estimatedCostPer1K: 0.00 // Free tier
   },
   {
     id: 'grok',
@@ -164,36 +206,47 @@ export const AI_MODELS: AIModelConfig[] = [
     endpoint: 'https://api.x.ai/v1',
     model: 'grok-2-latest',
     maxTokens: 4096,
-    temperature: 0.7
+    temperature: 0.7,
+    displayColor: '#1DA1F2',
+    estimatedCostPer1K: 2.00
   },
   {
-    id: 'claude',
-    name: 'Claude',
-    provider: 'Anthropic',
-    apiKeyEnvVar: 'ANTHROPIC_API_KEY',
-    model: 'claude-sonnet-4-20250514',
+    id: 'kimi',
+    name: 'Kimi',
+    provider: 'Moonshot',
+    apiKeyEnvVar: 'MOONSHOT_API_KEY',
+    endpoint: 'https://api.moonshot.cn/v1',
+    model: 'moonshot-v1-128k',
     maxTokens: 4096,
-    temperature: 0.7
+    temperature: 0.7,
+    displayColor: '#9B59B6',
+    estimatedCostPer1K: 1.00
   },
   {
-    id: 'chatgpt',
-    name: 'ChatGPT',
-    provider: 'OpenAI',
-    apiKeyEnvVar: 'OPENAI_API_KEY',
-    model: 'gpt-4o',
+    id: 'qwen',
+    name: 'Qwen',
+    provider: 'Alibaba',
+    apiKeyEnvVar: 'DASHSCOPE_API_KEY',
+    endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: 'qwen-max',
     maxTokens: 4096,
-    temperature: 0.7
-  },
-  {
-    id: 'gemini',
-    name: 'Gemini',
-    provider: 'Google',
-    apiKeyEnvVar: 'GOOGLE_API_KEY',
-    model: 'gemini-2.0-flash',
-    maxTokens: 4096,
-    temperature: 0.7
+    temperature: 0.7,
+    displayColor: '#FF7000',
+    estimatedCostPer1K: 2.00
   }
 ]
+
+// Helper to get model by ID
+export function getModelById(id: string): AIModelConfig | undefined {
+  return AI_MODELS.find(m => m.id === id)
+}
+
+// Calculate estimated daily cost for all models
+export function calculateDailyCost(sessionsPerDay: number = 4): number {
+  return AI_MODELS.reduce((sum, model) => {
+    return sum + (model.estimatedCostPer1K / 1000) * sessionsPerDay
+  }, 0)
+}
 
 // Competition status
 export interface CompetitionStatus {

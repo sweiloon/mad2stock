@@ -232,14 +232,14 @@ export function parseAIResponse(response: string): MarketAnalysis | null {
       top_picks: parsed.analysis.top_picks || [],
       avoid_stocks: parsed.analysis.avoid_stocks || [],
       market_summary: parsed.analysis.market_summary || '',
-      recommended_actions: (parsed.actions || []).map((a: any) => ({
-        action: a.action || 'HOLD',
-        stock_code: a.stock_code || '',
-        quantity: a.quantity || 0,
-        reasoning: a.reasoning || '',
-        confidence: a.confidence || 50,
-        target_price: a.target_price,
-        stop_loss: a.stop_loss
+      recommended_actions: (parsed.actions || []).map((a: Record<string, unknown>) => ({
+        action: (a.action as string) || 'HOLD',
+        stock_code: (a.stock_code as string) || '',
+        quantity: (a.quantity as number) || 0,
+        reasoning: (a.reasoning as string) || '',
+        confidence: (a.confidence as number) || 50,
+        target_price: a.target_price as number | undefined,
+        stop_loss: a.stop_loss as number | undefined
       }))
     }
   } catch (e) {

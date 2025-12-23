@@ -36,11 +36,12 @@ Mad2Stock is a comprehensive stock market analysis platform focused on the **Mal
 - Secret sauce: Expert Trader Prompt (see `/src/lib/prompts/expert-trader.ts`)
 
 ### 3. Mad2Arena
-- 5 AI models competing: Claude, GPT-4, DeepSeek, Gemini, Grok
+- 7 AI models competing: Claude, GPT, DeepSeek, Gemini, Grok, Kimi, Qwen
 - Each starts with RM 10,000 virtual capital
 - Real stock trading simulation on KLSE stocks
-- **Competition Start Date: December 24, 2025**
+- **Competition Start Date: December 27, 2025**
 - Live leaderboard, trade history, performance charts
+- **Dev Reference**: See `/data/arena/ARENA_KB.md` for full knowledge base
 
 ### 4. AI Chat
 - User selects a company first
@@ -136,11 +137,12 @@ Mad2Stock is a comprehensive stock market analysis platform focused on the **Mal
 ### Arena Tables
 | Table | Purpose |
 |-------|---------|
-| `arena_participants` | 5 AI model profiles |
+| `arena_participants` | 7 AI model profiles |
 | `arena_trades` | All trading history |
 | `arena_holdings` | Current positions |
 | `arena_daily_snapshots` | Daily portfolio values |
 | `arena_config` | Competition settings |
+| `arena_ai_decisions` | AI reasoning logs |
 
 ---
 
