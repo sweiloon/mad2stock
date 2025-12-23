@@ -10,13 +10,12 @@ import {
   LineChart,
   TrendingUp,
   TrendingDown,
-  Play,
-  Pause,
   RotateCcw,
-  Maximize2
+  BarChart3
 } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { useArenaStore } from "@/stores/arena"
 
 // AI Logo mapping - All 7 AI models
 const AI_LOGOS: Record<string, string> = {
@@ -50,63 +49,6 @@ interface AIPerformanceData {
 
 interface ArenaChartProps {
   height?: number
-  showDemoData?: boolean
-}
-
-// Generate realistic demo competition data
-function generateDemoData(): AIPerformanceData[] {
-  const startDate = new Date('2024-12-01')
-  const days = 30
-  const startingCapital = 10000
-
-  const aiModels = [
-    { name: 'DeepSeek', volatility: 0.015, trend: 0.003, color: AI_COLORS['DeepSeek'] },
-    { name: 'Claude', volatility: 0.012, trend: 0.0025, color: AI_COLORS['Claude'] },
-    { name: 'ChatGPT', volatility: 0.018, trend: 0.002, color: AI_COLORS['ChatGPT'] },
-    { name: 'Grok', volatility: 0.02, trend: 0.0015, color: AI_COLORS['Grok'] },
-    { name: 'Gemini', volatility: 0.014, trend: 0.001, color: AI_COLORS['Gemini'] },
-  ]
-
-  return aiModels.map(ai => {
-    let currentValue = startingCapital
-    const data: LineData<Time>[] = []
-
-    for (let i = 0; i < days; i++) {
-      const date = new Date(startDate)
-      date.setDate(date.getDate() + i)
-
-      // Skip weekends
-      if (date.getDay() === 0 || date.getDay() === 6) continue
-
-      // Generate random walk with trend
-      const randomChange = (Math.random() - 0.5) * 2 * ai.volatility
-      const trendChange = ai.trend
-      currentValue = currentValue * (1 + randomChange + trendChange)
-
-      // Add some market events (dips and rallies)
-      if (i === 10) currentValue *= (ai.name === 'DeepSeek' ? 1.03 : 0.98)
-      if (i === 15) currentValue *= (ai.name === 'Claude' ? 1.025 : 1.01)
-      if (i === 20) currentValue *= (ai.name === 'ChatGPT' ? 0.97 : 1.005)
-
-      const timestamp = Math.floor(date.getTime() / 1000) as Time
-
-      data.push({
-        time: timestamp,
-        value: Math.round(currentValue * 100) / 100
-      })
-    }
-
-    const finalValue = data[data.length - 1]?.value || startingCapital
-    const changePercent = ((finalValue - startingCapital) / startingCapital) * 100
-
-    return {
-      name: ai.name,
-      color: ai.color,
-      data,
-      currentValue: finalValue,
-      changePercent
-    }
-  })
 }
 
 type TimeRange = '1D' | '1W' | '1M' | '3M' | 'ALL'
@@ -119,30 +61,54 @@ interface LogoPosition {
   visible: boolean
 }
 
-export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProps) {
+export function ArenaChart({ height = 500 }: ArenaChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
 
-  const [demoData] = useState<AIPerformanceData[]>(() => generateDemoData())
+  const { dailySnapshots, participants, competitionStatus } = useArenaStore()
+
   const [selectedAI, setSelectedAI] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState<TimeRange>('ALL')
-  const [isPlaying, setIsPlaying] = useState(false)
   const [crosshairData, setCrosshairData] = useState<{ time: string; values: Record<string, number> } | null>(null)
   const [logoPositions, setLogoPositions] = useState<LogoPosition[]>([])
 
+  // Convert store data to chart data
+  const chartData: AIPerformanceData[] = participants.map(participant => {
+    const participantSnapshots = dailySnapshots.filter(s => s.participant_id === participant.id)
+    const data: LineData<Time>[] = participantSnapshots.map(snapshot => ({
+      time: Math.floor(new Date(snapshot.snapshot_date).getTime() / 1000) as Time,
+      value: snapshot.portfolio_value
+    }))
+
+    const startValue = 10000
+    const currentValue = participant.portfolio_value
+    const changePercent = ((currentValue - startValue) / startValue) * 100
+
+    return {
+      name: participant.display_name,
+      color: AI_COLORS[participant.display_name] || participant.avatar_color,
+      data,
+      currentValue,
+      changePercent
+    }
+  })
+
   // Sort by performance
-  const sortedData = [...demoData].sort((a, b) => b.changePercent - a.changePercent)
+  const sortedData = [...chartData].sort((a, b) => b.changePercent - a.changePercent)
+
+  // Check if we have data
+  const hasData = chartData.some(ai => ai.data.length > 0)
 
   // Function to update logo positions based on chart coordinates
   const updateLogoPositions = useCallback(() => {
-    if (!chartRef.current || !chartContainerRef.current) return
+    if (!chartRef.current || !chartContainerRef.current || !hasData) return
 
     const chart = chartRef.current
     const timeScale = chart.timeScale()
     const positions: LogoPosition[] = []
 
-    demoData.forEach(ai => {
+    chartData.forEach(ai => {
       const series = seriesRefs.current.get(ai.name)
       if (!series || ai.data.length === 0) return
 
@@ -162,11 +128,11 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
     })
 
     setLogoPositions(positions)
-  }, [demoData])
+  }, [chartData, hasData])
 
   // Initialize chart
   useEffect(() => {
-    if (!chartContainerRef.current) return
+    if (!chartContainerRef.current || !hasData) return
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -219,7 +185,9 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
     chartRef.current = chart
 
     // Add series for each AI
-    demoData.forEach(ai => {
+    chartData.forEach(ai => {
+      if (ai.data.length === 0) return
+
       const series = chart.addSeries(LineSeries, {
         color: ai.color,
         lineWidth: 2,
@@ -236,19 +204,19 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
       seriesRefs.current.set(ai.name, series)
     })
 
-    // Add starting line marker
-    const startingLine = chart.addSeries(LineSeries, {
-      color: 'rgba(156, 163, 175, 0.5)',
-      lineWidth: 1,
-      lineStyle: LineStyle.Dashed,
-      priceLineVisible: false,
-      lastValueVisible: false,
-      crosshairMarkerVisible: false,
-    })
+    // Add starting line marker at RM 10,000
+    if (chartData[0]?.data.length > 0) {
+      const startingLine = chart.addSeries(LineSeries, {
+        color: 'rgba(156, 163, 175, 0.5)',
+        lineWidth: 1,
+        lineStyle: LineStyle.Dashed,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false,
+      })
 
-    if (demoData[0]?.data.length > 0) {
-      const startTime = demoData[0].data[0].time
-      const endTime = demoData[0].data[demoData[0].data.length - 1].time
+      const startTime = chartData[0].data[0].time
+      const endTime = chartData[0].data[chartData[0].data.length - 1].time
       startingLine.setData([
         { time: startTime, value: 10000 },
         { time: endTime, value: 10000 }
@@ -293,7 +261,6 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
       updateLogoPositions()
     })
 
-    // Subscribe to visible logical range change for better tracking
     chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
       updateLogoPositions()
     })
@@ -304,7 +271,6 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
         chartRef.current.applyOptions({
           width: chartContainerRef.current.clientWidth,
         })
-        // Update logo positions after resize
         setTimeout(() => updateLogoPositions(), 50)
       }
     }
@@ -316,42 +282,42 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
       chart.remove()
       seriesRefs.current.clear()
     }
-  }, [demoData, updateLogoPositions])
+  }, [chartData, hasData, updateLogoPositions])
 
   // Handle AI selection (highlight/dim)
   useEffect(() => {
     seriesRefs.current.forEach((series, name) => {
-      const ai = demoData.find(a => a.name === name)
+      const ai = chartData.find(a => a.name === name)
       if (!ai) return
 
       if (selectedAI === null) {
-        // Show all with full opacity
         series.applyOptions({
           color: ai.color,
           lineWidth: 2,
         })
       } else if (selectedAI === name) {
-        // Highlight selected
         series.applyOptions({
           color: ai.color,
           lineWidth: 3,
         })
       } else {
-        // Dim others
         series.applyOptions({
           color: ai.color + '40',
           lineWidth: 1,
         })
       }
     })
-  }, [selectedAI, demoData])
+  }, [selectedAI, chartData])
 
   // Handle time range filter
   const handleTimeRangeChange = useCallback((range: TimeRange) => {
     setTimeRange(range)
-    if (!chartRef.current || demoData[0]?.data.length === 0) return
+    if (!chartRef.current || !hasData) return
 
-    const now = demoData[0].data[demoData[0].data.length - 1].time as number
+    const allData = chartData.flatMap(ai => ai.data)
+    if (allData.length === 0) return
+
+    const now = Math.max(...allData.map(d => d.time as number))
     let from: number
 
     switch (range) {
@@ -377,13 +343,45 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
       from: from as Time,
       to: now as Time
     })
-  }, [demoData])
+  }, [chartData, hasData])
 
   const resetChart = useCallback(() => {
     setSelectedAI(null)
     setTimeRange('ALL')
     chartRef.current?.timeScale().fitContent()
   }, [])
+
+  // Show waiting state if no data
+  if (!hasData) {
+    return (
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+              <LineChart className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Portfolio Performance</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Tracking AI trading model performance
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center justify-center" style={{ height: height - 150 }}>
+            <BarChart3 className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Waiting for Trading Data</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              {competitionStatus?.hasStarted
+                ? "Chart data will appear as AI models execute trades and daily snapshots are recorded."
+                : "The competition hasn't started yet. Check back on December 27, 2025."}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="overflow-hidden">
@@ -422,7 +420,7 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
                 <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
               </span>
-              DEMO MODE
+              LIVE
             </Badge>
           </div>
         </div>
@@ -465,7 +463,7 @@ export function ArenaChart({ height = 500, showDemoData = true }: ArenaChartProp
                 selectedAI !== null && selectedAI !== logo.name && "opacity-30"
               )}
               style={{
-                left: logo.x - 12, // Center the 24px logo
+                left: logo.x - 12,
                 top: logo.y - 12,
                 zIndex: 10,
               }}

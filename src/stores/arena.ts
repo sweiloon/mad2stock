@@ -14,8 +14,91 @@ import type {
   CompetitionStatus,
   ArenaStats,
   LeaderboardEntry,
-  ChartDataPoint
+  ChartDataPoint,
+  ExtendedArenaStats
 } from '@/lib/arena/types'
+
+// Helper functions for advanced metrics
+
+/**
+ * Calculate Sharpe Ratio
+ * Formula: (Portfolio Return - Risk Free Rate) / Std Dev of Returns
+ * Using 3% annual risk-free rate (Malaysian T-bills approx)
+ */
+function calculateSharpeRatio(dailyReturns: number[], totalReturnPct: number): number {
+  if (dailyReturns.length < 2) return 0
+
+  const riskFreeRate = 3 // 3% annual
+  const excessReturn = totalReturnPct - (riskFreeRate / 12) // Monthly adjustment
+
+  // Calculate standard deviation of daily returns
+  const mean = dailyReturns.reduce((s, r) => s + r, 0) / dailyReturns.length
+  const squaredDiffs = dailyReturns.map(r => Math.pow(r - mean, 2))
+  const variance = squaredDiffs.reduce((s, d) => s + d, 0) / dailyReturns.length
+  const stdDev = Math.sqrt(variance)
+
+  if (stdDev === 0) return excessReturn > 0 ? 3 : 0 // Cap at 3 if no volatility
+
+  // Annualized Sharpe (assuming ~252 trading days)
+  const annualizedSharpe = (excessReturn / stdDev) * Math.sqrt(252 / dailyReturns.length)
+  return Math.max(-3, Math.min(3, annualizedSharpe)) // Cap between -3 and 3
+}
+
+/**
+ * Calculate Maximum Drawdown
+ * Formula: (Peak - Trough) / Peak × 100
+ */
+function calculateMaxDrawdown(snapshots: DailySnapshot[]): number {
+  if (snapshots.length < 2) return 0
+
+  const sorted = [...snapshots].sort(
+    (a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime()
+  )
+
+  let peak = sorted[0]?.portfolio_value || 0
+  let maxDrawdown = 0
+
+  for (const snapshot of sorted) {
+    if (snapshot.portfolio_value > peak) {
+      peak = snapshot.portfolio_value
+    }
+    const drawdown = peak > 0 ? ((peak - snapshot.portfolio_value) / peak) * 100 : 0
+    if (drawdown > maxDrawdown) {
+      maxDrawdown = drawdown
+    }
+  }
+
+  return maxDrawdown
+}
+
+/**
+ * Calculate average hold time between trades (in hours)
+ */
+function calculateAvgHoldTime(trades: Trade[]): number {
+  if (trades.length < 2) return 0
+
+  const sorted = [...trades].sort(
+    (a, b) => new Date(a.executed_at).getTime() - new Date(b.executed_at).getTime()
+  )
+
+  let totalHours = 0
+  for (let i = 1; i < sorted.length; i++) {
+    const diff = new Date(sorted[i].executed_at).getTime() - new Date(sorted[i - 1].executed_at).getTime()
+    totalHours += diff / (1000 * 60 * 60)
+  }
+
+  return totalHours / (sorted.length - 1)
+}
+
+/**
+ * Calculate median of an array
+ */
+function calculateMedian(arr: number[]): number {
+  if (arr.length === 0) return 0
+  const sorted = [...arr].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+}
 
 interface ArenaState {
   // Data
@@ -35,6 +118,9 @@ interface ArenaState {
   leaderboard: LeaderboardEntry[]
   chartData: ChartDataPoint[]
   stats: ArenaStats | null
+  extendedStats: ExtendedArenaStats | null
+  // Participant-specific trade data for metrics computation
+  participantTrades: Record<string, Trade[]>
 
   // Actions
   fetchParticipants: () => Promise<void>
@@ -64,6 +150,8 @@ export const useArenaStore = create<ArenaState>((set, get) => ({
   leaderboard: [],
   chartData: [],
   stats: null,
+  extendedStats: null,
+  participantTrades: {},
 
   // Fetch participants
   fetchParticipants: async () => {
@@ -135,7 +223,16 @@ export const useArenaStore = create<ArenaState>((set, get) => ({
       return
     }
 
-    set({ trades: data || [] })
+    // Group trades by participant for metrics computation
+    const participantTrades: Record<string, Trade[]> = {}
+    data?.forEach((trade: Trade) => {
+      if (!participantTrades[trade.participant_id]) {
+        participantTrades[trade.participant_id] = []
+      }
+      participantTrades[trade.participant_id].push(trade)
+    })
+
+    set({ trades: data || [], participantTrades })
   },
 
   // Fetch daily snapshots
@@ -226,22 +323,103 @@ export const useArenaStore = create<ArenaState>((set, get) => ({
     set({ selectedParticipant: id })
   },
 
-  // Compute leaderboard
+  // Compute leaderboard with advanced metrics
   computeLeaderboard: () => {
-    const { participants } = get()
+    const { participants, participantTrades, holdings, dailySnapshots, config } = get()
 
     const leaderboard: LeaderboardEntry[] = participants
-      .map((p, index) => ({
-        rank: index + 1,
-        participant: p,
-        portfolioValue: p.portfolio_value,
-        totalReturn: p.total_profit_loss,
-        totalReturnPct: p.profit_loss_pct,
-        dailyChange: 0, // Would be computed from snapshots
-        dailyChangePct: 0,
-        winRate: p.total_trades > 0 ? (p.winning_trades / p.total_trades) * 100 : 0,
-        totalTrades: p.total_trades
-      }))
+      .map((p) => {
+        const trades = participantTrades[p.id] || []
+        const participantHoldings = holdings[p.id] || []
+        const participantSnapshots = dailySnapshots.filter(s => s.participant_id === p.id)
+
+        // Basic metrics
+        const totalTrades = trades.length
+        const winningTrades = trades.filter(t => (t.realized_pnl || 0) > 0).length
+        const losingTrades = trades.filter(t => (t.realized_pnl || 0) < 0).length
+        const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0
+
+        // Fee calculation
+        const totalFees = trades.reduce((sum, t) => sum + (t.fees || 0), 0)
+
+        // P&L metrics
+        const realizedPnls = trades.map(t => t.realized_pnl || 0).filter(pnl => pnl !== 0)
+        const wins = realizedPnls.filter(pnl => pnl > 0)
+        const losses = realizedPnls.filter(pnl => pnl < 0)
+
+        const highestWin = wins.length > 0 ? Math.max(...wins) : 0
+        const biggestLoss = losses.length > 0 ? Math.min(...losses) : 0
+
+        // Gross profit/loss for profit factor
+        const grossProfit = wins.reduce((sum, w) => sum + w, 0)
+        const grossLoss = Math.abs(losses.reduce((sum, l) => sum + l, 0))
+        const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0
+
+        // Trade size metrics
+        const tradeSizes = trades.map(t => t.total_value)
+        const avgTradeSize = tradeSizes.length > 0
+          ? tradeSizes.reduce((sum, s) => sum + s, 0) / tradeSizes.length
+          : 0
+
+        // Long percentage (BUY trades)
+        const buyTrades = trades.filter(t => t.trade_type === 'BUY').length
+        const longPct = totalTrades > 0 ? (buyTrades / totalTrades) * 100 : 50
+
+        // Expectancy = (Win Rate × Avg Win) - (Loss Rate × Avg Loss)
+        const avgWin = wins.length > 0 ? wins.reduce((s, w) => s + w, 0) / wins.length : 0
+        const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((s, l) => s + l, 0) / losses.length) : 0
+        const expectancy = (winRate / 100 * avgWin) - ((1 - winRate / 100) * avgLoss)
+
+        // Holdings metrics
+        const openPositions = participantHoldings.length
+        const holdingsValue = participantHoldings.reduce((sum, h) => sum + (h.market_value || 0), 0)
+        const marginUsed = p.initial_capital > 0 ? (holdingsValue / p.initial_capital) * 100 : 0
+
+        // Average hold time (simplified - based on trade frequency)
+        const avgHoldTime = totalTrades > 1 && trades.length > 1
+          ? calculateAvgHoldTime(trades)
+          : 0
+
+        // Sharpe Ratio calculation (simplified)
+        // Sharpe = (Portfolio Return - Risk Free Rate) / Std Dev of Returns
+        const returns = participantSnapshots.map(s => s.daily_change_pct || 0)
+        const sharpeRatio = calculateSharpeRatio(returns, p.profit_loss_pct)
+
+        // Max Drawdown from snapshots
+        const maxDrawdown = calculateMaxDrawdown(participantSnapshots)
+
+        // Daily change (from most recent snapshot)
+        const sortedSnapshots = [...participantSnapshots].sort(
+          (a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime()
+        )
+        const latestSnapshot = sortedSnapshots[0]
+        const dailyChange = latestSnapshot?.daily_change || 0
+        const dailyChangePct = latestSnapshot?.daily_change_pct || 0
+
+        return {
+          rank: p.rank || 0,
+          participant: p,
+          portfolioValue: p.portfolio_value,
+          totalReturn: p.total_profit_loss,
+          totalReturnPct: p.profit_loss_pct,
+          dailyChange,
+          dailyChangePct,
+          winRate,
+          totalTrades,
+          totalFees,
+          highestWin,
+          biggestLoss,
+          sharpeRatio,
+          avgTradeSize,
+          avgHoldTime,
+          longPct,
+          expectancy,
+          profitFactor,
+          maxDrawdown,
+          openPositions,
+          marginUsed
+        }
+      })
       .sort((a, b) => b.portfolioValue - a.portfolioValue)
       .map((entry, index) => ({ ...entry, rank: index + 1 }))
 
@@ -280,7 +458,7 @@ export const useArenaStore = create<ArenaState>((set, get) => ({
     const { participants, trades } = get()
 
     if (participants.length === 0) {
-      set({ stats: null })
+      set({ stats: null, extendedStats: null })
       return
     }
 
@@ -295,6 +473,42 @@ export const useArenaStore = create<ArenaState>((set, get) => ({
       ? trades.reduce((max, t) => t.total_value > max.total_value ? t : max, trades[0])
       : null
 
+    // Extended stats
+    const totalFees = trades.reduce((sum, t) => sum + (t.fees || 0), 0)
+    const tradeSizes = trades.map(t => t.total_value)
+    const avgTradeSize = tradeSizes.length > 0
+      ? tradeSizes.reduce((s, t) => s + t, 0) / tradeSizes.length
+      : 0
+    const medianTradeSize = calculateMedian(tradeSizes)
+
+    // Calculate hold times between consecutive trades per participant
+    const holdTimes: number[] = []
+    const participantTradesMap: Record<string, Trade[]> = {}
+    trades.forEach(t => {
+      if (!participantTradesMap[t.participant_id]) {
+        participantTradesMap[t.participant_id] = []
+      }
+      participantTradesMap[t.participant_id].push(t)
+    })
+
+    Object.values(participantTradesMap).forEach(pTrades => {
+      const sorted = pTrades.sort((a, b) =>
+        new Date(a.executed_at).getTime() - new Date(b.executed_at).getTime()
+      )
+      for (let i = 1; i < sorted.length; i++) {
+        const diff = new Date(sorted[i].executed_at).getTime() - new Date(sorted[i-1].executed_at).getTime()
+        holdTimes.push(diff / (1000 * 60 * 60)) // in hours
+      }
+    })
+
+    const avgHoldTime = holdTimes.length > 0
+      ? holdTimes.reduce((s, h) => s + h, 0) / holdTimes.length
+      : 0
+    const medianHoldTime = calculateMedian(holdTimes)
+
+    const totalBuys = trades.filter(t => t.trade_type === 'BUY').length
+    const totalSells = trades.filter(t => t.trade_type === 'SELL').length
+
     set({
       stats: {
         totalTrades,
@@ -304,6 +518,23 @@ export const useArenaStore = create<ArenaState>((set, get) => ({
         worstPerformer: sortedByReturn[sortedByReturn.length - 1] || null,
         mostActiveTrade: sortedByTrades[0] || null,
         highestSingleTrade: highestTrade
+      },
+      extendedStats: {
+        totalTrades,
+        totalVolume,
+        avgReturn,
+        bestPerformer: sortedByReturn[0] || null,
+        worstPerformer: sortedByReturn[sortedByReturn.length - 1] || null,
+        mostActiveTrade: sortedByTrades[0] || null,
+        highestSingleTrade: highestTrade,
+        totalFees,
+        avgTradeSize,
+        medianTradeSize,
+        avgHoldTime,
+        medianHoldTime,
+        totalBuys,
+        totalSells,
+        avgConfidence: 0 // Would need AI decision data
       }
     })
   },

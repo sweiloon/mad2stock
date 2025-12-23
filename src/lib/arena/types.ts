@@ -111,6 +111,32 @@ export interface LeaderboardEntry {
   dailyChangePct: number
   winRate: number
   totalTrades: number
+  // Enhanced metrics from KB "One Glance" table
+  totalFees: number
+  highestWin: number
+  biggestLoss: number
+  sharpeRatio: number
+  // Advanced analytics
+  avgTradeSize: number
+  avgHoldTime: number // in hours
+  longPct: number // percentage of long/buy trades
+  expectancy: number // expected $ per trade
+  profitFactor: number // gross profit / gross loss
+  maxDrawdown: number // largest peak-to-trough decline %
+  openPositions: number
+  marginUsed: number // % of capital in positions
+}
+
+// Extended stats for analytics
+export interface ExtendedArenaStats extends ArenaStats {
+  totalFees: number
+  avgTradeSize: number
+  medianTradeSize: number
+  avgHoldTime: number
+  medianHoldTime: number
+  totalBuys: number
+  totalSells: number
+  avgConfidence: number
 }
 
 // Trading action types
