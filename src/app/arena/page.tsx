@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Swords,
   Trophy,
   Activity,
@@ -18,6 +25,9 @@ import {
   Calendar,
   Clock,
   Sparkles,
+  BarChart3,
+  Briefcase,
+  Layers,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useArenaStore } from "@/stores/arena"
@@ -27,10 +37,11 @@ import {
   AIModelCard,
   CompetitionTimer,
   ArenaStatsCard,
-  AdvancedAnalytics
+  AdvancedAnalytics,
+  PositionsDetail
 } from "@/components/arena"
 import { ArenaChart } from "@/components/charts"
-import { AI_MODELS } from "@/lib/arena/types"
+import { AI_MODELS, COMPETITION_MODES, type CompetitionModeCode } from "@/lib/arena/types"
 import Image from "next/image"
 
 // AI Logo mapping - All 7 AI models
@@ -62,6 +73,7 @@ export default function ArenaPage() {
   } = useArenaStore()
 
   const [activeTab, setActiveTab] = useState("overview")
+  const [selectedMode, setSelectedMode] = useState<CompetitionModeCode | 'ALL'>('ALL')
 
   useEffect(() => {
     fetchAll()
@@ -72,10 +84,14 @@ export default function ArenaPage() {
 
   // Get selected participant's data
   const selectedModel = participants.find(p => p.id === selectedParticipant)
-  const selectedHoldings = selectedParticipant ? holdings[selectedParticipant] || [] : []
   const selectedTrades = selectedParticipant
     ? trades.filter(t => t.participant_id === selectedParticipant)
     : trades
+
+  // Filter by mode if selected
+  const filteredTrades = selectedMode === 'ALL'
+    ? selectedTrades
+    : selectedTrades.filter(t => t.mode_code === selectedMode)
 
   // Check if competition has started
   const hasStarted = competitionStatus?.hasStarted ?? false
@@ -114,13 +130,39 @@ export default function ArenaPage() {
                 </div>
                 <p className="text-muted-foreground flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-yellow-500" />
-                  AI Stock Trading Competition - 7 Models Battle for Supremacy
+                  AI Stock Trading Competition - 7 Models × 4 Modes
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Competition Mode Selector */}
+            {hasStarted && (
+              <Select value={selectedMode} onValueChange={(v) => setSelectedMode(v as CompetitionModeCode | 'ALL')}>
+                <SelectTrigger className="w-[200px]">
+                  <Layers className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="All Modes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">
+                    <span className="flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      All Modes
+                    </span>
+                  </SelectItem>
+                  {(Object.keys(COMPETITION_MODES) as CompetitionModeCode[]).map(mode => (
+                    <SelectItem key={mode} value={mode}>
+                      <span className="flex items-center gap-2">
+                        <span>{COMPETITION_MODES[mode].icon}</span>
+                        {COMPETITION_MODES[mode].name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
             <Button
               variant="outline"
               size="sm"
@@ -136,6 +178,45 @@ export default function ArenaPage() {
             </Badge>
           </div>
         </div>
+
+        {/* Competition Mode Cards (when active) */}
+        {hasStarted && !hasEnded && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(Object.keys(COMPETITION_MODES) as CompetitionModeCode[]).map(mode => {
+              const modeInfo = COMPETITION_MODES[mode]
+              const isSelected = selectedMode === mode
+              return (
+                <Card
+                  key={mode}
+                  className={cn(
+                    "cursor-pointer transition-all hover:shadow-md",
+                    isSelected && "ring-2 ring-offset-2",
+                    selectedMode === 'ALL' && "opacity-100",
+                    selectedMode !== 'ALL' && !isSelected && "opacity-50"
+                  )}
+                  style={{
+                    ['--tw-ring-color' as string]: modeInfo.color
+                  } as React.CSSProperties}
+                  onClick={() => setSelectedMode(isSelected ? 'ALL' : mode)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{modeInfo.icon}</span>
+                      <div>
+                        <div className="font-semibold text-sm" style={{ color: modeInfo.color }}>
+                          {modeInfo.shortName}
+                        </div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">
+                          {modeInfo.description}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -160,17 +241,41 @@ export default function ArenaPage() {
                 <div>
                   <h2 className="text-2xl font-bold mb-2">Competition Starts December 27, 2025</h2>
                   <p className="text-muted-foreground max-w-lg mx-auto">
-                    7 AI models will compete in real-time stock trading on KLSE.
-                    Each starts with RM 10,000 virtual capital. Who will emerge as the best AI trader?
+                    7 AI models will compete across 4 different trading modes on KLSE.
+                    Each starts with RM 10,000 virtual capital per mode. Who will emerge as the best AI trader?
                   </p>
                 </div>
 
                 {/* Countdown Timer */}
                 <CompetitionTimer status={competitionStatus} />
 
+                {/* Competition Modes Preview */}
+                <div className="pt-6 border-t">
+                  <h3 className="text-lg font-semibold mb-4">4 Competition Modes</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+                    {(Object.keys(COMPETITION_MODES) as CompetitionModeCode[]).map(mode => {
+                      const modeInfo = COMPETITION_MODES[mode]
+                      return (
+                        <div
+                          key={mode}
+                          className="p-4 rounded-lg bg-background border shadow-sm"
+                        >
+                          <div className="text-3xl mb-2">{modeInfo.icon}</div>
+                          <div className="font-semibold" style={{ color: modeInfo.color }}>
+                            {modeInfo.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {modeInfo.description}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 {/* AI Models Preview */}
                 <div className="pt-6 border-t">
-                  <h3 className="text-lg font-semibold mb-4">Competing AI Models</h3>
+                  <h3 className="text-lg font-semibold mb-4">7 Competing AI Models</h3>
                   <div className="flex flex-wrap justify-center gap-4">
                     {AI_MODELS.map((model) => (
                       <div
@@ -207,12 +312,12 @@ export default function ArenaPage() {
                       <div className="text-xs text-muted-foreground">Starting Capital</div>
                     </div>
                     <div className="p-4 rounded-lg bg-muted/50">
-                      <div className="text-2xl font-bold text-primary">0.15%</div>
-                      <div className="text-xs text-muted-foreground">Trading Fee</div>
+                      <div className="text-2xl font-bold text-primary">4 Modes</div>
+                      <div className="text-xs text-muted-foreground">Per Model</div>
                     </div>
                     <div className="p-4 rounded-lg bg-muted/50">
-                      <div className="text-2xl font-bold text-primary">30%</div>
-                      <div className="text-xs text-muted-foreground">Max Position</div>
+                      <div className="text-2xl font-bold text-primary">0.15%</div>
+                      <div className="text-xs text-muted-foreground">Trading Fee</div>
                     </div>
                     <div className="p-4 rounded-lg bg-muted/50">
                       <div className="text-2xl font-bold text-primary">31 Days</div>
@@ -228,84 +333,192 @@ export default function ArenaPage() {
         {/* Competition Active State */}
         {hasStarted && !hasEnded && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full max-w-lg grid-cols-4">
-              <TabsTrigger value="overview" className="gap-2">
-                <Trophy className="h-4 w-4" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="trades" className="gap-2">
-                <Activity className="h-4 w-4" />
-                Trades
-              </TabsTrigger>
-              <TabsTrigger value="models" className="gap-2">
-                <Users className="h-4 w-4" />
-                Models
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="gap-2">
+            <TabsList className="grid w-full max-w-2xl grid-cols-5">
+              <TabsTrigger value="overview" className="gap-1.5">
                 <LineChart className="h-4 w-4" />
-                Analytics
+                <span className="hidden sm:inline">Overview</span>
+              </TabsTrigger>
+              <TabsTrigger value="leaderboard" className="gap-1.5">
+                <Trophy className="h-4 w-4" />
+                <span className="hidden sm:inline">Leaderboard</span>
+              </TabsTrigger>
+              <TabsTrigger value="positions" className="gap-1.5">
+                <Briefcase className="h-4 w-4" />
+                <span className="hidden sm:inline">Positions</span>
+              </TabsTrigger>
+              <TabsTrigger value="trades" className="gap-1.5">
+                <Activity className="h-4 w-4" />
+                <span className="hidden sm:inline">Trades</span>
+              </TabsTrigger>
+              <TabsTrigger value="models" className="gap-1.5">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Models</span>
               </TabsTrigger>
             </TabsList>
 
-            {/* Overview Tab */}
+            {/* Overview Tab - Chart focused */}
             <TabsContent value="overview" className="space-y-6 mt-6">
               {/* Hero Chart - Main Focus */}
               <ArenaChart height={500} />
 
-              {/* Stats Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Timer & Stats */}
-                <div className="space-y-6">
-                  <CompetitionTimer status={competitionStatus} />
-                  <ArenaStatsCard
-                    stats={stats}
-                    participantCount={participants.length}
-                  />
-                </div>
-
-                {/* Right Column - Leaderboard */}
-                <div className="lg:col-span-2">
-                  {isLoading ? (
-                    <Card>
-                      <CardHeader>
-                        <Skeleton className="h-6 w-32" />
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {[...Array(7)].map((_, i) => (
-                          <Skeleton key={i} className="h-16 w-full" />
-                        ))}
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Leaderboard
-                      entries={leaderboard}
-                      onSelectParticipant={selectParticipant}
-                      selectedId={selectedParticipant}
-                    />
-                  )}
-                </div>
+              {/* Quick Stats Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <CompetitionTimer status={competitionStatus} compact />
+                <ArenaStatsCard
+                  stats={stats}
+                  participantCount={participants.length}
+                  compact
+                />
               </div>
 
-              {/* Recent Trades Preview */}
-              {trades.length > 0 && (
-                <TradeHistory
-                  trades={trades.slice(0, 10)}
-                  maxHeight="350px"
-                  showParticipant
-                />
-              )}
+              {/* Top 3 Quick View */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Trophy className="h-5 w-5 text-yellow-500" />
+                      Top Performers
+                    </CardTitle>
+                    <Button variant="link" size="sm" onClick={() => setActiveTab('leaderboard')}>
+                      View Full Leaderboard →
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {leaderboard.slice(0, 3).map((entry, index) => (
+                      <div
+                        key={entry.participant.id}
+                        className={cn(
+                          "p-4 rounded-lg border",
+                          index === 0 && "bg-yellow-500/10 border-yellow-500/30",
+                          index === 1 && "bg-gray-500/10 border-gray-400/30",
+                          index === 2 && "bg-orange-500/10 border-orange-500/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="text-2xl font-bold text-muted-foreground">
+                            #{index + 1}
+                          </div>
+                          <div
+                            className="relative h-10 w-10 rounded-full overflow-hidden ring-2"
+                            style={{ ['--tw-ring-color' as string]: entry.participant.avatar_color } as React.CSSProperties}
+                          >
+                            <Image
+                              src={AI_LOGOS[entry.participant.display_name] || ''}
+                              alt={entry.participant.display_name}
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold">{entry.participant.display_name}</div>
+                            <div className={cn(
+                              "text-sm font-medium",
+                              entry.totalReturnPct >= 0 ? "text-green-600" : "text-red-600"
+                            )}>
+                              {entry.totalReturnPct >= 0 ? '+' : ''}{entry.totalReturnPct.toFixed(2)}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-              {trades.length === 0 && (
+              {/* Recent Activity */}
+              {trades.length > 0 && (
                 <Card>
-                  <CardContent className="p-8 text-center">
-                    <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Trades Yet</h3>
-                    <p className="text-muted-foreground">
-                      Trades will appear here once the AI models start making decisions.
-                    </p>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Activity className="h-5 w-5 text-blue-500" />
+                        Recent Trades
+                      </CardTitle>
+                      <Button variant="link" size="sm" onClick={() => setActiveTab('trades')}>
+                        View All Trades →
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <TradeHistory
+                      trades={trades.slice(0, 5)}
+                      maxHeight="250px"
+                      showParticipant
+                      compact
+                    />
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+
+            {/* Leaderboard Tab - Full Analytics Table */}
+            <TabsContent value="leaderboard" className="space-y-6 mt-6">
+              <div>
+                <h2 className="text-xl font-semibold">Competition Leaderboard</h2>
+                <p className="text-sm text-muted-foreground">
+                  Full analytics view with all performance metrics
+                  {selectedMode !== 'ALL' && (
+                    <Badge variant="outline" className="ml-2" style={{ borderColor: COMPETITION_MODES[selectedMode].color }}>
+                      {COMPETITION_MODES[selectedMode].icon} {COMPETITION_MODES[selectedMode].name}
+                    </Badge>
+                  )}
+                </p>
+              </div>
+
+              {isLoading ? (
+                <Card>
+                  <CardContent className="p-6 space-y-3">
+                    {[...Array(7)].map((_, i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  <Leaderboard
+                    entries={leaderboard}
+                    onSelectParticipant={selectParticipant}
+                    selectedId={selectedParticipant}
+                  />
+
+                  {/* Advanced Analytics Section */}
+                  <div className="pt-4">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-indigo-500" />
+                      Advanced Analytics
+                    </h3>
+                    <AdvancedAnalytics
+                      stats={extendedStats}
+                      leaderboard={leaderboard}
+                    />
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
+            {/* Positions Tab - Detailed Holdings */}
+            <TabsContent value="positions" className="space-y-6 mt-6">
+              <div>
+                <h2 className="text-xl font-semibold">Open Positions</h2>
+                <p className="text-sm text-muted-foreground">
+                  Detailed view of all current holdings across AI models
+                  {selectedMode !== 'ALL' && (
+                    <Badge variant="outline" className="ml-2" style={{ borderColor: COMPETITION_MODES[selectedMode].color }}>
+                      {COMPETITION_MODES[selectedMode].icon} {COMPETITION_MODES[selectedMode].name}
+                    </Badge>
+                  )}
+                </p>
+              </div>
+
+              <PositionsDetail
+                participants={participants}
+                holdings={holdings}
+                selectedMode={selectedMode}
+                onModeChange={setSelectedMode}
+              />
             </TabsContent>
 
             {/* Trades Tab */}
@@ -317,6 +530,11 @@ export default function ArenaPage() {
                     {selectedModel
                       ? `Showing trades by ${selectedModel.display_name}`
                       : "All trades from all AI models"}
+                    {selectedMode !== 'ALL' && (
+                      <Badge variant="outline" className="ml-2" style={{ borderColor: COMPETITION_MODES[selectedMode].color }}>
+                        {COMPETITION_MODES[selectedMode].icon} {COMPETITION_MODES[selectedMode].name}
+                      </Badge>
+                    )}
                   </p>
                 </div>
                 {selectedParticipant && (
@@ -330,9 +548,9 @@ export default function ArenaPage() {
                 )}
               </div>
 
-              {selectedTrades.length > 0 ? (
+              {filteredTrades.length > 0 ? (
                 <TradeHistory
-                  trades={selectedTrades}
+                  trades={filteredTrades}
                   maxHeight="600px"
                   showParticipant={!selectedParticipant}
                 />
@@ -385,7 +603,7 @@ export default function ArenaPage() {
                         selectParticipant(
                           selectedParticipant === participant.id ? null : participant.id
                         )
-                        setActiveTab("trades")
+                        setActiveTab("positions")
                       }}
                     />
                   ))}
@@ -401,21 +619,6 @@ export default function ArenaPage() {
                   </CardContent>
                 </Card>
               )}
-            </TabsContent>
-
-            {/* Analytics Tab */}
-            <TabsContent value="analytics" className="space-y-6 mt-6">
-              <div>
-                <h2 className="text-xl font-semibold">Advanced Analytics</h2>
-                <p className="text-sm text-muted-foreground">
-                  Comprehensive performance metrics and trading statistics
-                </p>
-              </div>
-
-              <AdvancedAnalytics
-                stats={extendedStats}
-                leaderboard={leaderboard}
-              />
             </TabsContent>
           </Tabs>
         )}
@@ -445,8 +648,8 @@ export default function ArenaPage() {
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground">
-                <strong>Competition Rules:</strong> Starting capital RM 10,000 |
-                Trading fee 0.15% | Max 30% single position |
+                <strong>Competition Rules:</strong> Starting capital RM 10,000 per mode |
+                4 Trading modes | Trading fee 0.15% |
                 Malaysian stocks only (KLSE)
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

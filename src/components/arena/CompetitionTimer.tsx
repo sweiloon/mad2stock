@@ -11,6 +11,7 @@ import type { CompetitionStatus } from "@/lib/arena/types"
 
 interface CompetitionTimerProps {
   status: CompetitionStatus | null
+  compact?: boolean
 }
 
 interface TimeRemaining {
@@ -20,7 +21,7 @@ interface TimeRemaining {
   seconds: number
 }
 
-export function CompetitionTimer({ status }: CompetitionTimerProps) {
+export function CompetitionTimer({ status, compact = false }: CompetitionTimerProps) {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null)
   const [timeToStart, setTimeToStart] = useState<TimeRemaining | null>(null)
 
@@ -69,6 +70,53 @@ export function CompetitionTimer({ status }: CompetitionTimerProps) {
   const hasEnded = now > endDate
   const isActive = hasStarted && !hasEnded
   const progressPct = status?.progressPct || 0
+
+  // Compact mode - minimal display
+  if (compact) {
+    return (
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "p-2 rounded-full",
+                isActive ? "bg-green-500/10" : hasEnded ? "bg-muted" : "bg-orange-500/10"
+              )}>
+                <Timer className={cn(
+                  "h-4 w-4",
+                  isActive ? "text-green-500" : hasEnded ? "text-muted-foreground" : "text-orange-500"
+                )} />
+              </div>
+              <div>
+                <div className="text-sm font-medium">
+                  {hasEnded ? "Competition Ended" : isActive ? "Competition Live" : "Starts Soon"}
+                </div>
+                {!hasEnded && (hasStarted ? timeRemaining : timeToStart) && (
+                  <div className="text-xs text-muted-foreground">
+                    {(hasStarted ? timeRemaining : timeToStart)!.days}d {(hasStarted ? timeRemaining : timeToStart)!.hours}h {(hasStarted ? timeRemaining : timeToStart)!.minutes}m
+                  </div>
+                )}
+              </div>
+            </div>
+            <Badge
+              variant={isActive ? "default" : hasEnded ? "secondary" : "outline"}
+              className={cn(isActive && "bg-green-500 hover:bg-green-600")}
+            >
+              {hasEnded ? "Ended" : isActive ? "Live" : "Upcoming"}
+            </Badge>
+          </div>
+          {isActive && (
+            <div className="mt-3">
+              <Progress value={progressPct} className="h-1.5" />
+              <div className="text-xs text-muted-foreground mt-1 text-right">
+                {progressPct.toFixed(1)}% complete
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card>

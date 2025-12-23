@@ -29,22 +29,81 @@ const AI_LOGOS: Record<string, string> = {
 interface ArenaStatsCardProps {
   stats: ArenaStats | null
   participantCount: number
+  compact?: boolean
 }
 
-export function ArenaStatsCard({ stats, participantCount }: ArenaStatsCardProps) {
+export function ArenaStatsCard({ stats, participantCount, compact = false }: ArenaStatsCardProps) {
   if (!stats) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className={compact ? "pb-2" : undefined}>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-indigo-500" />
-            Arena Statistics
+            <BarChart3 className={cn("text-indigo-500", compact ? "h-4 w-4" : "h-5 w-5")} />
+            {compact ? "Quick Stats" : "Arena Statistics"}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
+          <div className={cn("text-center text-muted-foreground", compact ? "py-4" : "py-8")}>
             Statistics will be available once trading begins
           </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Compact mode - minimal stats
+  if (compact) {
+    return (
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="h-4 w-4 text-indigo-500" />
+            <span className="font-medium">Quick Stats</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-purple-600" />
+              <div>
+                <div className="text-lg font-bold">{stats.totalTrades}</div>
+                <div className="text-xs text-muted-foreground">Total Trades</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Target className={cn("h-4 w-4", stats.avgReturn >= 0 ? "text-green-600" : "text-red-600")} />
+              <div>
+                <div className={cn("text-lg font-bold", stats.avgReturn >= 0 ? "text-green-600" : "text-red-600")}>
+                  {stats.avgReturn >= 0 ? '+' : ''}{stats.avgReturn.toFixed(2)}%
+                </div>
+                <div className="text-xs text-muted-foreground">Avg Return</div>
+              </div>
+            </div>
+          </div>
+          {stats.bestPerformer && (
+            <div className="mt-3 pt-3 border-t flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-muted-foreground">Leader:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className="relative h-5 w-5 rounded-full overflow-hidden ring-1 ring-green-500/30"
+                  style={{ backgroundColor: stats.bestPerformer.avatar_color + '20' }}
+                >
+                  <Image
+                    src={AI_LOGOS[stats.bestPerformer.display_name] || ''}
+                    alt={stats.bestPerformer.display_name}
+                    fill
+                    sizes="20px"
+                    className="object-cover"
+                  />
+                </div>
+                <span className="font-medium text-sm">{stats.bestPerformer.display_name}</span>
+                <span className="text-sm text-green-600 font-medium">
+                  +{stats.bestPerformer.profit_loss_pct.toFixed(2)}%
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     )

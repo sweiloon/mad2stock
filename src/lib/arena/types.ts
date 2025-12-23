@@ -2,6 +2,62 @@
  * Mad2Arena - AI Stock Trading Competition Types
  */
 
+// Competition Mode Types (like Alpha Arena)
+export type CompetitionModeCode = 'NEW_BASELINE' | 'MONK_MODE' | 'SITUATIONAL_AWARENESS' | 'MAX_LEVERAGE'
+
+export interface CompetitionMode {
+  id: string
+  mode_code: CompetitionModeCode
+  mode_name: string
+  description: string
+  rules: {
+    max_position_pct: number
+    leverage_allowed?: boolean
+    leverage_required?: boolean
+    max_leverage?: number
+    news_access: boolean
+    memory_enabled: boolean
+    can_see_competitors?: boolean
+    max_daily_loss_pct?: number
+    mandatory_stop_loss?: boolean
+  }
+  is_active: boolean
+  display_order: number
+  created_at: string
+}
+
+// Mode display info for UI
+export const COMPETITION_MODES: Record<CompetitionModeCode, { name: string; shortName: string; color: string; icon: string; description: string }> = {
+  'NEW_BASELINE': {
+    name: 'New Baseline',
+    shortName: 'Baseline',
+    color: '#3B82F6', // blue
+    icon: '📊',
+    description: 'Standard trading with full market access'
+  },
+  'MONK_MODE': {
+    name: 'Monk Mode',
+    shortName: 'Monk',
+    color: '#8B5CF6', // purple
+    icon: '🧘',
+    description: 'Capital preservation focus, defensive trading'
+  },
+  'SITUATIONAL_AWARENESS': {
+    name: 'Situational Awareness',
+    shortName: 'Aware',
+    color: '#F59E0B', // amber
+    icon: '👁️',
+    description: 'Can see competitors rankings and positions'
+  },
+  'MAX_LEVERAGE': {
+    name: 'Max Leverage',
+    shortName: 'Leverage',
+    color: '#EF4444', // red
+    icon: '🚀',
+    description: 'Required leverage on every trade'
+  }
+}
+
 export interface AIParticipant {
   id: string
   model_name: string
@@ -20,6 +76,9 @@ export interface AIParticipant {
   last_trade_at: string | null
   created_at: string
   updated_at: string
+  // Competition mode fields
+  mode_id?: string
+  mode_code?: CompetitionModeCode
 }
 
 export interface Holding {
@@ -35,6 +94,14 @@ export interface Holding {
   unrealized_pnl_pct: number
   created_at: string
   updated_at: string
+  // Enhanced position details (like Alpha Arena)
+  mode_code?: CompetitionModeCode
+  entry_time?: string
+  leverage?: number
+  margin?: number
+  liquidation_price?: number
+  notional_value?: number
+  position_type?: 'LONG' | 'SHORT'
 }
 
 export interface Trade {
@@ -51,6 +118,9 @@ export interface Trade {
   reasoning: string
   executed_at: string
   created_at: string
+  // Enhanced trade details
+  mode_code?: CompetitionModeCode
+  leverage?: number
   // Joined fields
   participant?: AIParticipant
 }
