@@ -150,7 +150,7 @@ export interface AIModelConfig {
 /**
  * 7 AI Models for Mad2Arena Competition
  * Budget: $5/day = 4 sessions × 7 models = 28 calls/day
- * Cost-optimized model selection per provider
+ * BEST models from each provider (December 2025)
  */
 export const AI_MODELS: AIModelConfig[] = [
   {
@@ -162,18 +162,18 @@ export const AI_MODELS: AIModelConfig[] = [
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#FF6B35',
-    estimatedCostPer1K: 27.50 // $5/1M input + $25/1M output (67% cheaper than Opus 4.1!)
+    estimatedCostPer1K: 27.50 // $5/1M input + $25/1M output
   },
   {
     id: 'chatgpt',
     name: 'ChatGPT',
     provider: 'OpenAI',
     apiKeyEnvVar: 'OPENAI_API_KEY',
-    model: 'gpt-4o',
+    model: 'gpt-5.2', // BEST - GPT-5.2 (Dec 2025)
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#10A37F',
-    estimatedCostPer1K: 11.00 // $2.50/1M input + $10/1M output
+    estimatedCostPer1K: 15.00
   },
   {
     id: 'deepseek',
@@ -181,22 +181,22 @@ export const AI_MODELS: AIModelConfig[] = [
     provider: 'DeepSeek',
     apiKeyEnvVar: 'DEEPSEEK_API_KEY',
     endpoint: 'https://api.deepseek.com/v1',
-    model: 'deepseek-chat',
+    model: 'deepseek-chat', // V3.2 (latest)
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#5865F2',
-    estimatedCostPer1K: 0.14
+    estimatedCostPer1K: 1.68
   },
   {
     id: 'gemini',
     name: 'Gemini',
     provider: 'Google',
     apiKeyEnvVar: 'GOOGLE_API_KEY',
-    model: 'gemini-2.0-flash',
+    model: 'gemini-3-pro', // BEST - Gemini 3 Pro (Nov 2025)
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#4285F4',
-    estimatedCostPer1K: 0.00 // Free tier
+    estimatedCostPer1K: 14.00 // $2/1M input + $12/1M output
   },
   {
     id: 'grok',
@@ -204,35 +204,35 @@ export const AI_MODELS: AIModelConfig[] = [
     provider: 'xAI',
     apiKeyEnvVar: 'XAI_API_KEY',
     endpoint: 'https://api.x.ai/v1',
-    model: 'grok-2-latest',
+    model: 'grok-4-1-fast-reasoning', // BEST - Grok 4.1 (4.2 not available yet)
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#1DA1F2',
-    estimatedCostPer1K: 2.00
+    estimatedCostPer1K: 5.00
   },
   {
     id: 'kimi',
     name: 'Kimi',
     provider: 'Moonshot',
     apiKeyEnvVar: 'MOONSHOT_API_KEY',
-    endpoint: 'https://api.moonshot.cn/v1',
-    model: 'moonshot-v1-128k',
+    endpoint: 'https://api.moonshot.ai/v1', // Global endpoint (not .cn)
+    model: 'kimi-k2-thinking', // BEST - K2 Thinking (Nov 2025)
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#9B59B6',
-    estimatedCostPer1K: 1.00
+    estimatedCostPer1K: 3.00
   },
   {
     id: 'qwen',
     name: 'Qwen',
     provider: 'Alibaba',
     apiKeyEnvVar: 'DASHSCOPE_API_KEY',
-    endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    model: 'qwen-max',
+    endpoint: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', // International endpoint
+    model: 'qwen3-max', // BEST - Qwen3-Max
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#FF7000',
-    estimatedCostPer1K: 2.00
+    estimatedCostPer1K: 4.00
   }
 ]
 
