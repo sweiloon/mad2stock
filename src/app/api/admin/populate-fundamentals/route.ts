@@ -141,7 +141,8 @@ export async function GET(request: NextRequest) {
 
     if (data) {
       // Update database
-      const { error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
         .from('stock_prices')
         .update({
           market_cap: data.marketCap,
@@ -215,7 +216,8 @@ export async function GET(request: NextRequest) {
 
       if (data) {
         // Update database
-        const { error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
           .from('stock_prices')
           .update({
             market_cap: data.marketCap,

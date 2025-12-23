@@ -90,14 +90,15 @@ export function isMarketOpen(): { open: boolean; reason: string } {
  */
 async function getStockPrice(supabase: SupabaseClient, stockCode: string): Promise<number | null> {
   // Try to get from stock_prices table
-  const { data } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any)
     .from('stock_prices')
-    .select('current_price')
+    .select('price')
     .eq('stock_code', stockCode)
     .single()
 
-  if (data?.current_price) {
-    return data.current_price
+  if (data?.price) {
+    return data.price
   }
 
   // Fallback: generate reasonable mock price based on company data
@@ -220,14 +221,21 @@ async function executeTrades(
       }
 
       // Get current participant state
-      const { data: participant } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: participant } = await (supabase as any)
         .from('arena_participants')
         .select('*')
         .eq('id', participantId)
         .single()
 
+      if (!participant) {
+        console.error(`Participant ${participantId} not found`)
+        continue
+      }
+
       // Get holdings
-      const { data: holdings } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: holdings } = await (supabase as any)
         .from('arena_holdings')
         .select('*')
         .eq('participant_id', participantId)
@@ -261,13 +269,15 @@ async function executeTrades(
       )
 
       // Execute trade
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const db = supabase as any
       if (action.action === 'BUY') {
         if (holding) {
           // Update existing holding
           const newQty = holding.quantity + action.quantity
           const newAvg = (holding.avg_buy_price * holding.quantity + price * action.quantity) / newQty
 
-          await supabase
+          await db
             .from('arena_holdings')
             .update({
               quantity: newQty,
@@ -278,7 +288,7 @@ async function executeTrades(
             .eq('id', holding.id)
         } else {
           // Create new holding
-          await supabase
+          await db
             .from('arena_holdings')
             .insert({
               participant_id: participantId,
@@ -292,7 +302,7 @@ async function executeTrades(
         }
 
         // Update participant capital
-        await supabase
+        await db
           .from('arena_participants')
           .update({
             current_capital: participant.current_capital - metrics.netValue,
@@ -305,9 +315,9 @@ async function executeTrades(
         const remaining = holding.quantity - action.quantity
 
         if (remaining === 0) {
-          await supabase.from('arena_holdings').delete().eq('id', holding.id)
+          await db.from('arena_holdings').delete().eq('id', holding.id)
         } else {
-          await supabase
+          await db
             .from('arena_holdings')
             .update({
               quantity: remaining,
@@ -318,7 +328,7 @@ async function executeTrades(
 
         const isWin = (metrics.realizedPnl || 0) > 0
 
-        await supabase
+        await db
           .from('arena_participants')
           .update({
             current_capital: participant.current_capital + metrics.netValue,
@@ -331,7 +341,7 @@ async function executeTrades(
       }
 
       // Record trade
-      await supabase
+      await db
         .from('arena_trades')
         .insert({
           participant_id: participantId,
@@ -369,8 +379,11 @@ async function executeTrades(
  * Update portfolio values and rankings for all participants
  */
 async function updatePortfoliosAndRankings(supabase: SupabaseClient): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+
   // Get all participants
-  const { data: participants } = await supabase
+  const { data: participants } = await db
     .from('arena_participants')
     .select('id, current_capital, initial_capital')
 
@@ -378,7 +391,7 @@ async function updatePortfoliosAndRankings(supabase: SupabaseClient): Promise<vo
 
   // Update each participant's portfolio value
   for (const participant of participants) {
-    const { data: holdings } = await supabase
+    const { data: holdings } = await db
       .from('arena_holdings')
       .select('market_value')
       .eq('participant_id', participant.id)
@@ -388,7 +401,7 @@ async function updatePortfoliosAndRankings(supabase: SupabaseClient): Promise<vo
     const totalPnL = portfolioValue - participant.initial_capital
     const pnlPct = (totalPnL / participant.initial_capital) * 100
 
-    await supabase
+    await db
       .from('arena_participants')
       .update({
         portfolio_value: portfolioValue,
@@ -399,14 +412,14 @@ async function updatePortfoliosAndRankings(supabase: SupabaseClient): Promise<vo
   }
 
   // Update rankings
-  const { data: sorted } = await supabase
+  const { data: sorted } = await db
     .from('arena_participants')
     .select('id, portfolio_value')
     .order('portfolio_value', { ascending: false })
 
   if (sorted) {
     for (let i = 0; i < sorted.length; i++) {
-      await supabase
+      await db
         .from('arena_participants')
         .update({ rank: i + 1 })
         .eq('id', sorted[i].id)
@@ -432,6 +445,8 @@ export async function runTradingSession(
   }
 
   const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
 
   try {
     // Check market hours
@@ -444,7 +459,7 @@ export async function runTradingSession(
     }
 
     // Get competition config
-    const { data: config, error: configError } = await supabase
+    const { data: config, error: configError } = await db
       .from('arena_config')
       .select('*')
       .single()
@@ -477,7 +492,7 @@ export async function runTradingSession(
     report.competitionActive = true
 
     // Get active participants
-    let participantsQuery = supabase
+    let participantsQuery = db
       .from('arena_participants')
       .select('*')
       .eq('status', 'active')
@@ -532,7 +547,7 @@ export async function runTradingSession(
 
       try {
         // Build context
-        const context = await buildContext(supabase, participant, config)
+        const context = await buildContext(db, participant, config)
         const userPrompt = buildTradingPrompt(context)
 
         // Call AI
@@ -570,7 +585,7 @@ export async function runTradingSession(
         }
 
         // Log AI decision
-        await supabase
+        await db
           .from('arena_ai_decisions')
           .insert({
             participant_id: participant.id,
@@ -586,7 +601,7 @@ export async function runTradingSession(
         let executedTrades: ExecutedTrade[] = []
         if (!options.dryRun) {
           executedTrades = await executeTrades(
-            supabase,
+            db,
             participant.id,
             analysis.recommended_actions,
             config
@@ -624,7 +639,7 @@ export async function runTradingSession(
 
     // Update portfolios and rankings
     if (!options.dryRun && report.tradesExecuted > 0) {
-      await updatePortfoliosAndRankings(supabase)
+      await updatePortfoliosAndRankings(db)
     }
 
   } catch (err) {
