@@ -192,11 +192,11 @@ export const AI_MODELS: AIModelConfig[] = [
     name: 'Gemini',
     provider: 'Google',
     apiKeyEnvVar: 'GOOGLE_API_KEY',
-    model: 'gemini-3-pro', // BEST - Gemini 3 Pro (Nov 2025)
+    model: 'gemini-2.0-flash-exp', // Latest experimental (gemini-3 not yet in API)
     maxTokens: 4096,
     temperature: 0.7,
     displayColor: '#4285F4',
-    estimatedCostPer1K: 14.00 // $2/1M input + $12/1M output
+    estimatedCostPer1K: 0.50 // Free tier flash model
   },
   {
     id: 'grok',
