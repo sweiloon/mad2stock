@@ -37,7 +37,7 @@ type StockPriceUpdate = Database['public']['Tables']['stock_prices']['Update']
 //
 // ============================================================================
 
-const STOCKS_PER_RUN = 5  // Stocks per cron run (safe for 60s timeout)
+const STOCKS_PER_RUN = 10  // Stocks per cron run (safe for 60s timeout, ~30s for 10 stocks)
 const STALE_HOURS = 20    // Consider stocks stale after 20 hours
 
 // ============================================================================
@@ -232,11 +232,14 @@ export async function GET(request: NextRequest) {
   let staleStocks: { stock_code: string; updated_at: string | null }[]
 
   if (forceUpdate) {
-    // Force mode: get any 5 stocks that don't have fundamentals data
+    // Force mode: get 5 stocks that don't have 52-week data yet
+    // Also exclude recently attempted stocks (within last 1 hour) to avoid retrying failures
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const { data } = await supabase
       .from('stock_prices')
       .select('stock_code, updated_at')
-      .is('market_cap', null)
+      .is('week_52_high', null)
+      .or(`updated_at.is.null,updated_at.lt.${oneHourAgo}`)
       .limit(STOCKS_PER_RUN)
     staleStocks = data || []
   } else {
