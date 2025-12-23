@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       .from('arena_trades')
       .select(`
         *,
-        participant:arena_participants(id, display_name, avatar_color)
+        participant:arena_participants(id, display_name, avatar_color, mode_code)
       `)
       .order('executed_at', { ascending: false })
       .limit(limit)

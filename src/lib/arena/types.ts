@@ -219,6 +219,7 @@ export interface TradeAction {
   confidence: number // 0-100
   target_price?: number
   stop_loss?: number
+  leverage?: number // For MAX_LEVERAGE mode: 2.5-3x required
 }
 
 export interface MarketAnalysis {

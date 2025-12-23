@@ -239,10 +239,10 @@ export default function ArenaPage() {
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold mb-2">Competition Starts December 27, 2025</h2>
+                  <h2 className="text-2xl font-bold mb-2">Competition: December 24-26, 2025</h2>
                   <p className="text-muted-foreground max-w-lg mx-auto">
                     7 AI models will compete across 4 different trading modes on KLSE.
-                    Each starts with RM 10,000 virtual capital per mode. Who will emerge as the best AI trader?
+                    Each starts with RM 10,000 virtual capital per mode. Test Run #1 - Production Ready!
                   </p>
                 </div>
 
@@ -320,8 +320,8 @@ export default function ArenaPage() {
                       <div className="text-xs text-muted-foreground">Trading Fee</div>
                     </div>
                     <div className="p-4 rounded-lg bg-muted/50">
-                      <div className="text-2xl font-bold text-primary">31 Days</div>
-                      <div className="text-xs text-muted-foreground">Duration</div>
+                      <div className="text-2xl font-bold text-primary">3 Days</div>
+                      <div className="text-xs text-muted-foreground">Test Duration</div>
                     </div>
                   </div>
                 </div>

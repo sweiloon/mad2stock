@@ -25,9 +25,9 @@ export function CompetitionTimer({ status, compact = false }: CompetitionTimerPr
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null)
   const [timeToStart, setTimeToStart] = useState<TimeRemaining | null>(null)
 
-  // Default dates if no config
-  const startDate = status?.startDate || new Date('2025-12-16T01:00:00Z') // 9am MYT
-  const endDate = status?.endDate || new Date('2026-12-15T09:00:00Z') // 5pm MYT
+  // Default dates if no config - Dec 24-26, 2025 (Test Run #1)
+  const startDate = status?.startDate || new Date('2025-12-24T01:00:00Z') // 9am MYT
+  const endDate = status?.endDate || new Date('2025-12-26T09:00:00Z') // 5pm MYT
 
   useEffect(() => {
     const updateTimer = () => {
@@ -212,10 +212,10 @@ export function CompetitionTimer({ status, compact = false }: CompetitionTimerPr
 
         {/* Competition Info */}
         <div className="p-3 rounded-lg bg-muted/50 text-sm">
-          <div className="font-medium mb-1">Mad2Arena 2025-2026</div>
+          <div className="font-medium mb-1">Mad2Arena Test Run #1</div>
           <div className="text-muted-foreground">
-            5 AI models compete trading Malaysian stocks with RM 10,000 each.
-            Trading hours: 9am - 5pm MYT (Mon-Fri)
+            7 AI models × 4 modes = 28 portfolios competing on Malaysian stocks.
+            Each starts with RM 10,000. Trading hours: 9am - 5pm MYT (Mon-Fri)
           </div>
         </div>
       </CardContent>

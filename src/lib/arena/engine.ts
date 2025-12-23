@@ -5,10 +5,48 @@
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { COMPANY_DATA } from '@/lib/company-data'
-import { AI_MODELS, type AIParticipant, type TradeAction, type Holding, type ArenaConfig } from './types'
+import { AI_MODELS, type AIParticipant, type TradeAction, type Holding, type ArenaConfig, type CompetitionModeCode, COMPETITION_MODES } from './types'
 import { getProvider } from './ai/router'
-import { TRADING_SYSTEM_PROMPT, buildTradingPrompt, type TradingPromptContext } from './prompts/trading'
+import { buildSystemPrompt, buildTradingPrompt, type TradingPromptContext } from './prompts/trading'
 import { parseAIResponse, validateTradeAction, calculateTradeMetrics } from './ai-trader'
+
+// Mode-specific rules for validation and enforcement
+const MODE_RULES: Record<CompetitionModeCode, {
+  maxPositionPct: number
+  leverageRequired?: boolean
+  maxLeverage?: number
+  newsAccess: boolean
+  memoryEnabled: boolean
+  canSeeCompetitors?: boolean
+  maxDailyLossPct?: number
+  mandatoryStopLoss?: boolean
+}> = {
+  'NEW_BASELINE': {
+    maxPositionPct: 30,
+    newsAccess: true,
+    memoryEnabled: true
+  },
+  'MONK_MODE': {
+    maxPositionPct: 15,
+    maxDailyLossPct: 2,
+    mandatoryStopLoss: true,
+    newsAccess: true,
+    memoryEnabled: true
+  },
+  'SITUATIONAL_AWARENESS': {
+    maxPositionPct: 30,
+    canSeeCompetitors: true,
+    newsAccess: true,
+    memoryEnabled: true
+  },
+  'MAX_LEVERAGE': {
+    maxPositionPct: 30,
+    leverageRequired: true,
+    maxLeverage: 3,
+    newsAccess: true,
+    memoryEnabled: true
+  }
+}
 
 // Supabase client type - using ReturnType for proper inference
 type SupabaseClient = ReturnType<typeof createAdminClient>
@@ -121,6 +159,10 @@ async function buildContext(
   participant: AIParticipant,
   config: ArenaConfig
 ): Promise<TradingPromptContext> {
+  // Get mode code - default to NEW_BASELINE if not set
+  const modeCode: CompetitionModeCode = (participant.mode_code as CompetitionModeCode) || 'NEW_BASELINE'
+  const modeRules = MODE_RULES[modeCode]
+
   // Get holdings
   const { data: holdings } = await supabase
     .from('arena_holdings')
@@ -135,11 +177,12 @@ async function buildContext(
     .order('executed_at', { ascending: false })
     .limit(5)
 
-  // Get all participants for ranking context
+  // Get all participants for ranking context (same mode only)
   const { data: allParticipants } = await supabase
     .from('arena_participants')
     .select('id')
     .eq('status', 'active')
+    .eq('mode_code', modeCode)
 
   // Calculate days remaining
   const endDate = new Date(config.end_date)
@@ -171,6 +214,69 @@ async function buildContext(
       }))
   }
 
+  // Get competitor positions for SITUATIONAL_AWARENESS mode
+  let competitorPositions: TradingPromptContext['competitorPositions'] = undefined
+  if (modeCode === 'SITUATIONAL_AWARENESS') {
+    const { data: competitors } = await supabase
+      .from('arena_participants')
+      .select('id, display_name, rank, portfolio_value, profit_loss_pct')
+      .eq('status', 'active')
+      .eq('mode_code', 'SITUATIONAL_AWARENESS')
+      .neq('id', participant.id)
+      .order('rank', { ascending: true })
+      .limit(6)
+
+    if (competitors) {
+      competitorPositions = await Promise.all(
+        competitors.map(async (c: { id: string; display_name: string; rank: number; portfolio_value: number; profit_loss_pct: number }) => {
+          const { data: compHoldings } = await supabase
+            .from('arena_holdings')
+            .select('stock_code, market_value')
+            .eq('participant_id', c.id)
+            .order('market_value', { ascending: false })
+            .limit(3)
+
+          return {
+            displayName: c.display_name,
+            rank: c.rank,
+            portfolioValue: c.portfolio_value,
+            pnlPct: c.profit_loss_pct,
+            topHoldings: (compHoldings || []).map((h: { stock_code: string; market_value: number }) => ({
+              stockCode: h.stock_code,
+              pctOfPortfolio: c.portfolio_value > 0 ? (h.market_value / c.portfolio_value) * 100 : 0
+            }))
+          }
+        })
+      )
+    }
+  }
+
+  // Calculate daily loss for MONK_MODE
+  let dailyLoss = 0
+  let dailyLossPct = 0
+  if (modeCode === 'MONK_MODE') {
+    // Get today's date at midnight MYT
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Get today's trades for this participant
+    const { data: todayTrades } = await supabase
+      .from('arena_trades')
+      .select('realized_pnl')
+      .eq('participant_id', participant.id)
+      .gte('executed_at', today.toISOString())
+
+    // Sum up realized P&L for today
+    dailyLoss = (todayTrades || []).reduce((sum: number, t: { realized_pnl: number | null }) =>
+      sum + (t.realized_pnl || 0), 0)
+
+    // Also consider unrealized P&L changes
+    const initialCapital = participant.initial_capital
+    if (initialCapital > 0) {
+      dailyLossPct = Math.abs(dailyLoss) / initialCapital * 100
+    }
+  }
+
   return {
     cashAvailable: participant.current_capital,
     portfolioValue: participant.portfolio_value,
@@ -183,7 +289,8 @@ async function buildContext(
       quantity: h.quantity,
       avgBuyPrice: h.avg_buy_price,
       currentPrice: h.current_price || h.avg_buy_price,
-      unrealizedPnl: h.unrealized_pnl || 0
+      unrealizedPnl: h.unrealized_pnl || 0,
+      leverage: h.leverage
     })),
     recentTrades: (recentTrades || []).map((t: { stock_code: string; trade_type: 'BUY' | 'SELL'; price: number; executed_at: string }) => ({
       stockCode: t.stock_code,
@@ -194,7 +301,13 @@ async function buildContext(
     stocksByCategory,
     currentRank: participant.rank,
     daysRemaining,
-    competitorCount: allParticipants?.length || 7
+    competitorCount: allParticipants?.length || 7,
+    // Mode-specific context
+    modeCode,
+    modeRules,
+    competitorPositions,
+    dailyLoss: modeCode === 'MONK_MODE' ? dailyLoss : undefined,
+    dailyLossPct: modeCode === 'MONK_MODE' ? dailyLossPct : undefined
   }
 }
 
@@ -205,9 +318,11 @@ async function executeTrades(
   supabase: SupabaseClient,
   participantId: string,
   actions: TradeAction[],
-  config: ArenaConfig
+  config: ArenaConfig,
+  modeCode: CompetitionModeCode
 ): Promise<ExecutedTrade[]> {
   const executedTrades: ExecutedTrade[] = []
+  const modeRules = MODE_RULES[modeCode]
 
   for (const action of actions) {
     if (action.action === 'HOLD') continue
@@ -240,7 +355,50 @@ async function executeTrades(
         .select('*')
         .eq('participant_id', participantId)
 
-      // Validate trade
+      // Mode-specific validation: MONK_MODE daily loss check
+      if (modeCode === 'MONK_MODE' && modeRules.maxDailyLossPct) {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const { data: todayTrades } = await supabase
+          .from('arena_trades')
+          .select('realized_pnl')
+          .eq('participant_id', participantId)
+          .gte('executed_at', today.toISOString())
+
+        const dailyLoss = (todayTrades || []).reduce((sum: number, t: { realized_pnl: number | null }) =>
+          sum + (t.realized_pnl || 0), 0)
+        const dailyLossPct = participant.initial_capital > 0
+          ? (Math.abs(Math.min(0, dailyLoss)) / participant.initial_capital) * 100
+          : 0
+
+        if (dailyLossPct >= modeRules.maxDailyLossPct) {
+          console.warn(`MONK_MODE: Daily loss limit reached (${dailyLossPct.toFixed(2)}% >= ${modeRules.maxDailyLossPct}%), skipping trade`)
+          continue
+        }
+      }
+
+      // Mode-specific validation: MONK_MODE mandatory stop-loss
+      if (modeCode === 'MONK_MODE' && modeRules.mandatoryStopLoss) {
+        if (action.action === 'BUY' && !action.stop_loss) {
+          console.warn(`MONK_MODE: Trade rejected - stop_loss is mandatory`)
+          continue
+        }
+      }
+
+      // Mode-specific validation: MAX_LEVERAGE leverage requirement
+      let tradeLeverage = 1
+      if (modeCode === 'MAX_LEVERAGE') {
+        if (modeRules.leverageRequired) {
+          tradeLeverage = action.leverage || 2.5 // Default to 2.5x if not specified
+          if (tradeLeverage < 2.5 || tradeLeverage > 3) {
+            console.warn(`MAX_LEVERAGE: Adjusting leverage from ${tradeLeverage} to 2.5x (must be 2.5-3x)`)
+            tradeLeverage = 2.5
+          }
+        }
+      }
+
+      // Validate trade with mode-specific max position
       const validation = validateTradeAction(
         action,
         participant,
@@ -248,7 +406,7 @@ async function executeTrades(
         price,
         {
           min_trade_value: config.min_trade_value,
-          max_position_pct: config.max_position_pct,
+          max_position_pct: modeRules.maxPositionPct, // Use mode-specific max position
           trading_fee_pct: config.trading_fee_pct
         }
       )
@@ -271,6 +429,11 @@ async function executeTrades(
       // Execute trade
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const db = supabase as any
+
+      // Calculate notional value for leveraged trades
+      const notionalValue = action.quantity * price * tradeLeverage
+      const margin = action.quantity * price // Actual capital used
+
       if (action.action === 'BUY') {
         if (holding) {
           // Update existing holding
@@ -283,7 +446,10 @@ async function executeTrades(
               quantity: newQty,
               avg_buy_price: newAvg,
               current_price: price,
-              market_value: newQty * price
+              market_value: newQty * price,
+              leverage: tradeLeverage > 1 ? tradeLeverage : (holding.leverage || null),
+              notional_value: tradeLeverage > 1 ? newQty * price * tradeLeverage : null,
+              margin: tradeLeverage > 1 ? newQty * price : null
             })
             .eq('id', holding.id)
         } else {
@@ -297,7 +463,12 @@ async function executeTrades(
               quantity: action.quantity,
               avg_buy_price: price,
               current_price: price,
-              market_value: action.quantity * price
+              market_value: action.quantity * price,
+              mode_code: modeCode,
+              leverage: tradeLeverage > 1 ? tradeLeverage : null,
+              notional_value: tradeLeverage > 1 ? notionalValue : null,
+              margin: tradeLeverage > 1 ? margin : null,
+              entry_time: new Date().toISOString()
             })
         }
 
@@ -321,26 +492,34 @@ async function executeTrades(
             .from('arena_holdings')
             .update({
               quantity: remaining,
-              market_value: remaining * price
+              market_value: remaining * price,
+              notional_value: holding.leverage ? remaining * price * holding.leverage : null,
+              margin: holding.leverage ? remaining * price : null
             })
             .eq('id', holding.id)
         }
 
-        const isWin = (metrics.realizedPnl || 0) > 0
+        // Calculate P&L with leverage consideration
+        let realizedPnl = metrics.realizedPnl || 0
+        if (holding.leverage && holding.leverage > 1) {
+          // Leverage amplifies P&L
+          realizedPnl = realizedPnl * holding.leverage
+        }
+        const isWin = realizedPnl > 0
 
         await db
           .from('arena_participants')
           .update({
-            current_capital: participant.current_capital + metrics.netValue,
+            current_capital: participant.current_capital + metrics.netValue + (realizedPnl - (metrics.realizedPnl || 0)),
             total_trades: participant.total_trades + 1,
             winning_trades: participant.winning_trades + (isWin ? 1 : 0),
-            total_profit_loss: participant.total_profit_loss + (metrics.realizedPnl || 0),
+            total_profit_loss: participant.total_profit_loss + realizedPnl,
             last_trade_at: new Date().toISOString()
           })
           .eq('id', participantId)
       }
 
-      // Record trade
+      // Record trade with mode info
       await db
         .from('arena_trades')
         .insert({
@@ -353,7 +532,9 @@ async function executeTrades(
           total_value: metrics.grossValue,
           fees: metrics.fees,
           realized_pnl: metrics.realizedPnl,
-          reasoning: action.reasoning
+          reasoning: action.reasoning,
+          mode_code: modeCode,
+          leverage: tradeLeverage > 1 ? tradeLeverage : null
         })
 
       executedTrades.push({
@@ -546,12 +727,16 @@ export async function runTradingSession(
       }
 
       try {
-        // Build context
+        // Build context with mode-specific information
         const context = await buildContext(db, participant, config)
+        const modeCode: CompetitionModeCode = context.modeCode
         const userPrompt = buildTradingPrompt(context)
 
-        // Call AI
-        const response = await provider.chat(TRADING_SYSTEM_PROMPT, userPrompt)
+        // Build mode-specific system prompt
+        const systemPrompt = buildSystemPrompt(modeCode)
+
+        // Call AI with mode-aware prompt
+        const response = await provider.chat(systemPrompt, userPrompt)
 
         if (!response.success) {
           report.results.push({
@@ -597,14 +782,15 @@ export async function runTradingSession(
             tokens_used: response.tokensUsed
           })
 
-        // Execute trades (unless dry run)
+        // Execute trades (unless dry run) with mode-specific rules
         let executedTrades: ExecutedTrade[] = []
         if (!options.dryRun) {
           executedTrades = await executeTrades(
             db,
             participant.id,
             analysis.recommended_actions,
-            config
+            config,
+            modeCode
           )
         }
 
