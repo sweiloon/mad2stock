@@ -15,9 +15,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Top 7 coins for klines (CoinGecko rate limit constraint)
-// 7 coins × 3 intervals = 21 API calls per run
-const KLINE_COINS = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA']
+// Top 3 coins for klines (CoinGecko free tier allows ~10-15 calls/minute)
+// 3 coins × 3 intervals = 9 API calls per run
+const KLINE_COINS = ['BTC', 'ETH', 'SOL']
 
 // CoinGecko OHLC days mapping (API limitation)
 const OHLC_CONFIGS = [
@@ -26,8 +26,8 @@ const OHLC_CONFIGS = [
   { days: 30, interval: '1d' as const },  // 30 days = daily candles
 ]
 
-// Rate limit: 2 seconds between API calls to stay under 30 calls/minute
-const API_DELAY_MS = 2000
+// Rate limit: 5 seconds between API calls to stay under 12 calls/minute
+const API_DELAY_MS = 5000
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
