@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { binanceApi, TIER_1_COINS, getCoinTier, getCoinCategory } from '@/lib/crypto'
+import { TIER_1_COINS, getCoinTier, getCoinCategory } from '@/lib/crypto'
 import OpenAI from 'openai'
 
 // ============================================
