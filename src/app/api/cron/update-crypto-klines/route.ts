@@ -26,8 +26,8 @@ const OHLC_CONFIGS = [
   { days: 30, interval: '1d' as const },  // 30 days = daily candles
 ]
 
-// Rate limit: 3 seconds between API calls to stay under 20 calls/minute
-const API_DELAY_MS = 3000
+// Rate limit: 2 seconds between API calls to stay under 30 calls/minute
+const API_DELAY_MS = 2000
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()

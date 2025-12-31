@@ -1,8 +1,5 @@
 {
   "functions": {
-    "src/app/api/cron/**/*.ts": {
-      "maxDuration": 60
-    },
     "src/app/api/cron/arena-trading/route.ts": {
       "maxDuration": 300
     },
@@ -17,6 +14,9 @@
     },
     "src/app/api/cron/update-crypto-klines/route.ts": {
       "maxDuration": 180
+    },
+    "src/app/api/cron/**/*.ts": {
+      "maxDuration": 60
     }
   }
 }
