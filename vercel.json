@@ -6,8 +6,28 @@
     "src/app/api/cron/arena-trading/route.ts": {
       "maxDuration": 300
     },
+    "src/app/api/cron/arena-crypto-trading/route.ts": {
+      "maxDuration": 300
+    },
     "src/app/api/arena/analyze/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/cron/generate-crypto-signals/route.ts": {
+      "maxDuration": 120
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/update-crypto-prices",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/update-crypto-klines",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/generate-crypto-signals",
+      "schedule": "0 */4 * * *"
+    }
+  ]
 }
