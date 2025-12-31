@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -46,7 +46,7 @@ export function CryptoChart({
   showVolume = true,
   showMA = true,
 }: CryptoChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [container, setContainer] = useState<HTMLDivElement | null>(null)
   const chartRef = useRef<any>(null)
   const candleSeriesRef = useRef<any>(null)
   const volumeSeriesRef = useRef<any>(null)
@@ -56,18 +56,30 @@ export function CryptoChart({
   const [selectedInterval, setSelectedInterval] = useState<ChartInterval>("1h")
   const [chartLoaded, setChartLoaded] = useState(false)
 
+  // Callback ref to track container element
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    if (node !== null) {
+      setContainer(node)
+    }
+  }, [])
+
   // Initialize chart
   useEffect(() => {
     let chart: any = null
 
     const initChart = async () => {
-      if (!containerRef.current) return
+      if (!container) return
 
       try {
-        // Dynamically import lightweight-charts
-        const { createChart, ColorType, CrosshairMode } = await import(
-          "lightweight-charts"
-        )
+        // Dynamically import lightweight-charts (v5 API)
+        const {
+          createChart,
+          ColorType,
+          CrosshairMode,
+          CandlestickSeries,
+          HistogramSeries,
+          LineSeries
+        } = await import("lightweight-charts")
 
         // Clear previous chart
         if (chartRef.current) {
@@ -75,8 +87,8 @@ export function CryptoChart({
         }
 
         // Create new chart
-        chart = createChart(containerRef.current, {
-          width: containerRef.current.clientWidth,
+        chart = createChart(container, {
+          width: container.clientWidth,
           height: height,
           layout: {
             background: { type: ColorType.Solid, color: "transparent" },
@@ -103,8 +115,8 @@ export function CryptoChart({
           },
         })
 
-        // Create candlestick series
-        const candleSeries = chart.addCandlestickSeries({
+        // Create candlestick series (v5 API: addSeries with type)
+        const candleSeries = chart.addSeries(CandlestickSeries, {
           upColor: "#22c55e",
           downColor: "#ef4444",
           borderUpColor: "#22c55e",
@@ -117,12 +129,15 @@ export function CryptoChart({
 
         // Create volume series
         if (showVolume) {
-          const volumeSeries = chart.addHistogramSeries({
+          const volumeSeries = chart.addSeries(HistogramSeries, {
             color: "#6366f1",
             priceFormat: {
               type: "volume",
             },
             priceScaleId: "",
+          })
+          // Set scale margins via price scale options
+          chart.priceScale("").applyOptions({
             scaleMargins: {
               top: 0.8,
               bottom: 0,
@@ -133,7 +148,7 @@ export function CryptoChart({
 
         // Create MA series
         if (showMA) {
-          const ma20Series = chart.addLineSeries({
+          const ma20Series = chart.addSeries(LineSeries, {
             color: "#f59e0b",
             lineWidth: 1,
             priceLineVisible: false,
@@ -141,7 +156,7 @@ export function CryptoChart({
           })
           ma20SeriesRef.current = ma20Series
 
-          const ma50Series = chart.addLineSeries({
+          const ma50Series = chart.addSeries(LineSeries, {
             color: "#8b5cf6",
             lineWidth: 1,
             priceLineVisible: false,
@@ -155,8 +170,8 @@ export function CryptoChart({
 
         // Handle resize
         const handleResize = () => {
-          if (containerRef.current && chart) {
-            chart.applyOptions({ width: containerRef.current.clientWidth })
+          if (container && chart) {
+            chart.applyOptions({ width: container.clientWidth })
           }
         }
 
@@ -166,7 +181,7 @@ export function CryptoChart({
           window.removeEventListener("resize", handleResize)
         }
       } catch (error) {
-        console.error("Failed to load chart:", error)
+        console.error("[CryptoChart] Failed to load chart:", error)
       }
     }
 
@@ -178,7 +193,7 @@ export function CryptoChart({
         chartRef.current = null
       }
     }
-  }, [height, showVolume, showMA])
+  }, [height, showVolume, showMA, container])
 
   // Update chart data
   useEffect(() => {
@@ -258,7 +273,11 @@ export function CryptoChart({
       </div>
 
       {/* Chart Container */}
-      <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />
+      <div
+        ref={containerRef}
+        className="w-full rounded-lg overflow-hidden"
+        style={{ height: `${height}px` }}
+      />
 
       {/* Price Summary */}
       {klines.length > 0 && (
