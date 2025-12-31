@@ -391,23 +391,12 @@ CREATE INDEX IF NOT EXISTS idx_arena_crypto_snapshots_date ON arena_crypto_snaps
 -- ============================================
 
 -- Enable Supabase Realtime for crypto tables
-DO $$
-BEGIN
-  -- Check if publication exists and add tables
-  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
-    -- Remove first to avoid errors if already added
-    ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS crypto_prices;
-    ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS crypto_signals;
-    ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS arena_crypto_trades;
-    ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS arena_crypto_holdings;
-
-    -- Add tables
-    ALTER PUBLICATION supabase_realtime ADD TABLE crypto_prices;
-    ALTER PUBLICATION supabase_realtime ADD TABLE crypto_signals;
-    ALTER PUBLICATION supabase_realtime ADD TABLE arena_crypto_trades;
-    ALTER PUBLICATION supabase_realtime ADD TABLE arena_crypto_holdings;
-  END IF;
-END $$;
+-- Note: Tables will be added to realtime via Supabase Dashboard
+-- Go to: Database > Replication > Enable for these tables:
+-- - crypto_prices
+-- - crypto_signals
+-- - arena_crypto_trades
+-- - arena_crypto_holdings
 
 -- ============================================
 -- ROW LEVEL SECURITY
