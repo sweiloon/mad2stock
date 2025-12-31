@@ -60,12 +60,14 @@ export function CryptoTradeHistory({
     windowMs: 60000, // 1 minute window
   })
 
-  if (!isConnected && trades.length === 0) {
+  // Trade history is not available (Binance geo-blocked)
+  // Show a message instead of loading skeleton
+  if (trades.length === 0) {
     return (
-      <div className="space-y-2">
-        {[...Array(10)].map((_, i) => (
-          <Skeleton key={i} className="h-6 w-full" />
-        ))}
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+        <div className="text-4xl mb-3">📈</div>
+        <p className="text-sm font-medium">Trade History Not Available</p>
+        <p className="text-xs mt-1">Real-time trade data requires Binance WebSocket</p>
       </div>
     )
   }

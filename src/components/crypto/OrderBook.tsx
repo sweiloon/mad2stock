@@ -59,12 +59,14 @@ export function CryptoOrderBook({
   const maxAskQty = useMemo(() => Math.max(...asks.map(a => a.quantity), 0), [asks])
   const maxQty = Math.max(maxBidQty, maxAskQty)
 
-  if (!isConnected && bids.length === 0) {
+  // Order book is not available (Binance geo-blocked)
+  // Show a message instead of loading skeleton
+  if (bids.length === 0 && asks.length === 0) {
     return (
-      <div className="space-y-2">
-        {[...Array(levels)].map((_, i) => (
-          <Skeleton key={i} className="h-6 w-full" />
-        ))}
+      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+        <div className="text-4xl mb-3">📊</div>
+        <p className="text-sm font-medium">Order Book Not Available</p>
+        <p className="text-xs mt-1">Real-time order book data requires Binance WebSocket</p>
       </div>
     )
   }

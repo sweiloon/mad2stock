@@ -2,16 +2,13 @@
 
 // ============================================
 // USE BINANCE TICKER HOOK
-// Real-time ticker updates via WebSocket
-// For active coin profile pages
+// Fetches ticker data from Supabase (CoinGecko data)
+// Binance WebSocket disabled due to geo-blocking
 // ============================================
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import {
-  binanceWs,
-  BinanceWebSocketManager,
-  type CryptoPrice,
-} from '@/lib/crypto'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { CryptoPrice } from '@/lib/crypto'
 
 // ============================================
 // TYPES
@@ -19,7 +16,7 @@ import {
 
 interface UseBinanceTickerOptions {
   enabled?: boolean
-  throttleMs?: number      // Throttle updates (default: 1000ms)
+  throttleMs?: number      // Refresh interval in ms (default: 5000)
   pair?: string            // Quote currency (default: 'USDT')
 }
 
@@ -30,35 +27,28 @@ interface UseBinanceTickerResult {
   error: string | null
 }
 
-// ============================================
-// THROTTLE UTILITY
-// ============================================
-
-function useThrottle<T>(value: T, intervalMs: number): T {
-  const [throttledValue, setThrottledValue] = useState<T>(value)
-  const lastUpdated = useRef<number>(Date.now())
-
-  useEffect(() => {
-    const now = Date.now()
-
-    if (now - lastUpdated.current >= intervalMs) {
-      lastUpdated.current = now
-      setThrottledValue(value)
-    } else {
-      const timerId = setTimeout(() => {
-        lastUpdated.current = Date.now()
-        setThrottledValue(value)
-      }, intervalMs - (now - lastUpdated.current))
-
-      return () => clearTimeout(timerId)
-    }
-  }, [value, intervalMs])
-
-  return throttledValue
+// Database row type
+interface CryptoPriceRow {
+  symbol: string
+  price: string
+  change: string | null
+  change_percent: string | null
+  open_24h: string | null
+  high_24h: string | null
+  low_24h: string | null
+  volume_24h: string | null
+  quote_volume_24h: string | null
+  bid: string | null
+  ask: string | null
+  trades_24h: number | null
+  data_source: string | null
+  tier: number | null
+  updated_at: string
 }
 
 // ============================================
 // HOOK: useBinanceTicker
+// Fetches from Supabase crypto_prices table
 // ============================================
 
 export function useBinanceTicker(
@@ -67,85 +57,85 @@ export function useBinanceTicker(
 ): UseBinanceTickerResult {
   const {
     enabled = true,
-    throttleMs = 1000,
-    pair = 'USDT',
+    throttleMs = 5000,
   } = options
 
-  const [rawTicker, setRawTicker] = useState<CryptoPrice | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
+  const [ticker, setTicker] = useState<CryptoPrice | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const unsubscribeRef = useRef<(() => void) | null>(null)
-
-  // Throttle the ticker updates
-  const ticker = useThrottle(rawTicker, throttleMs)
-
-  // Build the pair symbol
-  const pairSymbol = useMemo(() => {
+  const normalizedSymbol = useMemo(() => {
     if (!symbol) return null
-    return `${symbol.toUpperCase()}${pair.toUpperCase()}`
-  }, [symbol, pair])
+    return symbol.toUpperCase()
+  }, [symbol])
 
-  useEffect(() => {
-    if (!enabled || !pairSymbol) {
-      setRawTicker(null)
-      setIsConnected(false)
+  // Fetch ticker from Supabase
+  const fetchTicker = useCallback(async () => {
+    if (!enabled || !normalizedSymbol) {
       return
     }
 
-    let isMounted = true
+    try {
+      const supabase = createClient()
+      const { data, error: fetchError } = await supabase
+        .from('crypto_prices')
+        .select('*')
+        .eq('symbol', normalizedSymbol)
+        .single()
 
-    const connect = async () => {
-      try {
-        // Connect to WebSocket
-        await binanceWs.connect()
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          // No data found
+          setError(`No data for ${normalizedSymbol}`)
+          return
+        }
+        throw fetchError
+      }
 
-        if (!isMounted) return
-
-        setIsConnected(binanceWs.isConnected())
+      if (data) {
+        const row = data as CryptoPriceRow
+        setTicker({
+          symbol: row.symbol,
+          price: parseFloat(row.price),
+          change: parseFloat(row.change || '0'),
+          changePercent: parseFloat(row.change_percent || '0'),
+          open24h: parseFloat(row.open_24h || '0'),
+          high24h: parseFloat(row.high_24h || '0'),
+          low24h: parseFloat(row.low_24h || '0'),
+          volume24h: parseFloat(row.volume_24h || '0'),
+          quoteVolume24h: parseFloat(row.quote_volume_24h || '0'),
+          bid: parseFloat(row.bid || '0'),
+          ask: parseFloat(row.ask || '0'),
+          trades24h: row.trades_24h ?? undefined,
+          dataSource: (row.data_source as 'BINANCE' | 'COINGECKO' | 'CACHE') || 'CACHE',
+          tier: row.tier || 2,
+          updatedAt: new Date(row.updated_at),
+        })
+        setLastUpdate(new Date())
         setError(null)
-
-        // Subscribe to ticker stream
-        unsubscribeRef.current = binanceWs.subscribeToTicker(
-          pairSymbol,
-          (data: CryptoPrice) => {
-            if (!isMounted) return
-            setRawTicker(data)
-            setLastUpdate(new Date())
-          }
-        )
-      } catch (err) {
-        if (!isMounted) return
-        console.error('[useBinanceTicker] Connection error:', err)
-        setError(err instanceof Error ? err.message : 'Failed to connect')
-        setIsConnected(false)
       }
+    } catch (err) {
+      console.error('[useBinanceTicker] Fetch error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch ticker')
     }
+  }, [enabled, normalizedSymbol])
 
-    connect()
+  // Initial fetch
+  useEffect(() => {
+    fetchTicker()
+  }, [fetchTicker])
 
-    // Check connection status periodically
-    const statusInterval = setInterval(() => {
-      if (isMounted) {
-        setIsConnected(binanceWs.isConnected())
-      }
-    }, 5000)
+  // Periodic refresh
+  useEffect(() => {
+    if (!enabled || !normalizedSymbol) return
 
-    return () => {
-      isMounted = false
-      clearInterval(statusInterval)
-
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current()
-        unsubscribeRef.current = null
-      }
-    }
-  }, [enabled, pairSymbol])
+    const interval = setInterval(fetchTicker, throttleMs)
+    return () => clearInterval(interval)
+  }, [enabled, normalizedSymbol, throttleMs, fetchTicker])
 
   return {
     ticker,
-    isConnected,
+    isConnected: ticker !== null, // "Connected" if we have data
     lastUpdate,
     error,
   }
@@ -169,68 +159,19 @@ export function useBinanceMiniTicker(
   isConnected: boolean
   lastUpdate: Date | null
 } {
-  const {
-    enabled = true,
-    throttleMs = 500,
-    pair = 'USDT',
-  } = options
+  const { ticker, isConnected, lastUpdate } = useBinanceTicker(symbol, options)
 
-  const [rawTicker, setRawTicker] = useState<MiniTickerData | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-
-  const unsubscribeRef = useRef<(() => void) | null>(null)
-  const ticker = useThrottle(rawTicker, throttleMs)
-
-  const pairSymbol = useMemo(() => {
-    if (!symbol) return null
-    return `${symbol.toUpperCase()}${pair.toUpperCase()}`
-  }, [symbol, pair])
-
-  useEffect(() => {
-    if (!enabled || !pairSymbol) {
-      setRawTicker(null)
-      setIsConnected(false)
-      return
+  const miniTicker = useMemo(() => {
+    if (!ticker) return null
+    return {
+      symbol: ticker.symbol,
+      price: ticker.price,
+      volume: ticker.volume24h,
     }
-
-    let isMounted = true
-
-    const connect = async () => {
-      try {
-        await binanceWs.connect()
-        if (!isMounted) return
-
-        setIsConnected(binanceWs.isConnected())
-
-        unsubscribeRef.current = binanceWs.subscribeToMiniTicker(
-          pairSymbol,
-          (data) => {
-            if (!isMounted) return
-            setRawTicker(data)
-            setLastUpdate(new Date())
-          }
-        )
-      } catch (err) {
-        if (!isMounted) return
-        console.error('[useBinanceMiniTicker] Error:', err)
-        setIsConnected(false)
-      }
-    }
-
-    connect()
-
-    return () => {
-      isMounted = false
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current()
-        unsubscribeRef.current = null
-      }
-    }
-  }, [enabled, pairSymbol])
+  }, [ticker])
 
   return {
-    ticker,
+    ticker: miniTicker,
     isConnected,
     lastUpdate,
   }
@@ -251,110 +192,77 @@ export function useMultipleBinanceTickers(
 } {
   const {
     enabled = true,
-    throttleMs = 1000,
-    pair = 'USDT',
+    throttleMs = 5000,
   } = options
 
   const [tickers, setTickers] = useState<Map<string, CryptoPrice>>(new Map())
-  const [isConnected, setIsConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const unsubscribeRefs = useRef<Map<string, () => void>>(new Map())
+  const normalizedSymbols = useMemo(() => {
+    return symbols.map(s => s.toUpperCase())
+  }, [symbols.join(',')])
 
-  // Throttled update function
-  const updateTicker = useCallback(
-    (() => {
-      let lastUpdateTime = 0
-      let pendingUpdates = new Map<string, CryptoPrice>()
-      let timeoutId: NodeJS.Timeout | null = null
-
-      return (symbol: string, data: CryptoPrice) => {
-        pendingUpdates.set(symbol, data)
-
-        const now = Date.now()
-        if (now - lastUpdateTime >= throttleMs) {
-          lastUpdateTime = now
-          setTickers((prev) => {
-            const newMap = new Map(prev)
-            pendingUpdates.forEach((price, sym) => {
-              newMap.set(sym, price)
-            })
-            return newMap
-          })
-          setLastUpdate(new Date())
-          pendingUpdates.clear()
-        } else if (!timeoutId) {
-          timeoutId = setTimeout(() => {
-            lastUpdateTime = Date.now()
-            setTickers((prev) => {
-              const newMap = new Map(prev)
-              pendingUpdates.forEach((price, sym) => {
-                newMap.set(sym, price)
-              })
-              return newMap
-            })
-            setLastUpdate(new Date())
-            pendingUpdates.clear()
-            timeoutId = null
-          }, throttleMs - (now - lastUpdateTime))
-        }
-      }
-    })(),
-    [throttleMs]
-  )
-
-  useEffect(() => {
-    if (!enabled || symbols.length === 0) {
-      setTickers(new Map())
-      setIsConnected(false)
+  const fetchTickers = useCallback(async () => {
+    if (!enabled || normalizedSymbols.length === 0) {
       return
     }
 
-    let isMounted = true
+    try {
+      const supabase = createClient()
+      const { data, error: fetchError } = await supabase
+        .from('crypto_prices')
+        .select('*')
+        .in('symbol', normalizedSymbols)
 
-    const connect = async () => {
-      try {
-        await binanceWs.connect()
-        if (!isMounted) return
+      if (fetchError) throw fetchError
 
-        setIsConnected(binanceWs.isConnected())
-        setError(null)
-
-        // Subscribe to each symbol
-        symbols.forEach((symbol) => {
-          const pairSymbol = `${symbol.toUpperCase()}${pair.toUpperCase()}`
-
-          const unsubscribe = binanceWs.subscribeToTicker(
-            pairSymbol,
-            (data: CryptoPrice) => {
-              if (!isMounted) return
-              updateTicker(symbol, data)
-            }
-          )
-
-          unsubscribeRefs.current.set(symbol, unsubscribe)
+      const tickerMap = new Map<string, CryptoPrice>()
+      data?.forEach((row: CryptoPriceRow) => {
+        tickerMap.set(row.symbol, {
+          symbol: row.symbol,
+          price: parseFloat(row.price),
+          change: parseFloat(row.change || '0'),
+          changePercent: parseFloat(row.change_percent || '0'),
+          open24h: parseFloat(row.open_24h || '0'),
+          high24h: parseFloat(row.high_24h || '0'),
+          low24h: parseFloat(row.low_24h || '0'),
+          volume24h: parseFloat(row.volume_24h || '0'),
+          quoteVolume24h: parseFloat(row.quote_volume_24h || '0'),
+          bid: parseFloat(row.bid || '0'),
+          ask: parseFloat(row.ask || '0'),
+          trades24h: row.trades_24h ?? undefined,
+          dataSource: (row.data_source as 'BINANCE' | 'COINGECKO' | 'CACHE') || 'CACHE',
+          tier: row.tier || 2,
+          updatedAt: new Date(row.updated_at),
         })
-      } catch (err) {
-        if (!isMounted) return
-        console.error('[useMultipleBinanceTickers] Error:', err)
-        setError(err instanceof Error ? err.message : 'Failed to connect')
-        setIsConnected(false)
-      }
-    }
+      })
 
-    connect()
-
-    return () => {
-      isMounted = false
-      unsubscribeRefs.current.forEach((unsubscribe) => unsubscribe())
-      unsubscribeRefs.current.clear()
+      setTickers(tickerMap)
+      setLastUpdate(new Date())
+      setError(null)
+    } catch (err) {
+      console.error('[useMultipleBinanceTickers] Fetch error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch tickers')
     }
-  }, [enabled, symbols.join(','), pair, updateTicker])
+  }, [enabled, normalizedSymbols])
+
+  // Initial fetch
+  useEffect(() => {
+    fetchTickers()
+  }, [fetchTickers])
+
+  // Periodic refresh
+  useEffect(() => {
+    if (!enabled || normalizedSymbols.length === 0) return
+
+    const interval = setInterval(fetchTickers, throttleMs)
+    return () => clearInterval(interval)
+  }, [enabled, normalizedSymbols, throttleMs, fetchTickers])
 
   return {
     tickers,
-    isConnected,
+    isConnected: tickers.size > 0,
     lastUpdate,
     error,
   }

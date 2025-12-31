@@ -3,31 +3,13 @@
 // ============================================
 // USE CRYPTO CHART HOOK
 // Candlestick/Kline data for charts
-// Combines REST initial load + WebSocket updates
+// Uses Supabase as primary source (CoinGecko data)
+// Binance WebSocket disabled due to geo-blocking
 // ============================================
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { binanceApi, binanceWs, type Kline, type KlineInterval, type BinanceWSKline } from '@/lib/crypto'
-
-// Transform WebSocket kline data to our Kline type
-function transformWSKline(data: BinanceWSKline, pairSymbol: string, interval: KlineInterval): Kline {
-  const k = data.k
-  return {
-    pairSymbol,
-    interval,
-    openTime: new Date(k.t),
-    closeTime: new Date(k.T),
-    open: parseFloat(k.o),
-    high: parseFloat(k.h),
-    low: parseFloat(k.l),
-    close: parseFloat(k.c),
-    volume: parseFloat(k.v),
-    quoteVolume: parseFloat(k.q),
-    tradesCount: k.n,
-    takerBuyBase: parseFloat(k.V),
-    takerBuyQuote: parseFloat(k.Q),
-  }
-}
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { type Kline, type KlineInterval } from '@/lib/crypto'
 
 // ============================================
 // TYPES
@@ -43,7 +25,7 @@ interface UseCryptoChartOptions {
   interval?: ChartInterval
   limit?: number            // Number of candles to fetch (default: 200)
   pair?: string             // Quote currency (default: 'USDT')
-  realtime?: boolean        // Enable real-time updates (default: true)
+  realtime?: boolean        // Not used - kept for API compatibility
 }
 
 interface UseCryptoChartResult {
@@ -62,8 +44,43 @@ interface UseCryptoChartResult {
   volume: number
 }
 
+// Database row type
+interface KlineRow {
+  pair_symbol: string
+  interval: string
+  open_time: string
+  open: string
+  high: string
+  low: string
+  close: string
+  volume: string
+}
+
+// Helper to convert interval to milliseconds
+function getIntervalMs(interval: ChartInterval): number {
+  const map: Record<ChartInterval, number> = {
+    '1m': 60 * 1000,
+    '3m': 3 * 60 * 1000,
+    '5m': 5 * 60 * 1000,
+    '15m': 15 * 60 * 1000,
+    '30m': 30 * 60 * 1000,
+    '1h': 60 * 60 * 1000,
+    '2h': 2 * 60 * 60 * 1000,
+    '4h': 4 * 60 * 60 * 1000,
+    '6h': 6 * 60 * 60 * 1000,
+    '8h': 8 * 60 * 60 * 1000,
+    '12h': 12 * 60 * 60 * 1000,
+    '1d': 24 * 60 * 60 * 1000,
+    '3d': 3 * 24 * 60 * 60 * 1000,
+    '1w': 7 * 24 * 60 * 60 * 1000,
+    '1M': 30 * 24 * 60 * 60 * 1000,
+  }
+  return map[interval] || 60 * 60 * 1000
+}
+
 // ============================================
 // HOOK: useCryptoChart
+// Fetches klines from Supabase (populated by CoinGecko cron)
 // ============================================
 
 export function useCryptoChart(
@@ -75,16 +92,12 @@ export function useCryptoChart(
     interval = '1h',
     limit = 200,
     pair = 'USDT',
-    realtime = true,
   } = options
 
   const [klines, setKlines] = useState<Kline[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isConnected, setIsConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  const unsubscribeRef = useRef<(() => void) | null>(null)
 
   // Build the pair symbol
   const pairSymbol = useMemo(() => {
@@ -92,7 +105,7 @@ export function useCryptoChart(
     return `${symbol.toUpperCase()}${pair.toUpperCase()}`
   }, [symbol, pair])
 
-  // Fetch klines via REST API
+  // Fetch klines from Supabase
   const fetchKlines = useCallback(async () => {
     if (!symbol || !pairSymbol || !enabled) {
       setIsLoading(false)
@@ -103,8 +116,35 @@ export function useCryptoChart(
     setError(null)
 
     try {
-      const data = await binanceApi.getCryptoKlines(symbol.toUpperCase(), pair.toUpperCase(), interval, limit)
-      setKlines(data)
+      const supabase = createClient()
+      const { data, error: fetchError } = await supabase
+        .from('crypto_klines')
+        .select('*')
+        .eq('pair_symbol', pairSymbol)
+        .eq('interval', interval)
+        .order('open_time', { ascending: true })
+        .limit(limit)
+
+      if (fetchError) throw fetchError
+
+      // Transform database rows to Kline format
+      const transformedKlines: Kline[] = (data || []).map((row: KlineRow) => ({
+        pairSymbol: row.pair_symbol,
+        interval: row.interval as KlineInterval,
+        openTime: new Date(row.open_time),
+        closeTime: new Date(new Date(row.open_time).getTime() + getIntervalMs(interval)),
+        open: parseFloat(row.open),
+        high: parseFloat(row.high),
+        low: parseFloat(row.low),
+        close: parseFloat(row.close),
+        volume: parseFloat(row.volume),
+        quoteVolume: 0,
+        tradesCount: 0,
+        takerBuyBase: 0,
+        takerBuyQuote: 0,
+      }))
+
+      setKlines(transformedKlines)
       setLastUpdate(new Date())
     } catch (err) {
       console.error('[useCryptoChart] Fetch error:', err)
@@ -112,80 +152,19 @@ export function useCryptoChart(
     } finally {
       setIsLoading(false)
     }
-  }, [symbol, pairSymbol, interval, limit, pair, enabled])
+  }, [symbol, pairSymbol, interval, limit, enabled])
 
   // Initial fetch
   useEffect(() => {
     fetchKlines()
   }, [fetchKlines])
 
-  // Subscribe to real-time kline updates
+  // Auto-refresh every 5 minutes (matches cron interval)
   useEffect(() => {
-    if (!enabled || !pairSymbol || !realtime) {
-      return
-    }
-
-    let isMounted = true
-
-    const connect = async () => {
-      try {
-        await binanceWs.connect()
-
-        if (!isMounted) return
-
-        setIsConnected(binanceWs.isConnected())
-
-        // Subscribe to kline stream
-        unsubscribeRef.current = binanceWs.subscribeToKline(
-          pairSymbol,
-          interval,
-          (wsKline: BinanceWSKline) => {
-            if (!isMounted) return
-
-            // Transform WebSocket data to our Kline format
-            const kline = transformWSKline(wsKline, pairSymbol, interval)
-
-            setKlines(prev => {
-              // Find and update or append the kline
-              const newKlines = [...prev]
-              const lastIndex = newKlines.length - 1
-
-              if (lastIndex >= 0 && newKlines[lastIndex].openTime.getTime() === kline.openTime.getTime()) {
-                // Update existing candle
-                newKlines[lastIndex] = kline
-              } else if (lastIndex < 0 || kline.openTime > newKlines[lastIndex].openTime) {
-                // New candle
-                newKlines.push(kline)
-
-                // Keep only the last `limit` candles
-                if (newKlines.length > limit) {
-                  newKlines.shift()
-                }
-              }
-
-              return newKlines
-            })
-
-            setLastUpdate(new Date())
-          }
-        )
-      } catch (err) {
-        if (!isMounted) return
-        console.error('[useCryptoChart] WebSocket error:', err)
-        setIsConnected(false)
-      }
-    }
-
-    connect()
-
-    return () => {
-      isMounted = false
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current()
-        unsubscribeRef.current = null
-      }
-    }
-  }, [enabled, pairSymbol, interval, realtime, limit])
+    if (!enabled) return
+    const refreshInterval = setInterval(fetchKlines, 5 * 60 * 1000)
+    return () => clearInterval(refreshInterval)
+  }, [enabled, fetchKlines])
 
   // Calculate derived values
   const derivedValues = useMemo(() => {
@@ -230,7 +209,7 @@ export function useCryptoChart(
   return {
     klines,
     isLoading,
-    isConnected,
+    isConnected: true, // Always "connected" since using Supabase
     lastUpdate,
     error,
     refetch: fetchKlines,
@@ -292,9 +271,35 @@ export function useMultiTimeframeChart(
       setError(null)
 
       try {
+        const supabase = createClient()
+
         const results = await Promise.all(
           intervals.map(async (interval) => {
-            const klines = await binanceApi.getCryptoKlines(symbol.toUpperCase(), pair.toUpperCase(), interval, limit)
+            const { data: rows, error: fetchError } = await supabase
+              .from('crypto_klines')
+              .select('*')
+              .eq('pair_symbol', pairSymbol)
+              .eq('interval', interval)
+              .order('open_time', { ascending: true })
+              .limit(limit)
+
+            if (fetchError) throw fetchError
+
+            const klines: Kline[] = (rows || []).map((row: KlineRow) => ({
+              pairSymbol: row.pair_symbol,
+              interval: row.interval as KlineInterval,
+              openTime: new Date(row.open_time),
+              closeTime: new Date(new Date(row.open_time).getTime() + getIntervalMs(interval)),
+              open: parseFloat(row.open),
+              high: parseFloat(row.high),
+              low: parseFloat(row.low),
+              close: parseFloat(row.close),
+              volume: parseFloat(row.volume),
+              quoteVolume: 0,
+              tradesCount: 0,
+              takerBuyBase: 0,
+              takerBuyQuote: 0,
+            }))
 
             const latest = klines[klines.length - 1]
             const first = klines[0]
