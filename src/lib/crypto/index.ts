@@ -8,6 +8,9 @@ export * from './types'
 // Binance REST API
 export { binanceApi, BinanceAPI } from './binance-api'
 
+// CoinGecko REST API (fallback when Binance is geo-blocked)
+export { coingeckoApi, CoinGeckoAPI, SYMBOL_TO_ID, ID_TO_SYMBOL } from './coingecko-api'
+
 // Binance WebSocket
 export {
   binanceWs,

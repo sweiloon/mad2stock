@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { binanceApi, TIER_1_COINS, TIER_2_COINS, TIER_3_COINS, getCoinTier } from '@/lib/crypto'
+import { coingeckoApi, TIER_1_COINS, TIER_2_COINS, TIER_3_COINS, getCoinTier } from '@/lib/crypto'
 
 // ============================================
 // UPDATE CRYPTO PRICES CRON
-// Runs every 1 minute for Tier 1
-// Runs every 3 minutes for Tier 2
-// Runs every 5 minutes for Tier 3
+// Runs every 1 minute
+// Uses CoinGecko API (Binance is geo-blocked from Vercel)
 // ============================================
 
 const supabase = createClient(
@@ -55,12 +54,15 @@ export async function GET(request: NextRequest) {
       symbols = [...TIER_1_COINS]
     }
 
-    console.log(`[Crypto Cron] Updating ${symbols.length} coins (tier: ${tierToUpdate})`)
+    console.log(`[Crypto Cron] Updating ${symbols.length} coins (tier: ${tierToUpdate}) via CoinGecko`)
 
-    // Fetch all tickers from Binance
-    const tickers = await binanceApi.getAllTickers24hr()
+    // Filter to only supported symbols
+    const supportedSymbols = symbols.filter(s => coingeckoApi.isSymbolSupported(s))
 
-    // Filter and transform relevant tickers
+    // Fetch market data from CoinGecko
+    const priceMap = await coingeckoApi.getMarketData(supportedSymbols)
+
+    // Transform to database format
     const updates: Array<{
       symbol: string
       price: number
@@ -79,37 +81,28 @@ export async function GET(request: NextRequest) {
       updated_at: string
     }> = []
 
-    const symbolSet = new Set(symbols.map(s => s.toUpperCase()))
-
-    for (const ticker of tickers) {
-      // Only process USDT pairs for our tracked coins
-      if (!ticker.symbol.endsWith('USDT')) continue
-
-      const baseSymbol = ticker.symbol.replace('USDT', '')
-      if (!symbolSet.has(baseSymbol)) continue
-
-      const tier = getCoinTier(baseSymbol)
-
+    for (const [symbol, data] of priceMap) {
+      const tier = getCoinTier(symbol)
       updates.push({
-        symbol: baseSymbol,
-        price: parseFloat(ticker.lastPrice),
-        change: parseFloat(ticker.priceChange),
-        change_percent: parseFloat(ticker.priceChangePercent),
-        open_24h: parseFloat(ticker.openPrice),
-        high_24h: parseFloat(ticker.highPrice),
-        low_24h: parseFloat(ticker.lowPrice),
-        volume_24h: parseFloat(ticker.volume),
-        quote_volume_24h: parseFloat(ticker.quoteVolume),
-        bid: parseFloat(ticker.bidPrice),
-        ask: parseFloat(ticker.askPrice),
-        trades_24h: ticker.count,
-        data_source: 'BINANCE',
+        symbol,
+        price: data.price,
+        change: data.change,
+        change_percent: data.changePercent,
+        open_24h: data.open24h,
+        high_24h: data.high24h,
+        low_24h: data.low24h,
+        volume_24h: data.volume24h,
+        quote_volume_24h: data.quoteVolume24h,
+        bid: data.bid,
+        ask: data.ask,
+        trades_24h: data.trades24h || 0,
+        data_source: 'COINGECKO',
         tier,
         updated_at: new Date().toISOString(),
       })
     }
 
-    console.log(`[Crypto Cron] Found ${updates.length} matching tickers`)
+    console.log(`[Crypto Cron] Got ${updates.length} prices from CoinGecko`)
 
     // Batch upsert to database
     if (updates.length > 0) {
@@ -131,6 +124,7 @@ export async function GET(request: NextRequest) {
       success: true,
       tier: tierToUpdate,
       updated: updates.length,
+      source: 'COINGECKO',
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
     })

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { binanceApi, TIER_1_COINS, TIER_2_COINS, CRON_CONFIG } from '@/lib/crypto'
+import { coingeckoApi, TIER_1_COINS, TIER_2_COINS, CRON_CONFIG } from '@/lib/crypto'
 
 // ============================================
 // UPDATE CRYPTO KLINES CRON
 // Runs every 5 minutes
-// Fetches 1h and 1d candlestick data for charting
+// Fetches OHLC data from CoinGecko for charting
+// Note: CoinGecko has limited OHLC intervals (1, 7, 14, 30 days)
 // ============================================
 
 const supabase = createClient(
@@ -13,10 +14,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-type KlineInterval = '1h' | '4h' | '1d'
-
-const INTERVALS: KlineInterval[] = ['1h', '4h', '1d']
-const KLINE_LIMIT = 100 // Fetch last 100 candles per interval
+// CoinGecko OHLC days mapping (API limitation)
+const OHLC_CONFIGS = [
+  { days: 1, interval: '1h' as const },   // 1 day = hourly candles
+  { days: 7, interval: '4h' as const },   // 7 days = 4-hour candles
+  { days: 30, interval: '1d' as const },  // 30 days = daily candles
+]
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
@@ -36,67 +39,68 @@ export async function GET(request: NextRequest) {
 
   try {
     // Only update Tier 1 and Tier 2 coins for klines (most viewed)
-    const symbols = [...TIER_1_COINS, ...TIER_2_COINS]
+    const allSymbols = [...TIER_1_COINS, ...TIER_2_COINS]
 
-    console.log(`[Klines Cron] Updating klines for ${symbols.length} coins`)
+    // Filter to only CoinGecko-supported symbols
+    const symbols = allSymbols.filter(s => coingeckoApi.isSymbolSupported(s))
+
+    console.log(`[Klines Cron] Updating klines for ${symbols.length} coins via CoinGecko`)
 
     let totalUpdated = 0
     const errors: string[] = []
 
-    // Process in batches to avoid rate limiting
+    // Process in batches to respect rate limits
     const batchSize = CRON_CONFIG.batchSize
     for (let i = 0; i < symbols.length; i += batchSize) {
       const batch = symbols.slice(i, i + batchSize)
 
-      await Promise.all(
-        batch.map(async (symbol) => {
-          const pairSymbol = `${symbol}USDT`
+      for (const symbol of batch) {
+        const pairSymbol = `${symbol}USDT`
 
-          for (const interval of INTERVALS) {
-            try {
-              const klines = await binanceApi.getCryptoKlines(
-                symbol,
-                'USDT',
-                interval,
-                KLINE_LIMIT
-              )
+        for (const config of OHLC_CONFIGS) {
+          try {
+            const klines = await coingeckoApi.getOHLC(symbol, config.days)
 
-              // Transform to database format
-              const records = klines.map((k) => ({
-                pair_symbol: pairSymbol,
-                interval,
-                open_time: k.openTime.toISOString(),
-                open: k.open,
-                high: k.high,
-                low: k.low,
-                close: k.close,
-                volume: k.volume,
-              }))
+            // Transform to database format
+            const records = klines.map((k) => ({
+              pair_symbol: pairSymbol,
+              interval: config.interval,
+              open_time: k.openTime.toISOString(),
+              open: k.open,
+              high: k.high,
+              low: k.low,
+              close: k.close,
+              volume: k.volume,
+            }))
 
-              // Upsert klines
-              const { error } = await supabase
-                .from('crypto_klines')
-                .upsert(records, {
-                  onConflict: 'pair_symbol,interval,open_time',
-                })
+            if (records.length === 0) continue
 
-              if (error) {
-                errors.push(`${pairSymbol} ${interval}: ${error.message}`)
-              } else {
-                totalUpdated += records.length
-              }
-            } catch (err) {
-              errors.push(
-                `${pairSymbol} ${interval}: ${err instanceof Error ? err.message : 'Unknown error'}`
-              )
+            // Upsert klines
+            const { error } = await supabase
+              .from('crypto_klines')
+              .upsert(records, {
+                onConflict: 'pair_symbol,interval,open_time',
+              })
+
+            if (error) {
+              errors.push(`${pairSymbol} ${config.interval}: ${error.message}`)
+            } else {
+              totalUpdated += records.length
             }
+          } catch (err) {
+            errors.push(
+              `${pairSymbol} ${config.interval}: ${err instanceof Error ? err.message : 'Unknown error'}`
+            )
           }
-        })
-      )
+        }
 
-      // Small delay between batches to respect rate limits
-      if (i + batchSize < symbols.length) {
+        // Delay between symbols to respect CoinGecko rate limit
         await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+
+      // Larger delay between batches
+      if (i + batchSize < symbols.length) {
+        await new Promise((resolve) => setTimeout(resolve, 2000))
       }
     }
 
@@ -109,7 +113,8 @@ export async function GET(request: NextRequest) {
       success: true,
       updated: totalUpdated,
       symbols: symbols.length,
-      intervals: INTERVALS,
+      source: 'COINGECKO',
+      intervals: OHLC_CONFIGS.map(c => c.interval),
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),

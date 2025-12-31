@@ -131,7 +131,7 @@ export interface CryptoPrice {
   // Trade count
   trades24h?: number
 
-  dataSource: 'BINANCE' | 'CACHE'
+  dataSource: 'BINANCE' | 'COINGECKO' | 'CACHE'
   tier: number
   updatedAt: Date
 }
