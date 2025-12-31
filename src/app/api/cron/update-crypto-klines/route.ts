@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { coingeckoApi, TIER_1_COINS, TIER_2_COINS, CRON_CONFIG } from '@/lib/crypto'
+import { coingeckoApi, TIER_1_COINS, CRON_CONFIG } from '@/lib/crypto'
 
 // ============================================
 // UPDATE CRYPTO KLINES CRON
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Only update Tier 1 and Tier 2 coins for klines (most viewed)
-    const allSymbols = [...TIER_1_COINS, ...TIER_2_COINS]
+    // Only update Tier 1 coins for klines (top 20 - CoinGecko rate limit constraint)
+    const allSymbols = [...TIER_1_COINS]
 
     // Filter to only CoinGecko-supported symbols
     const symbols = allSymbols.filter(s => coingeckoApi.isSymbolSupported(s))
