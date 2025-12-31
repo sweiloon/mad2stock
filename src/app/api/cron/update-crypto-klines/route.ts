@@ -21,9 +21,16 @@ const KLINE_LIMIT = 100 // Fetch last 100 candles per interval
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
 
-  // Verify cron secret
+  // Verify cron secret (supports both header and query param)
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const { searchParams } = new URL(request.url)
+  const querySecret = searchParams.get('secret')
+
+  const isAuthorized =
+    authHeader === `Bearer ${process.env.CRON_SECRET}` ||
+    querySecret === process.env.CRON_SECRET
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
