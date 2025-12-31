@@ -12,11 +12,7 @@
  */
 
 import type { CompetitionModeCode, Holding } from '../types'
-import type {
-  ComprehensiveMarketData,
-  StockFundamentals,
-  MarketMover
-} from '../market-data'
+import type { ComprehensiveMarketData, ScreenedStock } from '../market-data'
 
 // ============================================================================
 // TYPES
@@ -125,7 +121,7 @@ You are a sophisticated algorithmic trading system with access to:
 - Market: KLSE (Bursa Malaysia)
 - Starting Capital: RM 10,000
 - Duration: Competition period with daily trading sessions
-- Objective: Maximize portfolio returns while managing risk
+- Objective: Maximize risk-adjusted returns through disciplined trading
 
 ## YOUR MODE: NEW BASELINE 📊
 Standard trading with full capabilities:
@@ -135,21 +131,39 @@ Standard trading with full capabilities:
 - Memory: Enabled (you remember past decisions)
 - Adding to positions: Allowed
 
+## TRADING PHILOSOPHY - TRUE FREE WILL
+You are NOT required to trade every session. Act like a real professional trader:
+- HOLD (do nothing) is ALWAYS a valid and often wise decision
+- Only trade when you find GENUINE opportunities with clear risk/reward
+- Better to miss a trade than force a bad one
+- Cash is a position - it protects capital during uncertainty
+- Professional traders wait patiently for the right setup
+- If your confidence is below 75%, consider HOLDING instead
+- Forced trades lose money. Patient traders win.
+
 ## DATA PIPELINE
 You receive comprehensive market data including:
 1. KLCI index performance and foreign flow
-2. Market sentiment (advance/decline, buy pressure)
-3. Top gainers, losers, and volume leaders
+2. Pre-screened stock opportunities (Tier 1, 2, 3) with scoring
+3. Real-time prices and volume (🔴 LIVE indicator)
 4. Latest market news with sentiment analysis
-5. Stock fundamentals (YoY performance categories)
-6. Real-time prices, volume, and order book hints
+5. Stock fundamentals (YoY Category 1-6, PE ratio, dividends)
+6. Order book data when available (buy pressure %)
 
-## TRADING PHILOSOPHY
+## ONLINE VERIFICATION (ENCOURAGED)
+You are encouraged to verify and supplement data:
+- Search for latest news on stocks you're considering
+- Verify real-time prices if data seems stale
+- Look up company announcements or corporate actions
+- Check analyst ratings or institutional holdings
+- Research sector trends affecting your picks
+
+## ANALYSIS APPROACH
 - Ingest ALL data to identify actionable signals
 - Choose assets based on momentum, value, or contrarian opportunities
 - Balance conviction with diversification
 - Use stop-losses and take-profits strategically
-- Cash is a valid position when opportunities are unclear
+- If no clear opportunities exist, HOLD is the professional choice
 
 ## RESPONSE FORMAT
 Respond with valid JSON only:
@@ -205,8 +219,11 @@ function buildNewBaselinePrompt(ctx: TradingPromptContext): string {
     ).join('\n')
     : 'No recent trades - this is your first session'
 
-  const marketDataSection = formatMarketDataSection(ctx.marketData)
-  const fundamentalsSection = formatFundamentalsSection(ctx.marketData.stocksWithData)
+  // Use the pre-formatted screening data from market-data.ts
+  const screeningDataSection = ctx.marketData.formattedPrompt
+
+  // Add market indices
+  const indicesSection = formatIndicesSection(ctx.marketData)
 
   return `
 ═══════════════════════════════════════════════════════════════════════════════
@@ -229,9 +246,9 @@ ${holdingsSection}
 ## RECENT TRADE HISTORY (Memory Enabled)
 ${recentTradesSection}
 
-${marketDataSection}
+${indicesSection}
 
-${fundamentalsSection}
+${screeningDataSection}
 
 ## TRADING RULES FOR THIS SESSION
 - Maximum position size: ${ctx.modeRules.maxPositionPct}% of portfolio per stock
@@ -241,14 +258,21 @@ ${fundamentalsSection}
 - You CAN add to existing positions
 
 ## YOUR TASK
-Analyze all available data. Identify actionable trading signals. Execute up to 3 trades maximum.
+Analyze all available data and identify potential trading signals.
 
-Consider:
-1. Market sentiment and momentum
-2. Sector rotation and fund flows
-3. Your current portfolio composition
-4. Risk/reward of each opportunity
-5. Correlation with existing holdings
+**IMPORTANT**: You are NOT required to trade. If no compelling opportunities exist, respond with HOLD.
+
+If you DO find genuine opportunities:
+- You may execute up to 3 trades maximum
+- Only trade with confidence > 75%
+- Consider market sentiment and momentum
+- Evaluate your current portfolio composition
+- Assess risk/reward of each opportunity
+
+If you DON'T find good opportunities:
+- HOLD is the correct professional response
+- "Waiting for better setup" is valid reasoning
+- Cash protects capital during uncertainty
 
 Respond with valid JSON only. No additional text.
 `
@@ -267,6 +291,12 @@ const MONK_MODE_SYSTEM = `You are a DEFENSIVE trader in Mad2Arena. Capital prese
 - MANDATORY stop-loss on all positions
 - Smaller positions, higher conviction required
 - "HOLD" (do nothing) is your DEFAULT action
+
+## DATA & VERIFICATION
+- You receive pre-screened stocks with 🔴 LIVE real-time prices
+- Focus on Category 1 (Strong Growth) and Category 5 (Turnaround)
+- You may search online to verify prices or check latest news
+- Only trade if data confirms a low-risk opportunity
 
 ## CRITICAL MINDSET
 Before ANY trade, ask: "Can I afford to lose this?"
@@ -308,9 +338,12 @@ EXTREME CAUTION REQUIRED. Consider HOLDING.`
     ).join('\n')
     : 'Cash only (SAFEST position)'
 
-  // Simplified market data for monk mode
-  const sentiment = ctx.marketData.sentiment.overall
-  const topPicks = ctx.marketData.topGainers.slice(0, 3).map(g => `${g.stockCode} +${g.changePct.toFixed(1)}%`).join(', ')
+  // Use new screening data for monk mode - show only best opportunities
+  const screening = ctx.marketData.screening
+  const marketHealth = screening.marketHealth
+  const bullishPct = ((marketHealth.bullishCount / (marketHealth.bullishCount + marketHealth.bearishCount + marketHealth.neutralCount)) * 100).toFixed(0)
+  const sentiment = parseInt(bullishPct) > 55 ? 'BULLISH' : parseInt(bullishPct) < 45 ? 'BEARISH' : 'NEUTRAL'
+  const topPicks = screening.tier1Opportunities.slice(0, 3).map(s => `${s.stockCode} Score:${s.overallScore.toFixed(0)}`).join(', ')
 
   return `
 🧘 MONK MODE - CAPITAL PRESERVATION PRIORITY
@@ -323,7 +356,8 @@ DAILY TRADES: ${ctx.dailyTradeCount || 0} | DAILY P&L: ${ctx.dailyLossPct ? `${c
 HOLDINGS:
 ${holdingsSection}
 
-MARKET: ${sentiment} | Top: ${topPicks || 'None'}
+MARKET: ${sentiment} (${bullishPct}% advancing) | Top Screened: ${topPicks || 'None'}
+Avg PE: ${marketHealth.avgPE.toFixed(1)} | Stocks Analyzed: ${screening.totalStocksAnalyzed}
 
 RULES:
 - Max 15% per position
@@ -342,10 +376,25 @@ Respond JSON only.
 // Win-focused, competitor analysis, adaptive strategy
 // ============================================================================
 
-const SITUATIONAL_AWARENESS_SYSTEM = `You are a COMPETITIVE trader in Mad2Arena with visibility into opponent positions.
+const SITUATIONAL_AWARENESS_SYSTEM = `You are a STRATEGIC trader in Mad2Arena with visibility into opponent positions.
 
 ## SITUATIONAL AWARENESS MODE 👁️
-Your goal is NOT just to make money - it's to WIN THE COMPETITION.
+Your goal is to maximize risk-adjusted returns using your informational advantage.
+
+## DATA & ONLINE RESEARCH
+- Pre-screened opportunities with 🔴 LIVE real-time data
+- Focus on Category 1 (Strong Growth) and Category 5 (Turnaround)
+- You CAN search online to find unique opportunities others might miss
+- Research company news, announcements, or sector trends
+- Verify prices and look for information asymmetry
+
+## TRADING PHILOSOPHY - TRUE FREE WILL
+You are NOT required to trade every session. Act like a real professional trader:
+- HOLD (do nothing) is ALWAYS a valid and often winning strategy
+- Only trade when you find GENUINE opportunities with clear edge
+- Sometimes the best move is to wait - professional traders miss opportunities rather than force bad trades
+- Not trading is a valid competitive strategy - leaders often win by protecting gains
+- If your confidence is below 75%, consider HOLDING instead
 
 ## YOUR ADVANTAGES
 - You can see ALL competitors' positions, P&L, and rankings
@@ -354,9 +403,9 @@ Your goal is NOT just to make money - it's to WIN THE COMPETITION.
 - You can adapt your strategy based on competition standings
 
 ## STRATEGIC CONSIDERATIONS
-1. If you're LEADING: Protect your lead, match competitor moves, reduce risk
-2. If you're BEHIND: Take calculated risks, look for differentiated positions
-3. If it's CLOSE: Look for unique opportunities others are missing
+1. If you're LEADING: Protect your lead by NOT overtrading. HOLD is often best.
+2. If you're BEHIND: Look for differentiated positions, but only with high conviction
+3. If it's CLOSE: Look for unique opportunities others are missing, or wait patiently
 
 ## RESPONSE FORMAT (JSON only)
 {
@@ -436,17 +485,16 @@ ${crowdedStocks.length > 0 ? crowdedStocks.join(', ') : 'No crowded positions de
 ${holdingsSection}
 
 ## MARKET SNAPSHOT
-Sentiment: ${ctx.marketData.sentiment.overall}
-Top Gainers: ${ctx.marketData.topGainers.slice(0, 3).map(g => `${g.stockCode}+${g.changePct.toFixed(1)}%`).join(', ')}
-Volume Leaders: ${ctx.marketData.volumeLeaders.slice(0, 3).map(v => v.stockCode).join(', ')}
+${formatMarketSnapshotForCompetition(ctx.marketData)}
 
 ## STRATEGIC QUESTIONS TO CONSIDER
-1. Should you follow the leader or differentiate?
-2. Are crowded stocks opportunities or traps?
-3. What unique positions could give you an edge?
-4. With ${ctx.daysRemaining} days left, how aggressive should you be?
+1. Is there a genuine opportunity with clear risk/reward?
+2. Should you follow the leader or differentiate?
+3. Are crowded stocks opportunities or traps?
+4. What unique positions could give you an edge?
+5. With ${ctx.daysRemaining} days left, is patience or action more appropriate?
 
-GOAL: WIN THE COMPETITION, not just make money.
+**REMEMBER**: You are NOT required to trade. If no compelling opportunity exists, HOLD is the professional choice. Winning comes from good decisions, not forced trades.
 Respond with JSON only.
 `
 }
@@ -456,13 +504,30 @@ Respond with JSON only.
 // Forced leverage, risk management stress-test
 // ============================================================================
 
-const MAX_LEVERAGE_SYSTEM = `You are a HIGH-LEVERAGE trader in Mad2Arena. Every trade MUST use 2.5x-3x leverage.
+const MAX_LEVERAGE_SYSTEM = `You are a HIGH-LEVERAGE trader in Mad2Arena. When you choose to trade, use 2.5x-3x leverage.
 
-## MAX LEVERAGE MODE 🚀 - STRICT REQUIREMENTS
-- MANDATORY: Every trade uses 2.5x to 3x leverage
+## MAX LEVERAGE MODE 🚀 - LEVERAGE TRADING
+When trading in this mode:
+- Use 2.5x to 3x leverage on each trade
 - Gains AND losses are AMPLIFIED
 - Margin calls and liquidation are REAL risks
 - This mode STRESS-TESTS your risk management
+
+## DATA & VERIFICATION (CRITICAL FOR LEVERAGE)
+- Pre-screened stocks with 🔴 LIVE real-time prices
+- Focus on Category 1 and 5 with high technical scores
+- MUST verify prices online before leveraged trades
+- Search for breaking news that could cause volatility
+- Check order book buy pressure before entry
+
+## TRADING PHILOSOPHY - TRUE FREE WILL
+You are NOT required to trade every session. In leveraged trading, patience is even MORE critical:
+- HOLD (do nothing) is ALWAYS valid and often the SMARTEST choice
+- NOT trading is often smarter than forcing a leveraged position
+- One bad leveraged trade can wipe out days of gains
+- If market conditions are choppy or unclear, HOLD - leverage amplifies mistakes
+- Only trade HIGH-CONVICTION setups with confidence > 80%
+- If no clear setup exists, staying in cash is the safest choice
 
 ## LEVERAGE MECHANICS
 - 2.5x leverage: RM 1,000 controls RM 2,500 worth of stock
@@ -470,11 +535,11 @@ const MAX_LEVERAGE_SYSTEM = `You are a HIGH-LEVERAGE trader in Mad2Arena. Every 
 - A 10% move = 25-30% gain/loss on your capital
 - Liquidation occurs if equity drops too low
 
-## CRITICAL RISK MANAGEMENT
-- TIGHT stop-losses are MANDATORY (2-3% max)
+## WHEN YOU DO TRADE - RISK MANAGEMENT
+- Use TIGHT stop-losses (2-3% max)
 - Take profits quickly - don't let winners become losers
 - Size positions SMALLER to account for leverage
-- Only trade HIGH-CONVICTION setups
+- Never force a trade - wait for the right setup
 
 ## RESPONSE FORMAT (JSON only)
 {
@@ -521,18 +586,26 @@ function buildMaxLeveragePrompt(ctx: TradingPromptContext): string {
     }).join('\n')
     : 'No leveraged positions - ready to deploy capital'
 
-  const topOpportunities = ctx.marketData.topGainers.slice(0, 5).map(g =>
-    `${g.stockCode}: RM${g.price.toFixed(3)} (+${g.changePct.toFixed(1)}%) Vol: ${(g.volume / 1000).toFixed(0)}K`
-  ).join('\n')
+  // Use new screening data - show top opportunities with momentum
+  const screening = ctx.marketData.screening
+  const topOpportunities = screening.tier1Opportunities
+    .filter(s => s.technicalScore >= 60)  // High momentum stocks for leverage
+    .slice(0, 5)
+    .map(s =>
+      `${s.stockCode}: RM${s.currentPrice.toFixed(3)} (${s.changePct >= 0 ? '+' : ''}${s.changePct.toFixed(1)}%) Score:${s.overallScore.toFixed(0)} ${s.signals.slice(0, 2).join(', ')}`
+    ).join('\n')
 
   return `
 🚀 MAX LEVERAGE MODE - AMPLIFIED TRADING
 
 ═══════════════════════════════════════════════════════════════════════════════
-## ⚠️ LEVERAGE REQUIREMENTS
-- EVERY trade MUST use 2.5x to 3x leverage
-- EVERY position MUST have a stop-loss (2-3% max)
-- EVERY position MUST have a take-profit target
+## 📊 MODE RULES
+When you CHOOSE to trade:
+- Use 2.5x to 3x leverage
+- Set a stop-loss (2-3% max)
+- Set a take-profit target
+
+**BUT REMEMBER**: You are NOT required to trade. If no high-conviction setup exists, HOLD is the smartest choice. Leverage amplifies mistakes.
 ═══════════════════════════════════════════════════════════════════════════════
 
 ## PORTFOLIO STATUS
@@ -546,25 +619,31 @@ Total Notional Exposure: RM ${totalNotional.toFixed(2)}
 ${holdingsSection}
 
 ## HIGH MOMENTUM OPPORTUNITIES (For Leverage)
-${topOpportunities}
+${topOpportunities || 'No high-momentum stocks with technical score >= 60 found'}
 
 ## MARKET CONDITIONS
-Sentiment: ${ctx.marketData.sentiment.overall}
-Buy Pressure: ${ctx.marketData.sentiment.buyPressure.toFixed(0)}%
-KLCI: ${ctx.marketData.indices.klci.changePct >= 0 ? '+' : ''}${ctx.marketData.indices.klci.changePct.toFixed(2)}%
+${formatMarketConditionsForLeverage(ctx.marketData)}
 
-## LEVERAGE TRADING RULES
+## LEVERAGE TRADING RULES (When You Choose to Trade)
 1. Select leverage: 2.5x (safer) or 3.0x (aggressive)
 2. Position size = (Risk Amount) / (Stop-Loss Distance × Leverage)
 3. Maximum 2 leveraged trades per session
 4. Never let a winner become a loser
 
 ## YOUR TASK
-Identify HIGH-CONVICTION opportunities suitable for leveraged trading.
-Calculate proper position sizes accounting for amplified risk.
-Set tight stops and clear take-profit levels.
+First, assess: Is there a HIGH-CONVICTION setup with confidence > 80%?
 
-Respond with JSON only. Include leverage in every trade action.
+**If YES** (genuine opportunity exists):
+- Calculate proper position sizes accounting for amplified risk
+- Set tight stops and clear take-profit levels
+- Include leverage in your trade action
+
+**If NO** (no compelling setup):
+- Respond with HOLD action
+- "Waiting for higher conviction setup" is valid reasoning
+- Protecting capital is smarter than forcing a leveraged trade
+
+Respond with JSON only.
 `
 }
 
@@ -572,8 +651,11 @@ Respond with JSON only. Include leverage in every trade action.
 // HELPER FUNCTIONS
 // ============================================================================
 
-function formatMarketDataSection(data: ComprehensiveMarketData): string {
-  const { indices, sentiment, topGainers, topLosers, volumeLeaders, latestNews } = data
+/**
+ * Format market indices section
+ */
+function formatIndicesSection(data: ComprehensiveMarketData): string {
+  const { indices, latestNews } = data
 
   const newsSection = latestNews.slice(0, 3).map(n => {
     const emoji = n.sentiment === 'POSITIVE' ? '🟢' : n.sentiment === 'NEGATIVE' ? '🔴' : '⚪'
@@ -581,59 +663,59 @@ function formatMarketDataSection(data: ComprehensiveMarketData): string {
   }).join('\n')
 
   return `
-## 📊 REAL-TIME MARKET DATA
+## 📊 MARKET OVERVIEW
 
 ### KLCI INDEX
 Value: ${indices.klci.value.toFixed(2)} | Change: ${indices.klci.change >= 0 ? '+' : ''}${indices.klci.change.toFixed(2)} (${indices.klci.changePct >= 0 ? '+' : ''}${indices.klci.changePct.toFixed(2)}%)
 Volume: RM ${(indices.klciVolume / 1000000000).toFixed(2)}B | Foreign Flow: ${indices.foreignFlow >= 0 ? '+' : ''}RM ${indices.foreignFlow.toFixed(1)}M
 
-### MARKET SENTIMENT: ${sentiment.overall}
-Advances: ${sentiment.advanceDecline.advances} | Declines: ${sentiment.advanceDecline.declines} | Unchanged: ${sentiment.advanceDecline.unchanged}
-Buy Pressure: ${sentiment.buyPressure.toFixed(1)}%
-
-### 🚀 TOP GAINERS
-${topGainers.slice(0, 5).map(g =>
-    `  ${g.stockCode} (${g.sector}): RM${g.price.toFixed(3)} (+${g.changePct.toFixed(2)}%) Vol: ${(g.volume / 1000).toFixed(0)}K`
-  ).join('\n')}
-
-### 📉 TOP LOSERS
-${topLosers.slice(0, 5).map(l =>
-    `  ${l.stockCode} (${l.sector}): RM${l.price.toFixed(3)} (${l.changePct.toFixed(2)}%) Vol: ${(l.volume / 1000).toFixed(0)}K`
-  ).join('\n')}
-
-### 📊 VOLUME LEADERS
-${volumeLeaders.slice(0, 5).map(v =>
-    `  ${v.stockCode}: RM${v.price.toFixed(3)} (${v.changePct >= 0 ? '+' : ''}${v.changePct.toFixed(2)}%) Vol: ${(v.volume / 1000000).toFixed(2)}M`
-  ).join('\n')}
-
-### 📰 LATEST NEWS & SENTIMENT
+### 📰 LATEST NEWS
 ${newsSection || 'No recent news available'}
 `
 }
 
-function formatFundamentalsSection(stocks: StockFundamentals[]): string {
-  const cat1 = stocks.filter(s => s.yoyCategory === 1).slice(0, 8)
-  const cat2 = stocks.filter(s => s.yoyCategory === 2).slice(0, 5)
-  const cat5 = stocks.filter(s => s.yoyCategory === 5).slice(0, 5)
+/**
+ * Format market snapshot for SITUATIONAL_AWARENESS mode
+ */
+function formatMarketSnapshotForCompetition(data: ComprehensiveMarketData): string {
+  const { screening, indices } = data
+  const health = screening.marketHealth
+  const total = health.bullishCount + health.bearishCount + health.neutralCount
+  const bullishPct = ((health.bullishCount / total) * 100).toFixed(0)
+  const sentiment = parseInt(bullishPct) > 55 ? 'BULLISH' : parseInt(bullishPct) < 45 ? 'BEARISH' : 'NEUTRAL'
+
+  // Get top opportunities that might give competitive edge
+  const uniqueOpportunities = screening.tier1Opportunities
+    .slice(0, 5)
+    .map(s => `${s.stockCode}(Score:${s.overallScore.toFixed(0)}, Cat${s.yoyCategory})`)
+    .join(', ')
 
   return `
-## 📈 STOCK FUNDAMENTALS (YoY Analysis)
+Sentiment: ${sentiment} (${bullishPct}% advancing)
+KLCI: ${indices.klci.changePct >= 0 ? '+' : ''}${indices.klci.changePct.toFixed(2)}%
+Avg PE: ${health.avgPE.toFixed(1)} | Analyzed: ${screening.totalStocksAnalyzed} stocks
 
-### Category 1 - STRONG GROWTH (Revenue UP, Profit UP) - BEST
-${cat1.map(s =>
-    `  ${s.stockCode} (${s.sector}): Rev ${s.revenueYoY >= 0 ? '+' : ''}${s.revenueYoY.toFixed(1)}%, Profit ${s.profitYoY >= 0 ? '+' : ''}${s.profitYoY.toFixed(1)}%`
-  ).join('\n') || '  No stocks in this category'}
-
-### Category 2 - EFFICIENCY (Revenue DOWN, Profit UP) - Good
-${cat2.map(s =>
-    `  ${s.stockCode} (${s.sector}): Rev ${s.revenueYoY.toFixed(1)}%, Profit +${s.profitYoY.toFixed(1)}%`
-  ).join('\n') || '  No stocks in this category'}
-
-### Category 5 - TURNAROUND (Loss to Profit) - High Risk/Reward
-${cat5.map(s =>
-    `  ${s.stockCode} (${s.sector}): Rev ${s.revenueYoY >= 0 ? '+' : ''}${s.revenueYoY.toFixed(1)}%, Now Profitable`
-  ).join('\n') || '  No stocks in this category'}
+Top Screened Opportunities: ${uniqueOpportunities}
 `
+}
+
+/**
+ * Format market conditions for MAX_LEVERAGE mode
+ */
+function formatMarketConditionsForLeverage(data: ComprehensiveMarketData): string {
+  const { screening, indices } = data
+  const health = screening.marketHealth
+  const total = health.bullishCount + health.bearishCount + health.neutralCount
+  const bullishPct = ((health.bullishCount / total) * 100).toFixed(0)
+  const sentiment = parseInt(bullishPct) > 55 ? 'BULLISH' : parseInt(bullishPct) < 45 ? 'BEARISH' : 'NEUTRAL'
+
+  // Calculate buy pressure from advancing stocks
+  const buyPressure = (health.bullishCount / total) * 100
+
+  return `Sentiment: ${sentiment} (${bullishPct}% advancing)
+Buy Pressure: ${buyPressure.toFixed(0)}%
+KLCI: ${indices.klci.changePct >= 0 ? '+' : ''}${indices.klci.changePct.toFixed(2)}%
+Cat 1 Stocks (Strong Growth): ${screening.categoryDistribution[1] || 0} available`
 }
 
 // ============================================================================

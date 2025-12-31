@@ -69,6 +69,7 @@ export interface TradingSessionConfig {
 export interface TradingSessionReport {
   timestamp: Date
   marketHours: boolean
+  analysisOnly: boolean  // True when running after-hours analysis
   competitionActive: boolean
   modelsProcessed: number
   tradesExecuted: number
@@ -105,7 +106,7 @@ export interface ExecutedTrade {
 /**
  * Check if current time is within KLSE market hours
  */
-export function isMarketOpen(): { open: boolean; reason: string } {
+export function isMarketOpen(): { open: boolean; reason: string; canAnalyze: boolean } {
   const now = new Date()
   const myt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur' }))
   const hour = myt.getHours()
@@ -114,25 +115,33 @@ export function isMarketOpen(): { open: boolean; reason: string } {
 
   // Weekend
   if (day === 0 || day === 6) {
-    return { open: false, reason: 'Weekend - market closed' }
+    return { open: false, reason: 'Weekend - market closed', canAnalyze: false }
   }
 
-  // Before market open (9:00 AM)
-  if (hour < 9) {
-    return { open: false, reason: `Pre-market (opens at 9:00 AM MYT)` }
+  // Before market open (9:00 AM) - Allow pre-market analysis from 8:00 AM
+  if (hour < 8) {
+    return { open: false, reason: `Pre-market (opens at 9:00 AM MYT)`, canAnalyze: false }
   }
 
-  // After market close (5:00 PM)
-  if (hour >= 17) {
-    return { open: false, reason: `After hours (closed at 5:00 PM MYT)` }
+  if (hour === 8) {
+    return { open: false, reason: `Pre-market analysis session`, canAnalyze: true }
+  }
+
+  // After market close (5:00 PM) - Allow after-hours analysis until 8:00 PM
+  if (hour >= 17 && hour < 20) {
+    return { open: false, reason: `After-hours analysis session`, canAnalyze: true }
+  }
+
+  if (hour >= 20) {
+    return { open: false, reason: `After hours (too late for analysis)`, canAnalyze: false }
   }
 
   // Lunch break (12:30 PM - 2:30 PM)
   if ((hour === 12 && minutes >= 30) || hour === 13 || (hour === 14 && minutes < 30)) {
-    return { open: false, reason: 'Lunch break (12:30 PM - 2:30 PM MYT)' }
+    return { open: false, reason: 'Lunch break (12:30 PM - 2:30 PM MYT)', canAnalyze: false }
   }
 
-  return { open: true, reason: 'Market is open' }
+  return { open: true, reason: 'Market is open', canAnalyze: true }
 }
 
 /**
@@ -682,6 +691,7 @@ export async function runTradingSession(
   const report: TradingSessionReport = {
     timestamp: new Date(),
     marketHours: false,
+    analysisOnly: false,
     competitionActive: false,
     modelsProcessed: 0,
     tradesExecuted: 0,
@@ -699,9 +709,18 @@ export async function runTradingSession(
     const marketStatus = isMarketOpen()
     report.marketHours = marketStatus.open
 
-    if (!marketStatus.open && !options.dryRun) {
+    // Block if market closed AND not analysis session AND not dry run
+    if (!marketStatus.open && !marketStatus.canAnalyze && !options.dryRun) {
       report.errors.push(marketStatus.reason)
       return report
+    }
+
+    // Set analysis-only mode (AI analyzes but no trades executed)
+    const analysisOnlyMode = !marketStatus.open && marketStatus.canAnalyze
+    report.analysisOnly = analysisOnlyMode
+
+    if (analysisOnlyMode) {
+      console.log(`📊 Running in ANALYSIS-ONLY mode: ${marketStatus.reason}`)
     }
 
     // Get competition config
@@ -742,7 +761,7 @@ export async function runTradingSession(
     // =========================================================================
     console.log('📊 Fetching comprehensive market data...')
     const marketData = await buildComprehensiveMarketData()
-    console.log(`✅ Market data fetched: ${marketData.topGainers.length} gainers, ${marketData.topLosers.length} losers, ${marketData.latestNews.length} news items`)
+    console.log(`✅ Market data fetched: ${marketData.screening.tier1Opportunities.length} tier1 opportunities, ${marketData.screening.totalStocksAnalyzed} stocks analyzed, ${marketData.latestNews.length} news items`)
 
     // Get active participants
     let participantsQuery = db
@@ -866,9 +885,9 @@ export async function runTradingSession(
             tokens_used: response.tokensUsed
           })
 
-        // Execute trades (unless dry run) with mode-specific rules
+        // Execute trades (unless dry run or analysis-only mode) with mode-specific rules
         let executedTrades: ExecutedTrade[] = []
-        if (!options.dryRun) {
+        if (!options.dryRun && !analysisOnlyMode) {
           executedTrades = await executeTrades(
             db,
             participant.id,
@@ -876,6 +895,8 @@ export async function runTradingSession(
             config,
             modeCode
           )
+        } else if (analysisOnlyMode) {
+          console.log(`  📊 Analysis-only: ${analysis.recommended_actions.length} potential trades identified (not executed)`)
         }
 
         console.log(`  ✅ ${participant.display_name}: ${executedTrades.length} trades executed`)

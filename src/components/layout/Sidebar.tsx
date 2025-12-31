@@ -20,6 +20,7 @@ import {
   Sparkles,
   Moon,
   Newspaper,
+  Bitcoin,
 } from "lucide-react"
 
 // Check if Malaysian stock market is open
@@ -47,6 +48,7 @@ function isMarketOpen(): boolean {
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, description: "Market overview" },
   { name: "Companies", href: "/companies", icon: Building2, description: "All listings" },
+  { name: "Crypto", href: "/crypto", icon: Bitcoin, description: "Cryptocurrency" },
   { name: "Signals", href: "/signals", icon: TrendingUp, description: "Live alerts" },
   { name: "News", href: "/news", icon: Newspaper, description: "Market news" },
   { name: "AI Chat", href: "/chat", icon: MessageSquare, description: "Analysis assistant" },
